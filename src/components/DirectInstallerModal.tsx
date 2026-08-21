@@ -112,19 +112,28 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
     setHasTriggeredDownload(true);
 
     try {
-      // If direct APK link exists, trigger it
       const downloadUrl = app.link && app.link.startsWith('http')
         ? app.link
         : `https://archive.org/download/sample-apk-files/sample-app.apk`;
 
+      // Create invisible iframe for seamless in-app download without blank page flash
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = downloadUrl;
+      document.body.appendChild(iframe);
+
+      // Fallback anchor click for direct download
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.download = `${app.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_v${app.ver}.apk`;
-      link.target = '_blank';
       link.rel = 'noopener noreferrer';
       document.body.appendChild(link);
       link.click();
-      setTimeout(() => link.remove(), 200);
+
+      setTimeout(() => {
+        try { link.remove(); } catch (_) {}
+        try { iframe.remove(); } catch (_) {}
+      }, 2000);
     } catch (e) {
       console.warn("Direct download trigger exception:", e);
     }

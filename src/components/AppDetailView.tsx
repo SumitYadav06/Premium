@@ -17,11 +17,19 @@ import {
   Send,
   Lock,
   ArrowLeft,
-  ChevronRight
+  ChevronRight,
+  QrCode,
+  HelpCircle,
+  AlertCircle,
+  Copy,
+  Check
 } from 'lucide-react';
 import { AppItem, AppStats, ReviewItem } from '../types';
 import { addAppReview } from '../services/firebase';
 import { ScreenshotLightbox } from './ScreenshotLightbox';
+import { QrShareModal } from './QrShareModal';
+import { ReportLinkModal } from './ReportLinkModal';
+import { InstallGuideModal } from './InstallGuideModal';
 
 interface AppDetailViewProps {
   app: AppItem;
@@ -48,6 +56,9 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
 }) => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [guideModalOpen, setGuideModalOpen] = useState(false);
 
   // Review Form
   const [authorName, setAuthorName] = useState('');
@@ -55,6 +66,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
   const [reviewRating, setReviewRating] = useState(5);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [shareToast, setShareToast] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   // Extract screenshots
   const screenshots = [app.icon, app.p1, app.p2, app.p3, app.p4, app.p5].filter(
@@ -118,23 +130,28 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
     }
   };
 
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `${app.name} - Download on Premium Store`,
-          text: `Download ${app.name} v${app.ver} (${app.mb} MB) directly from Premium Store!`,
-          url: window.location.href
-        });
-        return;
-      } catch {
-        // Fallback to clipboard
-      }
-    }
+  const handleShareWhatsApp = () => {
+    const text = encodeURIComponent(
+      `🔥 Download ${app.name} VIP APK (v${app.ver}, ${app.mb} MB) for free! 100% Virus-Free with all premium features unlocked: ${window.location.href}`
+    );
+    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+  };
 
+  const handleShareTelegram = () => {
+    const text = encodeURIComponent(
+      `🔥 Download ${app.name} VIP APK (v${app.ver}, ${app.mb} MB) with all premium features unlocked!`
+    );
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${text}`, '_blank');
+  };
+
+  const handleCopyLink = () => {
     navigator.clipboard?.writeText(window.location.href);
+    setCopiedLink(true);
     setShareToast(true);
-    setTimeout(() => setShareToast(false), 2500);
+    setTimeout(() => {
+      setCopiedLink(false);
+      setShareToast(false);
+    }, 2500);
   };
 
   const relatedApps = allApps
@@ -158,7 +175,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
         onClose={() => setLightboxOpen(false)}
       />
 
-      {/* Navigation & Header */}
+      {/* Navigation & Actions Top Bar */}
       <div className="flex items-center justify-between">
         <button
           onClick={onBack}
@@ -172,6 +189,34 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
         </button>
 
         <div className="flex items-center gap-2">
+          {/* How to Install Helper Button */}
+          <button
+            onClick={() => setGuideModalOpen(true)}
+            className={`flex items-center gap-1.5 py-2 px-3 rounded-2xl border text-xs font-bold transition ${
+              theme === 'dark'
+                ? 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white'
+                : 'bg-white border-slate-200 text-slate-700 hover:text-slate-900 shadow-sm'
+            }`}
+            title="How to install this APK on Android"
+          >
+            <HelpCircle className="w-4 h-4 text-purple-400" />
+            <span className="hidden sm:inline">Install Guide</span>
+          </button>
+
+          {/* QR Code Scanner */}
+          <button
+            onClick={() => setQrModalOpen(true)}
+            className={`p-2.5 rounded-2xl border transition ${
+              theme === 'dark'
+                ? 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+                : 'bg-white border-slate-200 text-slate-600 hover:text-slate-900 shadow-sm'
+            }`}
+            title="Scan QR to Download on Phone"
+          >
+            <QrCode className="w-4 h-4 text-purple-400" />
+          </button>
+
+          {/* Save / Bookmark Button */}
           <button
             onClick={() => onToggleBookmark(app)}
             className={`p-2.5 rounded-2xl border transition ${
@@ -186,19 +231,40 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
             <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-purple-400' : ''}`} />
           </button>
 
+          {/* Copy Link Button */}
           <button
-            onClick={handleShare}
+            onClick={handleCopyLink}
             className={`p-2.5 rounded-2xl border transition ${
               theme === 'dark'
                 ? 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
                 : 'bg-white border-slate-200 text-slate-600 hover:text-slate-900 shadow-sm'
             }`}
-            title="Share App"
+            title="Copy Direct Link"
           >
-            <Share2 className="w-4 h-4" />
+            {copiedLink ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
           </button>
         </div>
       </div>
+
+      <QrShareModal
+        app={app}
+        isOpen={qrModalOpen}
+        onClose={() => setQrModalOpen(false)}
+        theme={theme}
+      />
+
+      <ReportLinkModal
+        app={app}
+        isOpen={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        theme={theme}
+      />
+
+      <InstallGuideModal
+        isOpen={guideModalOpen}
+        onClose={() => setGuideModalOpen(false)}
+        theme={theme}
+      />
 
       {/* App Identity Banner */}
       <div
@@ -223,12 +289,12 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
           />
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span className="bg-purple-600/20 text-purple-400 border border-purple-500/30 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full">
                 {app.cat}
               </span>
               <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5" /> Certified Safe APK
+                <ShieldCheck className="w-3.5 h-3.5" /> 100% Virus-Free & Safe
               </span>
             </div>
 
@@ -280,17 +346,41 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
       </div>
 
       {/* Primary Direct Download & Installation Action Button */}
-      <div className="space-y-2">
+      <div className="space-y-3">
         <button
           onClick={() => onDirectInstall(app)}
           className="w-full py-4 px-6 rounded-2xl font-black uppercase text-sm tracking-wider text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 shadow-xl shadow-purple-600/25 active:scale-98 transition flex items-center justify-center gap-2.5 group"
         >
           <Download className="w-5 h-5 group-hover:animate-bounce" />
-          <span>Direct Download & Install APK ({app.mb} MB)</span>
+          <span>Direct Download APK ({app.mb} MB)</span>
         </button>
-        <p className="text-center text-[11px] text-slate-500 font-medium">
-          Instant high-speed CDN download • Direct Android package installer • Safe & Tested
-        </p>
+
+        {/* 1-Click Social Share & Report Buttons */}
+        <div className="flex items-center justify-between gap-2 pt-1">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleShareWhatsApp}
+              className="py-2 px-3 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5 active:scale-95 transition"
+            >
+              <span>WhatsApp Share</span>
+            </button>
+
+            <button
+              onClick={handleShareTelegram}
+              className="py-2 px-3 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 text-xs font-bold flex items-center gap-1.5 active:scale-95 transition"
+            >
+              <span>Telegram Share</span>
+            </button>
+          </div>
+
+          <button
+            onClick={() => setReportModalOpen(true)}
+            className="text-[11px] font-bold text-slate-400 hover:text-amber-400 flex items-center gap-1 transition"
+          >
+            <AlertCircle className="w-3.5 h-3.5" />
+            <span>Report Broken Link</span>
+          </button>
+        </div>
       </div>
 
       {/* Screenshots Showcase Carousel */}
@@ -398,7 +488,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
             <span>Community Ratings & Reviews ({commentsList.length})</span>
           </h3>
           <span className="text-xs font-bold text-yellow-400 flex items-center gap-1">
-            <Star className="w-3.5 h-3.5 fill-yellow-400" /> 4.9 out of 5
+            <Star className="w-3.5 h-3.5 fill-yellow-400" /> {app.rating || 4.9} out of 5
           </span>
         </div>
 

@@ -5,18 +5,20 @@ import {
   Bookmark,
   Sun,
   Moon,
-  Search,
-  Users,
-  ShieldCheck
+  ShieldCheck,
+  Smartphone,
+  HelpCircle,
+  MessageSquare
 } from 'lucide-react';
 
 interface NavbarProps {
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
-  activeUsers: number;
   onOpenOwner: () => void;
   onOpenDownloads: () => void;
   onOpenBookmarks: () => void;
+  onOpenInstallGuide: () => void;
+  onOpenRequestApp: () => void;
   bookmarksCount: number;
   downloadsCount: number;
   selectedApp: boolean;
@@ -27,10 +29,11 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   theme,
   onToggleTheme,
-  activeUsers,
   onOpenOwner,
   onOpenDownloads,
   onOpenBookmarks,
+  onOpenInstallGuide,
+  onOpenRequestApp,
   bookmarksCount,
   downloadsCount,
   selectedApp,
@@ -41,8 +44,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header
       className={`sticky top-0 z-40 backdrop-blur-xl border-b transition-colors duration-200 ${
         theme === 'dark'
-          ? 'bg-slate-950/80 border-slate-800/80 text-white'
-          : 'bg-white/85 border-slate-200/80 text-slate-900 shadow-sm'
+          ? 'bg-slate-950/85 border-slate-800/80 text-white'
+          : 'bg-white/90 border-slate-200/80 text-slate-900 shadow-sm'
       }`}
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
@@ -67,9 +70,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   PREMIUM STORE
                 </h1>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">
-                    {activeUsers} Active Live
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  <span className="text-[10px] font-extrabold text-emerald-400 uppercase tracking-widest flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3 text-emerald-400" /> VIP Verified Store
                   </span>
                 </div>
               </div>
@@ -77,8 +80,36 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
         </div>
 
-        {/* Right: Actions */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5">
+        {/* Right: Quick Action Buttons */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* How to Install Guide Button */}
+          <button
+            onClick={onOpenInstallGuide}
+            className={`hidden md:flex items-center gap-1.5 py-1.5 px-3 rounded-xl border text-xs font-bold transition ${
+              theme === 'dark'
+                ? 'bg-slate-900/80 border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-white'
+                : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-slate-700'
+            }`}
+            title="How to install APKs on Android"
+          >
+            <HelpCircle className="w-3.5 h-3.5 text-purple-400" />
+            <span>Install Guide</span>
+          </button>
+
+          {/* Request App Button */}
+          <button
+            onClick={onOpenRequestApp}
+            className={`hidden sm:flex items-center gap-1.5 py-1.5 px-3 rounded-xl border text-xs font-bold transition ${
+              theme === 'dark'
+                ? 'bg-purple-950/40 border-purple-800/50 hover:bg-purple-900/50 text-purple-300'
+                : 'bg-purple-50 border-purple-200 hover:bg-purple-100 text-purple-700'
+            }`}
+            title="Request a new VIP APK or Mod"
+          >
+            <MessageSquare className="w-3.5 h-3.5 text-purple-400" />
+            <span>Request App</span>
+          </button>
+
           {/* Bookmarks / Saved Button */}
           <button
             onClick={onOpenBookmarks}
@@ -134,8 +165,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Owner Avatar / Channel Profile */}
           <button
             onClick={onOpenOwner}
-            className="relative p-0.5 rounded-full ring-2 ring-purple-600/80 hover:ring-purple-400 transition ml-1"
-            title="Official Creator Channel"
+            className="relative p-0.5 rounded-full ring-2 ring-purple-600/80 hover:ring-purple-400 transition ml-0.5"
+            title="Official Creator Channel & Info"
           >
             <img
               src={ownerImg}
