@@ -174,3 +174,134 @@ export async function addAppReview(appName: string, review: { user: string; text
     return false;
   }
 }
+
+export async function saveAppToStore(appItem: AppItem): Promise<boolean> {
+  if (!appItem.name) return false;
+  const appId = appItem.id || `app_${Date.now()}`;
+  const appToSave: AppItem = {
+    ...appItem,
+    id: appId,
+    downloads: appItem.downloads || 1200,
+    rating: appItem.rating || 4.9
+  };
+
+  if (db) {
+    try {
+      const appRef = ref(db, `apps_list/${appId}`);
+      await set(appRef, appToSave);
+      return true;
+    } catch (e) {
+      console.warn("Firebase save app failed:", e);
+    }
+  }
+
+  // Local fallback
+  try {
+    const localApps = JSON.parse(localStorage.getItem('premium_store_custom_apps') || '[]');
+    const existingIndex = localApps.findIndex((a: AppItem) => a.id === appId || a.name === appToSave.name);
+    if (existingIndex >= 0) {
+      localApps[existingIndex] = appToSave;
+    } else {
+      localApps.unshift(appToSave);
+    }
+    localStorage.setItem('premium_store_custom_apps', JSON.stringify(localApps));
+    return true;
+  } catch (e) {
+    console.error("Local save app error:", e);
+    return false;
+  }
+}
+
+export async function deleteAppFromStore(appIdOrName: string): Promise<boolean> {
+  if (!appIdOrName) return false;
+
+  if (db) {
+    try {
+      const appRef = ref(db, `apps_list/${appIdOrName}`);
+      await set(appRef, null);
+    } catch (e) {
+      console.warn("Firebase delete app error:", e);
+    }
+  }
+
+  // Local fallback
+  try {
+    const localApps = JSON.parse(localStorage.getItem('premium_store_custom_apps') || '[]');
+    const filtered = localApps.filter((a: AppItem) => a.id !== appIdOrName && a.name !== appIdOrName);
+    localStorage.setItem('premium_store_custom_apps', JSON.stringify(filtered));
+    return true;
+  } catch (e) {
+    console.error("Local delete app error:", e);
+    return false;
+  }
+}
+
+export async function submitAppRequest(request: {
+  appName: string;
+  category?: string;
+  note?: string;
+  requesterName?: string;
+}): Promise<boolean> {
+  if (!request.appName) return false;
+  const newReq = {
+    ...request,
+    id: `req_${Date.now()}`,
+    createdAt: Date.now(),
+    votes: 1,
+    status: 'pending'
+  };
+
+  if (db) {
+    try {
+      const reqRef = ref(db, `requests/${newReq.id}`);
+      await set(reqRef, newReq);
+      return true;
+    } catch (e) {
+      console.warn("Firebase submit request error:", e);
+    }
+  }
+
+  // Local storage fallback
+  try {
+    const list = JSON.parse(localStorage.getItem('premium_store_user_requests') || '[]');
+    list.unshift(newReq);
+    localStorage.setItem('premium_store_user_requests', JSON.stringify(list));
+    return true;
+  } catch (e) {
+    console.error("Local request submit error:", e);
+    return false;
+  }
+}
+
+export async function submitBrokenLinkReport(report: {
+  appName: string;
+  appId?: string;
+  reason?: string;
+}): Promise<boolean> {
+  if (!report.appName) return false;
+  const newReport = {
+    ...report,
+    id: `report_${Date.now()}`,
+    reportedAt: Date.now()
+  };
+
+  if (db) {
+    try {
+      const repRef = ref(db, `broken_reports/${newReport.id}`);
+      await set(repRef, newReport);
+      return true;
+    } catch (e) {
+      console.warn("Firebase broken report error:", e);
+    }
+  }
+
+  try {
+    const list = JSON.parse(localStorage.getItem('premium_store_broken_reports') || '[]');
+    list.unshift(newReport);
+    localStorage.setItem('premium_store_broken_reports', JSON.stringify(list));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+

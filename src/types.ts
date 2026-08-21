@@ -59,3 +59,22 @@ export interface DownloadTask {
   startedAt: number;
   completedAt?: number;
 }
+
+export interface AppRequestItem {
+  id?: string;
+  appName: string;
+  category?: string;
+  note?: string;
+  requesterName?: string;
+  votes?: number;
+  createdAt: number;
+  status?: 'pending' | 'added' | 'reviewing';
+}
+
+export interface BrokenLinkReport {
+  id?: string;
+  appId?: string;
+  appName: string;
+  reason?: string;
+  reportedAt: number;
+}
