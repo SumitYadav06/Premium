@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .rainbow-text {
+    background: linear-gradient(
+      to right,
+      #ff2d55,
+      #ff9500,
+      #ffcc00,
+      #34c759,
+      #00c7be,
+      #32ade6,
+      #5856d6,
+      #af52de,
+      #ff2d55
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: rainbow_anim 4s linear infinite;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@keyframes rainbow_anim {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.heart-particle {
+  position: fixed;
+  pointer-events: none;
+  z-index: 99999;
+  transform: translate(-50%, -50%);
+  animation: heartParticleFly 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes heartParticleFly {
+  0% {
+    transform: translate(-50%, -50%) scale(0.4) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(-50%, -130px) scale(1.6) rotate(var(--rot, 15deg));
+    opacity: 0;
+  }
+}
+
+html, body {
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+

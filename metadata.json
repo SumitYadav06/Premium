@@ -1,0 +1,6 @@
+{
+  "name": "Premium Store",
+  "description": "An ultra-premium modern application store featuring curated APKs, direct install manager, live community reviews, interactive screenshot gallery, and sleek luxury aesthetics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
