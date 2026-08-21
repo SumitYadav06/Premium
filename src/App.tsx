@@ -16,7 +16,11 @@ import {
   X,
   Smartphone,
   Info,
-  CheckCircle2
+  CheckCircle2,
+  Mic,
+  MicOff,
+  HelpCircle,
+  MessageSquare
 } from 'lucide-react';
 
 import { AppItem, AppStats, StoreStatus, DownloadTask } from './types';
@@ -35,10 +39,21 @@ import { DownloadManagerDrawer } from './components/DownloadManagerDrawer';
 import { BookmarksDrawer } from './components/BookmarksDrawer';
 import { OwnerModal } from './components/OwnerModal';
 import { HeartGlowOverlay } from './components/HeartGlowOverlay';
+import { InstallGuideModal } from './components/InstallGuideModal';
+import { RequestAppModal } from './components/RequestAppModal';
+import { PwaInstallBanner } from './components/PwaInstallBanner';
 
 export default function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-  const [apps, setApps] = useState<AppItem[]>(INITIAL_APPS);
+  const [apps, setApps] = useState<AppItem[]>(() => {
+    try {
+      const localCustom = JSON.parse(localStorage.getItem('premium_store_custom_apps') || '[]');
+      if (Array.isArray(localCustom) && localCustom.length > 0) {
+        return [...localCustom, ...INITIAL_APPS];
+      }
+    } catch {}
+    return INITIAL_APPS;
+  });
   const [stats, setStats] = useState<Record<string, AppStats>>({});
   const [storeStatus, setStoreStatus] = useState<StoreStatus>({
     active: true,
@@ -49,7 +64,7 @@ export default function App() {
   const [selectedApp, setSelectedApp] = useState<AppItem | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [sortBy, setSortBy] = useState<'popular' | 'rating' | 'size' | 'name'>('popular');
+  const [sortBy, setSortBy] = useState<'popular' | 'rating' | 'size-asc' | 'size-desc' | 'name'>('popular');
 
   // Modals & Drawers
   const [isSplash, setIsSplash] = useState(true);
@@ -57,6 +72,11 @@ export default function App() {
   const [isDownloadsOpen, setIsDownloadsOpen] = useState(false);
   const [isBookmarksOpen, setIsBookmarksOpen] = useState(false);
   const [isOwnerOpen, setIsOwnerOpen] = useState(false);
+  const [isInstallGuideOpen, setIsInstallGuideOpen] = useState(false);
+  const [isRequestAppOpen, setIsRequestAppOpen] = useState(false);
+
+  // Voice Search
+  const [isListening, setIsListening] = useState(false);
 
   // Persistence: Bookmarks & Downloads
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(() => {
@@ -75,7 +95,6 @@ export default function App() {
     }
   });
 
-  const [activeUsers, setActiveUsers] = useState(14);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   // Save Bookmarks & Downloads to localStorage
@@ -100,6 +119,15 @@ export default function App() {
     const unsub = subscribeToApps(
       (newApps) => {
         if (newApps && newApps.length > 0) {
+          try {
+            const localCustom = JSON.parse(localStorage.getItem('premium_store_custom_apps') || '[]');
+            if (Array.isArray(localCustom) && localCustom.length > 0) {
+              const combined = [...localCustom, ...newApps];
+              const unique = Array.from(new Map(combined.map((item) => [item.name, item])).values());
+              setApps(unique);
+              return;
+            }
+          } catch {}
           setApps(newApps);
         }
       },
@@ -112,14 +140,6 @@ export default function App() {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Dynamic Live Users counter simulation
-    const timer = setInterval(() => {
-      setActiveUsers((prev) => {
-        const delta = Math.floor(Math.random() * 3) - 1;
-        return Math.max(8, prev + delta);
-      });
-    }, 4500);
-
     // Splash timeout
     const splashTimer = setTimeout(() => {
       setIsSplash(false);
@@ -131,10 +151,12 @@ export default function App() {
       if (directInstallApp) {
         setDirectInstallApp(null);
         window.history.pushState({ page: 'home' }, '');
-      } else if (isDownloadsOpen || isBookmarksOpen || isOwnerOpen) {
+      } else if (isDownloadsOpen || isBookmarksOpen || isOwnerOpen || isInstallGuideOpen || isRequestAppOpen) {
         setIsDownloadsOpen(false);
         setIsBookmarksOpen(false);
         setIsOwnerOpen(false);
+        setIsInstallGuideOpen(false);
+        setIsRequestAppOpen(false);
         window.history.pushState({ page: 'home' }, '');
       } else if (selectedApp) {
         setSelectedApp(null);
@@ -147,11 +169,10 @@ export default function App() {
       unsub();
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      clearInterval(timer);
       clearTimeout(splashTimer);
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [selectedApp, directInstallApp, isDownloadsOpen, isBookmarksOpen, isOwnerOpen]);
+  }, [selectedApp, directInstallApp, isDownloadsOpen, isBookmarksOpen, isOwnerOpen, isInstallGuideOpen, isRequestAppOpen]);
 
   // Apply theme to document body
   useEffect(() => {
@@ -195,6 +216,48 @@ export default function App() {
     });
   };
 
+  // Voice Search Handler
+  const handleToggleVoiceSearch = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Voice search is not supported in this browser. Please type to search.');
+      return;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      setIsListening(true);
+      recognition.start();
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        if (transcript) {
+          setSearchQuery(transcript);
+        }
+        setIsListening(false);
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+    } catch {
+      setIsListening(false);
+    }
+  };
+
   // Category counts
   const appsCountByCategory = useMemo(() => {
     const counts: Record<string, number> = { All: apps.length };
@@ -223,7 +286,12 @@ export default function App() {
         if (sortBy === 'rating') {
           return (b.rating || 4.5) - (a.rating || 4.5);
         }
-        if (sortBy === 'size') {
+        if (sortBy === 'size-asc') {
+          const mbA = typeof a.mb === 'string' ? parseFloat(a.mb) || 0 : a.mb;
+          const mbB = typeof b.mb === 'string' ? parseFloat(b.mb) || 0 : b.mb;
+          return mbA - mbB;
+        }
+        if (sortBy === 'size-desc') {
           const mbA = typeof a.mb === 'string' ? parseFloat(a.mb) || 0 : a.mb;
           const mbB = typeof b.mb === 'string' ? parseFloat(b.mb) || 0 : b.mb;
           return mbB - mbA;
@@ -273,10 +341,11 @@ export default function App() {
       <Navbar
         theme={theme}
         onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-        activeUsers={activeUsers}
         onOpenOwner={() => setIsOwnerOpen(true)}
         onOpenDownloads={() => setIsDownloadsOpen(true)}
         onOpenBookmarks={() => setIsBookmarksOpen(true)}
+        onOpenInstallGuide={() => setIsInstallGuideOpen(true)}
+        onOpenRequestApp={() => setIsRequestAppOpen(true)}
         bookmarksCount={bookmarkedIds.length}
         downloadsCount={downloadTasks.length}
         selectedApp={Boolean(selectedApp)}
@@ -301,6 +370,9 @@ export default function App() {
         ) : (
           /* Store Front Dashboard */
           <div className="space-y-6">
+            {/* PWA Add to Home Screen Banner */}
+            <PwaInstallBanner theme={theme} />
+
             {/* Search & Filter Bar */}
             <div className="flex flex-col sm:flex-row gap-3">
               <div
@@ -318,10 +390,26 @@ export default function App() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full bg-transparent p-3.5 pl-3 text-sm focus:outline-none placeholder:text-slate-500 font-medium"
                 />
+
+                {/* Voice Search Microphone Button */}
+                <button
+                  type="button"
+                  onClick={handleToggleVoiceSearch}
+                  className={`p-2 mr-1 rounded-xl transition ${
+                    isListening
+                      ? 'bg-red-500 text-white animate-pulse'
+                      : 'text-slate-400 hover:text-purple-400'
+                  }`}
+                  title={isListening ? 'Listening... Speak now' : 'Voice Search'}
+                >
+                  {isListening ? <Mic className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                </button>
+
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
                     className="p-2 mr-2 text-slate-400 hover:text-white rounded-lg"
+                    title="Clear Search"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -341,11 +429,31 @@ export default function App() {
                   className="bg-transparent text-xs font-bold uppercase tracking-wider focus:outline-none cursor-pointer"
                 >
                   <option value="popular" className="bg-slate-900 text-white">Most Popular</option>
-                  <option value="rating" className="bg-slate-900 text-white">Highest Rated</option>
-                  <option value="size" className="bg-slate-900 text-white">File Size</option>
-                  <option value="name" className="bg-slate-900 text-white">Alphabetical</option>
+                  <option value="rating" className="bg-slate-900 text-white">Highest Rated (★)</option>
+                  <option value="size-asc" className="bg-slate-900 text-white">Smallest Size (MB)</option>
+                  <option value="size-desc" className="bg-slate-900 text-white">Largest Size (MB)</option>
+                  <option value="name" className="bg-slate-900 text-white">Alphabetical (A-Z)</option>
                 </select>
               </div>
+            </div>
+
+            {/* Quick Community Action Bar (Mobile Responsive) */}
+            <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 sm:hidden">
+              <button
+                onClick={() => setIsInstallGuideOpen(true)}
+                className="flex items-center gap-1.5 py-2 px-3 rounded-xl bg-purple-950/40 border border-purple-800/40 text-purple-300 text-xs font-bold whitespace-nowrap"
+              >
+                <HelpCircle className="w-3.5 h-3.5 text-purple-400" />
+                <span>How to Install</span>
+              </button>
+
+              <button
+                onClick={() => setIsRequestAppOpen(true)}
+                className="flex items-center gap-1.5 py-2 px-3 rounded-xl bg-blue-950/40 border border-blue-800/40 text-blue-300 text-xs font-bold whitespace-nowrap"
+              >
+                <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
+                <span>Request App</span>
+              </button>
             </div>
 
             {/* Featured Hero Banner */}
@@ -464,6 +572,20 @@ export default function App() {
       <OwnerModal
         isOpen={isOwnerOpen}
         onClose={() => setIsOwnerOpen(false)}
+        theme={theme}
+      />
+
+      {/* How to Install APK Guide Modal */}
+      <InstallGuideModal
+        isOpen={isInstallGuideOpen}
+        onClose={() => setIsInstallGuideOpen(false)}
+        theme={theme}
+      />
+
+      {/* Request App Community Modal */}
+      <RequestAppModal
+        isOpen={isRequestAppOpen}
+        onClose={() => setIsRequestAppOpen(false)}
         theme={theme}
       />
     </div>
