@@ -123,8 +123,8 @@ jobs:
           import androidx.core.app.ActivityCompat;
           import androidx.core.content.ContextCompat;
 
-          import com.getcapacitor.BridgeWebChromeClient;
           import com.getcapacitor.BridgeActivity;
+          import com.getcapacitor.BridgeWebChromeClient;
 
           public class MainActivity extends BridgeActivity {
 
@@ -149,10 +149,6 @@ jobs:
                   settings.setLoadWithOverviewMode(true);
                   settings.setUseWideViewPort(true);
 
-                  /*
-                   * Keep Capacitor's normal WebChromeClient behavior,
-                   * but add our own microphone handling for the live website.
-                   */
                   webView.setWebChromeClient(
                       new BridgeWebChromeClient(getBridge()) {
 
@@ -165,6 +161,7 @@ jobs:
                               boolean videoRequested = false;
 
                               for (String resource : resources) {
+
                                   if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)) {
                                       audioRequested = true;
                                   }
@@ -174,15 +171,13 @@ jobs:
                                   }
                               }
 
-                              /*
-                               * Handle microphone-only requests from our live website.
-                               * Camera requests are left to Capacitor's normal handler.
-                               */
                               if (audioRequested && !videoRequested) {
 
                                   String origin = request.getOrigin().toString();
 
-                                  if (!origin.startsWith("https://sumityadav06.github.io/")) {
+                                  if (!origin.startsWith(
+                                          "https://sumityadav06.github.io/"
+                                  )) {
                                       request.deny();
                                       return;
                                   }
@@ -215,10 +210,6 @@ jobs:
                                   return;
                               }
 
-                              /*
-                               * For anything other than microphone-only requests,
-                               * use Capacitor's built-in permission handling.
-                               */
                               super.onPermissionRequest(request);
                           }
                       }
@@ -264,7 +255,7 @@ jobs:
               }
 
               @Override
-              protected void onDestroy() {
+              public void onDestroy() {
 
                   if (pendingMicrophoneRequest != null) {
                       try {
