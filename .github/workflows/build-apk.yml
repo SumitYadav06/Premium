@@ -19,10 +19,14 @@ jobs:
       - name: Build Android App
         run: |
           npm install @capacitor/core @capacitor/cli @capacitor/android
-          npx cap init "PremiumApp" "com.premium.app" --web-dir dist
-          npx cap add android
           
-          # लाइव GitHub Pages लिंक सेट करना
+          # एरर फिक्स: Capacitor के लिए dist फोल्डर बनाना जरूरी है
+          mkdir -p dist
+          echo "<html><body>Loading...</body></html>" > dist/index.html
+          
+          npx cap init "PremiumApp" "com.premium.app" --web-dir dist
+          
+          # आपकी Live GitHub Link
           cat <<EOF > capacitor.config.json
           {
             "appId": "com.premium.app",
@@ -35,6 +39,8 @@ jobs:
           }
           EOF
 
+          npx cap add android
+          npx cap copy android
           npx cap update android
           cd android && ./gradlew assembleDebug
 
