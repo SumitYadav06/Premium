@@ -86,7 +86,7 @@ export const DownloadManagerDrawer: React.FC<DownloadManagerDrawerProps> = ({
               >
                 <div className="flex items-center gap-3">
                   <img
-                    src={t.appIcon}
+                    src={t.appIcon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}
                     alt={t.appName}
                     className="w-12 h-12 rounded-xl object-cover border border-purple-500/30"
                   />

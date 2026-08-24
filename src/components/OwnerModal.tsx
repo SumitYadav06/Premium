@@ -33,19 +33,11 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
 
   const handleOpenInstagram = (e: React.MouseEvent) => {
     e.preventDefault();
-    const appDeepLink = `instagram://user?username=${instagramUsername}`;
-    const webFallbackUrl = instagramLink;
+    const webUrl = instagramLink.startsWith('http')
+      ? instagramLink
+      : `https://www.instagram.com/${instagramUsername}/`;
 
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-    if (isMobile) {
-      window.location.href = appDeepLink;
-      setTimeout(() => {
-        window.open(webFallbackUrl, '_blank', 'noopener,noreferrer');
-      }, 1200);
-    } else {
-      window.open(webFallbackUrl, '_blank', 'noopener,noreferrer');
-    }
+    window.open(webUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -74,7 +66,7 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
         <div className="relative mx-auto w-24 h-24 mb-4">
           <div className="absolute -inset-1 bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 rounded-full blur-md opacity-80 animate-pulse" />
           <img
-            src={ownerImg}
+            src={ownerImg || STORE_CONFIG.OWNER_IMAGE || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80"}
             alt="Sumit Yadav"
             className="relative w-full h-full rounded-full object-cover border-2 border-pink-500 shadow-2xl"
             onError={(e) => {
@@ -116,7 +108,9 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
 
         {/* Direct In-App Instagram Profile Launcher Button */}
         <a
-          href={`instagram://user?username=${instagramUsername}`}
+          href={instagramLink}
+          target="_blank"
+          rel="noopener noreferrer"
           onClick={handleOpenInstagram}
           className="w-full py-3.5 px-4 rounded-2xl font-black text-xs uppercase tracking-wider text-white bg-gradient-to-r from-amber-500 via-pink-600 to-purple-600 hover:from-amber-400 hover:via-pink-500 hover:to-purple-500 shadow-xl shadow-pink-600/30 active:scale-95 transition flex items-center justify-center gap-2 mb-2 cursor-pointer"
         >

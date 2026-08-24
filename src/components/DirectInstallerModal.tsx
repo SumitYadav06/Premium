@@ -163,7 +163,7 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
         {/* App Mini Header */}
         <div className="flex items-center gap-3 mb-6 pr-8">
           <img
-            src={app.icon}
+            src={app.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}
             alt={app.name}
             className="w-14 h-14 rounded-2xl object-cover border border-purple-500/30 shadow-lg"
           />

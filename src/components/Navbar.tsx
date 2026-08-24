@@ -166,7 +166,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             title="Official Creator Instagram & Info"
           >
             <img
-              src={ownerImg}
+              src={ownerImg || STORE_CONFIG.OWNER_IMAGE || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80"}
               alt={STORE_CONFIG.OWNER_NAME}
               className="w-8 h-8 rounded-full object-cover shadow"
               onError={(e) => {

@@ -98,7 +98,7 @@ const ScreenshotThumbnail: React.FC<{
       className="relative group flex-shrink-0 cursor-pointer select-none"
     >
       <img
-        src={pic}
+        src={pic || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80"}
         alt={`Preview ${idx + 1}`}
         loading="lazy"
         onError={(e) => {
@@ -263,6 +263,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
       `🛡️ Status: 100% Virus-Free & Verified ✅\n\n` +
       `📥 *Direct APK Download:*\n${apkLink}\n\n` +
       `🌐 *Explore More VIP Apps on Store:*\n${storeLink}\n\n` +
+      `📸 *Instagram:* ${STORE_CONFIG.OWNER_INSTAGRAM}\n` +
       `👑 Shared from *${STORE_CONFIG.OWNER_NAME}'s Premium Store*`;
   };
 
@@ -298,15 +299,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
       }
     }
 
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    if (isMobile) {
-      window.location.href = 'instagram://app';
-      setTimeout(() => {
-        window.open('https://www.instagram.com/direct/inbox/', '_blank', 'noopener,noreferrer');
-      }, 1200);
-    } else {
-      window.open('https://www.instagram.com/direct/inbox/', '_blank', 'noopener,noreferrer');
-    }
+    window.open('https://www.instagram.com/', '_blank', 'noopener,noreferrer');
   };
 
   const handleCopyBothLinks = async () => {
@@ -436,7 +429,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
           <div className="relative flex-shrink-0">
             <div className="p-0.5 rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600 shadow-lg">
               <img
-                src={app.icon}
+                src={app.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}
                 alt={app.name}
                 className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl sm:rounded-3xl object-cover bg-slate-950"
                 onError={(e) => {
@@ -770,7 +763,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
                 className="p-3.5 rounded-2xl bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800 hover:border-purple-500/40 transition cursor-pointer flex items-center gap-3 group"
               >
                 <img
-                  src={rel.icon}
+                  src={rel.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}
                   alt={rel.name}
                   className="w-12 h-12 rounded-xl object-cover border border-purple-500/20 group-hover:scale-105 transition"
                 />

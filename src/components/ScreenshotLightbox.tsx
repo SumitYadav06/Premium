@@ -154,7 +154,7 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
               className="w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing touch-none"
             >
               <img
-                src={images[currentIndex]}
+                src={images[currentIndex] || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80"}
                 alt={`Screenshot ${currentIndex + 1}`}
                 onError={(e) => {
                   (e.target as HTMLImageElement).src =
@@ -199,7 +199,11 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
                     : 'border-white/10 opacity-40 hover:opacity-90'
                 }`}
               >
-                <img src={img} alt="thumb" className="w-full h-full object-cover" />
+                <img
+                  src={img || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}
+                  alt="thumb"
+                  className="w-full h-full object-cover"
+                />
               </button>
             ))}
           </div>

@@ -55,7 +55,7 @@ export const AppCard: React.FC<AppCardProps> = ({
         >
           <div className="p-0.5 rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-amber-400/80 via-rose-500/80 to-purple-600/80 shadow-md group-hover:scale-105 group-hover:shadow-pink-500/25 transition duration-300">
             <img
-              src={app.icon}
+              src={app.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}
               alt={app.name}
               className="w-16 h-16 sm:w-18 sm:h-18 rounded-[14px] sm:rounded-[22px] object-cover bg-slate-950"
               onError={(e) => {
@@ -128,6 +128,7 @@ export const AppCard: React.FC<AppCardProps> = ({
                   `⚡ Size: ${app.mb} MB | Status: Verified ✅\n\n` +
                   `📥 *Direct APK Download:*\n${app.url}\n\n` +
                   `🌐 *Store Link:*\n${storeLink}\n\n` +
+                  `📸 *Instagram:* ${STORE_CONFIG.OWNER_INSTAGRAM}\n` +
                   `👑 Shared from *${STORE_CONFIG.OWNER_NAME}'s Premium Store*`;
                 const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
                 window.open(whatsappUrl, '_blank', 'noopener,noreferrer');

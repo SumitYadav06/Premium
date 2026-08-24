@@ -39,7 +39,7 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
         <AnimatePresence mode="wait">
           <motion.img
             key={current.id || current.name}
-            src={current.p1 || current.icon}
+            src={current.p1 || current.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80"}
             alt={current.name}
             initial={{ opacity: 0, scale: 1.08 }}
             animate={{ opacity: 0.35, scale: 1 }}
@@ -57,7 +57,7 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
         <div className="absolute inset-0 p-6 sm:p-8 flex flex-col justify-end">
           <div className="flex items-start gap-4">
             <img
-              src={current.icon}
+              src={current.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}
               alt={current.name}
               className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl object-cover border-2 border-purple-500/40 shadow-xl flex-shrink-0 cursor-pointer"
               onClick={() => onSelectApp(current)}
