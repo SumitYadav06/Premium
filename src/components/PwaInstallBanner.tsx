@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Download, Sparkles, X, Smartphone, CheckCircle2 } from 'lucide-react';
+import { STORE_CONFIG } from '../config';
 
 interface PwaInstallBannerProps {
   theme: 'dark' | 'light';
@@ -37,8 +38,20 @@ export const PwaInstallBanner: React.FC<PwaInstallBannerProps> = ({ theme }) => 
       }
       setDeferredPrompt(null);
     } else {
-      // Fallback guide for Android Chrome / iOS Safari
-      alert('To install: Tap your browser menu (⋮ or Share) and select "Add to Home Screen" or "Install App".');
+      // Direct Download Fallback using the easily editable STORE_CONFIG.STORE_APP_APK_URL
+      if (STORE_CONFIG.STORE_APP_APK_URL && STORE_CONFIG.STORE_APP_APK_URL !== '#') {
+        const link = document.createElement('a');
+        link.href = STORE_CONFIG.STORE_APP_APK_URL;
+        link.download = 'PremiumStore.apk';
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setInstalledSuccess(true);
+        setTimeout(() => setIsDismissed(true), 3000);
+      } else {
+        alert('To install: Tap browser menu (⋮) and select "Add to Home Screen" or "Install App".');
+      }
     }
   };
 

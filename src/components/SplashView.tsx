@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { ShieldCheck, Sparkles } from 'lucide-react';
+import { STORE_CONFIG } from '../config';
 
 interface SplashViewProps {
   logoUrl?: string;
@@ -8,7 +9,7 @@ interface SplashViewProps {
 }
 
 export const SplashView: React.FC<SplashViewProps> = ({
-  logoUrl = "https://i.postimg.cc/NFn5kYCV/In_Shot_20260113_184053825.jpg"
+  logoUrl = STORE_CONFIG.STORE_SPLASH_LOGO
 }) => {
   return (
     <motion.div
@@ -34,10 +35,9 @@ export const SplashView: React.FC<SplashViewProps> = ({
           <div className="relative w-44 h-44 sm:w-52 sm:h-52 rounded-[2rem] overflow-hidden bg-slate-900 border-2 border-purple-500/40 shadow-2xl p-1.5 flex items-center justify-center">
             <img
               src={logoUrl}
-              alt="Premium Store"
+              alt={STORE_CONFIG.STORE_NAME}
               className="w-full h-full object-cover rounded-[1.65rem]"
               onError={(e) => {
-                // Fallback elegant logo if remote image is blocked
                 (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80";
               }}
             />
@@ -55,7 +55,7 @@ export const SplashView: React.FC<SplashViewProps> = ({
           transition={{ delay: 0.2 }}
           className="text-3xl sm:text-4xl font-black italic tracking-tight mb-2 rainbow-text drop-shadow"
         >
-          PREMIUM STORE
+          {STORE_CONFIG.STORE_NAME}
         </motion.h1>
 
         <motion.p

@@ -1,6 +1,7 @@
 import React from 'react';
 import { ShieldAlert, ExternalLink, RefreshCw } from 'lucide-react';
 import { StoreStatus } from '../types';
+import { STORE_CONFIG } from '../config';
 
 interface KillSwitchScreenProps {
   status: StoreStatus;
@@ -31,25 +32,27 @@ export const KillSwitchScreen: React.FC<KillSwitchScreenProps> = ({ status }) =>
       {/* Message box */}
       <div className="bg-slate-900/90 border border-red-500/30 p-5 rounded-2xl max-w-sm w-full mb-8 shadow-2xl backdrop-blur-md">
         <p className="text-red-300 text-sm font-medium italic leading-relaxed">
-          "{status.msg || 'Please contact the administrator or visit the official channel to restore access.'}"
+          "{status.msg || 'The store is undergoing scheduled updates. Please check back shortly.'}"
         </p>
       </div>
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs">
-        <a
-          href={status.link && status.link !== '#' ? status.link : 'https://youtube.com/@smsumit06'}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-bold py-3.5 px-6 rounded-xl text-sm uppercase tracking-wider shadow-lg shadow-red-600/30 transition-all active:scale-95"
-        >
-          <span>Update Now</span>
-          <ExternalLink className="w-4 h-4" />
-        </a>
+        {status.link && status.link !== '#' && (
+          <a
+            href={status.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-400 hover:to-rose-500 text-white font-bold py-3.5 px-6 rounded-xl text-sm uppercase tracking-wider shadow-lg shadow-rose-600/30 transition-all active:scale-95 cursor-pointer"
+          >
+            <span>Update Now</span>
+            <ExternalLink className="w-4 h-4" />
+          </a>
+        )}
 
         <button
           onClick={() => window.location.reload()}
-          className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-3.5 px-4 rounded-xl text-sm transition-all"
+          className="flex-1 flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-3.5 px-4 rounded-xl text-sm transition-all cursor-pointer"
         >
           <RefreshCw className="w-4 h-4" />
           <span>Retry</span>

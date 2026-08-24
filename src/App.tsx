@@ -216,11 +216,16 @@ export default function App() {
     });
   };
 
-  // Voice Search Handler
+  // Voice Search Handler with Full Browser & Permission Support
   const handleToggleVoiceSearch = () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition ||
+      (window as any).mozSpeechRecognition ||
+      (window as any).msSpeechRecognition;
+
     if (!SpeechRecognition) {
-      alert('Voice search is not supported in this browser. Please type to search.');
+      alert('Voice Search is not supported by your current browser. Please type to search!');
       return;
     }
 
@@ -232,28 +237,38 @@ export default function App() {
     try {
       const recognition = new SpeechRecognition();
       recognition.lang = 'en-US';
+      recognition.continuous = false;
       recognition.interimResults = false;
       recognition.maxAlternatives = 1;
 
       setIsListening(true);
-      recognition.start();
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
 
       recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        if (transcript) {
-          setSearchQuery(transcript);
+        if (event.results && event.results[0] && event.results[0][0]) {
+          const transcript = event.results[0][0].transcript;
+          if (transcript) {
+            setSearchQuery(transcript.trim());
+          }
         }
         setIsListening(false);
       };
 
-      recognition.onerror = () => {
+      recognition.onerror = (event: any) => {
+        console.warn("Speech recognition error:", event?.error);
         setIsListening(false);
       };
 
       recognition.onend = () => {
         setIsListening(false);
       };
-    } catch {
+
+      recognition.start();
+    } catch (err) {
+      console.warn("Speech recognition failed to start:", err);
       setIsListening(false);
     }
   };

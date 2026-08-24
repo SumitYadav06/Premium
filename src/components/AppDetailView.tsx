@@ -1,35 +1,120 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Download,
   Star,
   ShieldCheck,
   Bookmark,
-  Share2,
-  Cpu,
   Smartphone,
-  HardDrive,
-  Calendar,
-  CheckCircle2,
   FileCode,
   Sparkles,
   MessageSquare,
-  Send,
-  Lock,
   ArrowLeft,
-  ChevronRight,
-  QrCode,
   HelpCircle,
   AlertCircle,
+  MessageCircle,
+  Instagram,
+  Share2,
   Copy,
-  Check
+  Check,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { AppItem, AppStats, ReviewItem } from '../types';
 import { addAppReview } from '../services/firebase';
 import { ScreenshotLightbox } from './ScreenshotLightbox';
-import { QrShareModal } from './QrShareModal';
 import { ReportLinkModal } from './ReportLinkModal';
 import { InstallGuideModal } from './InstallGuideModal';
+import { STORE_CONFIG } from '../config';
+
+export const VerifiedBadge: React.FC<{ size?: number; className?: string }> = ({
+  size = 18,
+  className = ''
+}) => (
+  <span
+    className={`inline-flex items-center justify-center flex-shrink-0 ${className}`}
+    title="Verified Official Mod APK"
+    style={{ width: size, height: size }}
+  >
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="none"
+      className="w-full h-full drop-shadow-sm flex-shrink-0"
+    >
+      {/* Official Verified Blue Background Circle */}
+      <circle cx="12" cy="12" r="10" fill="#0095F6" />
+      {/* Crisp White Checkmark */}
+      <path
+        d="M8 12.2l2.8 2.8 5.4-5.6"
+        stroke="#FFFFFF"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  </span>
+);
+
+export const VipBadge: React.FC<{ text?: string; className?: string }> = ({
+  text = 'VIP UNLOCKED',
+  className = ''
+}) => (
+  <span
+    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 text-white shadow-md shadow-emerald-500/20 border border-emerald-300/40 select-none ${className}`}
+  >
+    <Sparkles className="w-2.5 h-2.5 text-emerald-200 animate-pulse" />
+    <span>{text}</span>
+  </span>
+);
+
+const ScreenshotThumbnail: React.FC<{
+  pic: string;
+  idx: number;
+  onSelect: (index: number) => void;
+}> = ({ pic, idx, onSelect }) => {
+  const pointerStartRef = React.useRef<{ x: number; y: number } | null>(null);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    pointerStartRef.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!pointerStartRef.current) return;
+    const dx = Math.abs(e.clientX - pointerStartRef.current.x);
+    const dy = Math.abs(e.clientY - pointerStartRef.current.y);
+    // If movement is very small (< 10px), it's an intentional tap
+    if (dx < 10 && dy < 10) {
+      onSelect(idx);
+    }
+    pointerStartRef.current = null;
+  };
+
+  return (
+    <div
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      className="relative group flex-shrink-0 cursor-pointer select-none"
+    >
+      <img
+        src={pic}
+        alt={`Preview ${idx + 1}`}
+        loading="lazy"
+        onError={(e) => {
+          (e.target as HTMLImageElement).src =
+            'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80';
+        }}
+        className="w-36 sm:w-48 h-60 sm:h-72 object-cover rounded-2xl sm:rounded-3xl border-2 border-purple-500/20 group-hover:border-purple-500 shadow-lg transition duration-200 pointer-events-none"
+      />
+      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition rounded-2xl sm:rounded-3xl flex items-center justify-center pointer-events-none">
+        <span className="text-[11px] font-bold text-white bg-black/70 px-3 py-1 rounded-full border border-white/20 backdrop-blur-md">
+          Tap to Expand
+        </span>
+      </div>
+    </div>
+  );
+};
 
 interface AppDetailViewProps {
   app: AppItem;
@@ -56,7 +141,6 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
 }) => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [qrModalOpen, setQrModalOpen] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [guideModalOpen, setGuideModalOpen] = useState(false);
 
@@ -65,13 +149,52 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
   const [reviewContent, setReviewContent] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [shareToast, setShareToast] = useState(false);
-  const [copiedLink, setCopiedLink] = useState(false);
 
-  // Extract screenshots
-  const screenshots = [app.icon, app.p1, app.p2, app.p3, app.p4, app.p5].filter(
-    (p): p is string => Boolean(p && typeof p === 'string' && p.startsWith('http'))
-  );
+  // Extract screenshots dynamically supporting all schemas and formats (p1-p5, screenshots array, images, base64 data URLs)
+  const rawScreenshots: string[] = [];
+
+  // 1. Check array fields
+  if (Array.isArray(app.screenshots)) {
+    rawScreenshots.push(...app.screenshots);
+  } else if (typeof app.screenshots === 'string' && app.screenshots.trim()) {
+    rawScreenshots.push(...app.screenshots.split(/[\n,]+/).map((s) => s.trim()));
+  }
+
+  if (Array.isArray(app.images)) {
+    rawScreenshots.push(...app.images);
+  }
+  if (Array.isArray(app.pics)) {
+    rawScreenshots.push(...app.pics);
+  }
+
+  // 2. Check p1 to p5 fields
+  [app.p1, app.p2, app.p3, app.p4, app.p5].forEach((p) => {
+    if (p && typeof p === 'string' && p.trim()) {
+      rawScreenshots.push(p.trim());
+    }
+  });
+
+  // Filter valid image strings (http, https, data:image, blob, relative path)
+  const validScreenshots = rawScreenshots.filter((url) => {
+    if (!url || typeof url !== 'string') return false;
+    const clean = url.trim();
+    return (
+      clean.startsWith('http://') ||
+      clean.startsWith('https://') ||
+      clean.startsWith('data:image') ||
+      clean.startsWith('blob:') ||
+      clean.startsWith('/') ||
+      clean.startsWith('./')
+    );
+  });
+
+  // Remove duplicates
+  const uniqueScreenshots = Array.from(new Set(validScreenshots));
+
+  // If no screenshots provided, use app icon as fallback preview
+  const screenshots = uniqueScreenshots.length > 0 
+    ? uniqueScreenshots 
+    : (app.icon ? [app.icon] : []);
 
   const viewsCount = stats?.views || (app.downloads ? app.downloads * 2 : 5420);
   const commentsObj = stats?.comments;
@@ -130,28 +253,72 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
     }
   };
 
+  const [copyToast, setCopyToast] = useState<string | null>(null);
+
+  const getShareText = () => {
+    const storeLink = window.location.href.split('#')[0];
+    const apkLink = app.url;
+    return `🔥 *${app.name}* (v${app.ver}) - VIP MOD APK\n` +
+      `⚡ Size: ${app.mb} MB | Category: ${app.cat}\n` +
+      `🛡️ Status: 100% Virus-Free & Verified ✅\n\n` +
+      `📥 *Direct APK Download:*\n${apkLink}\n\n` +
+      `🌐 *Explore More VIP Apps on Store:*\n${storeLink}\n\n` +
+      `👑 Shared from *${STORE_CONFIG.OWNER_NAME}'s Premium Store*`;
+  };
+
   const handleShareWhatsApp = () => {
-    const text = encodeURIComponent(
-      `🔥 Download ${app.name} VIP APK (v${app.ver}, ${app.mb} MB) for free! 100% Virus-Free with all premium features unlocked: ${window.location.href}`
-    );
-    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+    const text = getShareText();
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   };
 
-  const handleShareTelegram = () => {
-    const text = encodeURIComponent(
-      `🔥 Download ${app.name} VIP APK (v${app.ver}, ${app.mb} MB) with all premium features unlocked!`
-    );
-    window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${text}`, '_blank');
+  const handleShareInstagram = async () => {
+    const text = getShareText();
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+      }
+    } catch {
+      // ignore clipboard error
+    }
+
+    setCopyToast('APK & Store Links copied! Opening Instagram...');
+    setTimeout(() => setCopyToast(null), 3500);
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${app.name} - VIP APK`,
+          text: text,
+          url: app.url
+        });
+        return;
+      } catch {
+        // User dismissed native share sheet, proceed to Instagram
+      }
+    }
+
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile) {
+      window.location.href = 'instagram://app';
+      setTimeout(() => {
+        window.open('https://www.instagram.com/direct/inbox/', '_blank', 'noopener,noreferrer');
+      }, 1200);
+    } else {
+      window.open('https://www.instagram.com/direct/inbox/', '_blank', 'noopener,noreferrer');
+    }
   };
 
-  const handleCopyLink = () => {
-    navigator.clipboard?.writeText(window.location.href);
-    setCopiedLink(true);
-    setShareToast(true);
-    setTimeout(() => {
-      setCopiedLink(false);
-      setShareToast(false);
-    }, 2500);
+  const handleCopyBothLinks = async () => {
+    const text = getShareText();
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyToast('Both APK & Store links copied!');
+      setTimeout(() => setCopyToast(null), 3000);
+    } catch {
+      setCopyToast('Failed to copy links.');
+      setTimeout(() => setCopyToast(null), 3000);
+    }
   };
 
   const relatedApps = allApps
@@ -160,13 +327,6 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-24 animate-in fade-in duration-300">
-      {/* Toast Notification */}
-      {shareToast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[9999] bg-purple-600 text-white px-5 py-2.5 rounded-full shadow-2xl text-xs font-bold flex items-center gap-2 border border-purple-400">
-          <Sparkles className="w-4 h-4" /> Link copied to clipboard!
-        </div>
-      )}
-
       {/* Lightbox for screenshots */}
       <ScreenshotLightbox
         images={screenshots}
@@ -179,9 +339,9 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
       <div className="flex items-center justify-between">
         <button
           onClick={onBack}
-          className={`flex items-center gap-2 py-2 px-4 rounded-2xl text-xs font-bold uppercase tracking-wider border transition active:scale-95 ${
+          className={`flex items-center gap-2 py-2.5 px-4 rounded-2xl text-xs font-bold uppercase tracking-wider border transition active:scale-95 ${
             theme === 'dark'
-              ? 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white'
+              ? 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:border-purple-500/40'
               : 'bg-white border-slate-200 text-slate-700 hover:text-slate-900 shadow-sm'
           }`}
         >
@@ -203,17 +363,17 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
             <span className="hidden sm:inline">Install Guide</span>
           </button>
 
-          {/* QR Code Scanner */}
+          {/* Quick Share Top Button */}
           <button
-            onClick={() => setQrModalOpen(true)}
+            onClick={handleShareWhatsApp}
             className={`p-2.5 rounded-2xl border transition ${
               theme === 'dark'
-                ? 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
-                : 'bg-white border-slate-200 text-slate-600 hover:text-slate-900 shadow-sm'
+                ? 'bg-slate-900 border-slate-800 text-slate-400 hover:text-emerald-400'
+                : 'bg-white border-slate-200 text-slate-600 hover:text-emerald-600 shadow-sm'
             }`}
-            title="Scan QR to Download on Phone"
+            title="Share on WhatsApp"
           >
-            <QrCode className="w-4 h-4 text-purple-400" />
+            <Share2 className="w-4 h-4" />
           </button>
 
           {/* Save / Bookmark Button */}
@@ -230,28 +390,23 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
           >
             <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-purple-400' : ''}`} />
           </button>
-
-          {/* Copy Link Button */}
-          <button
-            onClick={handleCopyLink}
-            className={`p-2.5 rounded-2xl border transition ${
-              theme === 'dark'
-                ? 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
-                : 'bg-white border-slate-200 text-slate-600 hover:text-slate-900 shadow-sm'
-            }`}
-            title="Copy Direct Link"
-          >
-            {copiedLink ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-          </button>
         </div>
       </div>
 
-      <QrShareModal
-        app={app}
-        isOpen={qrModalOpen}
-        onClose={() => setQrModalOpen(false)}
-        theme={theme}
-      />
+      {/* Floating Copied / Share Toast Notification */}
+      <AnimatePresence>
+        {copyToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            className="fixed top-20 left-1/2 -translate-x-1/2 z-[9999] px-4 py-2.5 rounded-2xl bg-slate-950/90 text-white border border-purple-500/50 shadow-2xl backdrop-blur-md flex items-center gap-2 text-xs font-bold pointer-events-none"
+          >
+            <Check className="w-4 h-4 text-emerald-400" />
+            <span>{copyToast}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <ReportLinkModal
         app={app}
@@ -266,7 +421,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
         theme={theme}
       />
 
-      {/* App Identity Banner */}
+      {/* App Identity Banner with Holographic Gold Aura */}
       <div
         className={`p-6 rounded-[2.5rem] border relative overflow-hidden shadow-2xl ${
           theme === 'dark'
@@ -275,36 +430,43 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
         }`}
       >
         {/* Glow accent */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-amber-500/10 via-purple-600/15 to-transparent rounded-full blur-3xl pointer-events-none" />
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 relative z-10">
-          <img
-            src={app.icon}
-            alt={app.name}
-            className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl object-cover border-2 border-purple-500/40 shadow-2xl flex-shrink-0"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src =
-                'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80';
-            }}
-          />
+        <div className="flex items-center gap-4 sm:gap-6 relative z-10">
+          <div className="relative flex-shrink-0">
+            <div className="p-0.5 rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600 shadow-lg">
+              <img
+                src={app.icon}
+                alt={app.name}
+                className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl sm:rounded-3xl object-cover bg-slate-950"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src =
+                    'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80';
+                }}
+              />
+            </div>
+            {app.isHot && (
+              <span className="absolute -top-1.5 -left-1.5 bg-gradient-to-r from-red-600 to-pink-600 text-white text-[8px] sm:text-[9px] font-black px-2 py-0.5 rounded-full shadow-lg border border-white/20 uppercase tracking-wider">
+                HOT
+              </span>
+            )}
+          </div>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <VipBadge text="VIP UNLOCKED" />
               <span className="bg-purple-600/20 text-purple-400 border border-purple-500/30 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full">
                 {app.cat}
               </span>
-              <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5" /> 100% Virus-Free & Safe
-              </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight mb-1 flex items-center gap-2">
-              <span>{app.name}</span>
-              <CheckCircle2 className="w-6 h-6 text-blue-400 flex-shrink-0" />
+            <h1 className="text-xl sm:text-3xl font-black tracking-tight leading-tight mb-1 text-white flex items-center gap-1.5 sm:gap-2">
+              <span className="truncate">{app.name}</span>
+              <VerifiedBadge size={22} />
             </h1>
 
-            <p className="text-xs text-slate-400 font-medium">
-              {app.developer || 'Verified Community Developer'} • v{app.ver}
+            <p className="text-xs text-slate-400 font-medium truncate">
+              {app.developer || 'Official Modded Edition'} • v{app.ver}
             </p>
           </div>
         </div>
@@ -349,33 +511,49 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
       <div className="space-y-3">
         <button
           onClick={() => onDirectInstall(app)}
-          className="w-full py-4 px-6 rounded-2xl font-black uppercase text-sm tracking-wider text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 shadow-xl shadow-purple-600/25 active:scale-98 transition flex items-center justify-center gap-2.5 group"
+          className="w-full py-4 px-6 rounded-2xl font-black uppercase text-sm tracking-wider text-white bg-gradient-to-r from-amber-500 via-rose-600 to-purple-600 hover:from-amber-400 hover:via-rose-500 hover:to-purple-500 shadow-xl shadow-pink-600/25 active:scale-98 transition flex items-center justify-center gap-2.5 group cursor-pointer"
         >
           <Download className="w-5 h-5 group-hover:animate-bounce" />
           <span>Direct Download APK ({app.mb} MB)</span>
         </button>
 
-        {/* 1-Click Social Share & Report Buttons */}
-        <div className="flex items-center justify-between gap-2 pt-1">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleShareWhatsApp}
-              className="py-2 px-3 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5 active:scale-95 transition"
-            >
-              <span>WhatsApp Share</span>
-            </button>
+        {/* Direct WhatsApp & Instagram Share Buttons (Both APK & Store Link included) - Compact Single Row */}
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          {/* WhatsApp Direct Share Button */}
+          <button
+            onClick={handleShareWhatsApp}
+            className="w-full py-2.5 px-3 rounded-xl font-bold text-xs tracking-wide text-white bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 active:scale-98 transition shadow-md shadow-green-600/20 flex items-center justify-center gap-1.5 cursor-pointer border border-emerald-400/30 whitespace-nowrap"
+            title="Share APK & Store link on WhatsApp"
+          >
+            <MessageCircle className="w-3.5 h-3.5 fill-white text-emerald-600 flex-shrink-0" />
+            <span>WhatsApp</span>
+          </button>
 
-            <button
-              onClick={handleShareTelegram}
-              className="py-2 px-3 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 text-xs font-bold flex items-center gap-1.5 active:scale-95 transition"
-            >
-              <span>Telegram Share</span>
-            </button>
-          </div>
+          {/* Instagram Direct Share Button */}
+          <button
+            onClick={handleShareInstagram}
+            className="w-full py-2.5 px-3 rounded-xl font-bold text-xs tracking-wide text-white bg-gradient-to-r from-amber-500 via-rose-500 to-purple-600 hover:from-amber-400 hover:via-rose-400 hover:to-purple-500 active:scale-98 transition shadow-md shadow-pink-600/20 flex items-center justify-center gap-1.5 cursor-pointer border border-pink-400/30 whitespace-nowrap"
+            title="Share APK & Store link on Instagram"
+          >
+            <Instagram className="w-3.5 h-3.5 flex-shrink-0" />
+            <span>Instagram</span>
+          </button>
+        </div>
+
+        {/* Secondary Actions Row (Copy Both Links + Report Broken Link) */}
+        <div className="flex items-center justify-between pt-1 text-xs">
+          <button
+            onClick={handleCopyBothLinks}
+            className="text-[11px] font-bold text-slate-400 hover:text-purple-400 flex items-center gap-1.5 transition py-1 cursor-pointer"
+            title="Copy both APK download link & Store link"
+          >
+            <Copy className="w-3.5 h-3.5" />
+            <span>Copy APK & Store Links</span>
+          </button>
 
           <button
             onClick={() => setReportModalOpen(true)}
-            className="text-[11px] font-bold text-slate-400 hover:text-amber-400 flex items-center gap-1 transition"
+            className="text-[11px] font-bold text-slate-400 hover:text-amber-400 flex items-center gap-1 transition py-1 cursor-pointer"
           >
             <AlertCircle className="w-3.5 h-3.5" />
             <span>Report Broken Link</span>
@@ -389,24 +567,30 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
           <div className="flex items-center justify-between px-1">
             <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-              <span>Preview & Screenshots</span>
+              <span>Preview & Screenshots ({screenshots.length})</span>
             </h3>
-            <span className="text-[10px] text-slate-500 font-semibold">
-              Tap image to expand HD
+            <span className="text-[10px] text-purple-400 font-bold flex items-center gap-1">
+              <ChevronLeft className="w-3 h-3" />
+              <span>Swipe Left / Right</span>
+              <ChevronRight className="w-3 h-3" />
             </span>
           </div>
 
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none snap-x">
+          {/* Smooth Touch-Friendly Screenshot Carousel */}
+          <div
+            id="screenshots-carousel"
+            className="flex gap-3 overflow-x-auto pb-3 scrollbar-none overscroll-x-contain scroll-smooth"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
             {screenshots.map((pic, idx) => (
-              <img
+              <ScreenshotThumbnail
                 key={idx}
-                src={pic}
-                alt={`Preview ${idx + 1}`}
-                onClick={() => {
-                  setLightboxIndex(idx);
+                pic={pic}
+                idx={idx}
+                onSelect={(selectedIdx) => {
+                  setLightboxIndex(selectedIdx);
                   setLightboxOpen(true);
                 }}
-                className="w-40 sm:w-48 h-64 sm:h-72 flex-shrink-0 object-cover rounded-3xl border-2 border-purple-500/20 shadow-xl cursor-pointer hover:border-purple-500 transition hover:scale-102 snap-start"
               />
             ))}
           </div>
@@ -516,85 +700,91 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
 
           <input
             type="text"
-            placeholder="Your name or handle..."
+            placeholder="Your Name (e.g. Rahul S.)"
             value={authorName}
             onChange={(e) => setAuthorName(e.target.value)}
-            className="w-full bg-slate-900/90 border border-slate-700 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
-            required
+            className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
           />
 
           <textarea
-            placeholder="Share your experience with this app..."
+            placeholder="Share your experience with this VIP Mod APK..."
             value={reviewContent}
             onChange={(e) => setReviewContent(e.target.value)}
-            rows={2}
-            className="w-full bg-slate-900/90 border border-slate-700 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 resize-none"
-            required
+            rows={3}
+            className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 resize-none"
           />
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs uppercase tracking-wider shadow-md shadow-purple-600/20 active:scale-95 transition flex items-center justify-center gap-2"
+            className="py-2.5 px-5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold uppercase tracking-wider transition disabled:opacity-50"
           >
-            <Send className="w-3.5 h-3.5" />
-            <span>{isSubmitting ? 'Posting...' : 'Submit Review'}</span>
+            {isSubmitting ? 'Posting...' : 'Submit Review'}
           </button>
         </form>
 
         {/* Existing Reviews List */}
         <div className="space-y-3">
-          {commentsList.map((rev, i) => (
+          {commentsList.map((item, idx) => (
             <div
-              key={i}
+              key={idx}
               className="p-4 rounded-2xl bg-slate-800/30 border border-slate-700/30 space-y-1.5"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-purple-300">
-                    @{rev.user || 'Anonymous'}
+                  <span className="text-xs font-black text-white">{item.user}</span>
+                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-extrabold uppercase">
+                    VIP User
                   </span>
-                  <div className="flex text-yellow-400">
-                    {[...Array(rev.rating || 5)].map((_, s) => (
-                      <Star key={s} className="w-2.5 h-2.5 fill-yellow-400" />
-                    ))}
-                  </div>
                 </div>
-                <span className="text-[10px] text-slate-500 font-mono">{rev.time}</span>
+                <span className="text-[10px] text-slate-500">{item.time || 'Recently'}</span>
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed italic">
-                "{rev.text}"
+
+              <div className="flex gap-0.5">
+                {[...Array(item.rating || 5)].map((_, i) => (
+                  <Star key={i} className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                ))}
+              </div>
+
+              <p className="text-xs text-slate-300 leading-relaxed font-normal">
+                "{item.text}"
               </p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Recommended Related Apps */}
+      {/* Related VIP Apps Carousel */}
       {relatedApps.length > 0 && (
-        <div className="space-y-3 pt-2">
-          <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">
-            You Might Also Like
+        <div className="space-y-3 pt-4">
+          <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+            <span>Recommended VIP Applications</span>
           </h3>
+
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {relatedApps.map((rel) => (
               <div
                 key={rel.id || rel.name}
                 onClick={() => onSelectRelatedApp(rel)}
-                className="p-3.5 rounded-2xl bg-slate-800/40 hover:bg-slate-800/80 border border-slate-700/40 cursor-pointer transition flex items-center gap-3"
+                className="p-3.5 rounded-2xl bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800 hover:border-purple-500/40 transition cursor-pointer flex items-center gap-3 group"
               >
                 <img
                   src={rel.icon}
                   alt={rel.name}
-                  className="w-12 h-12 rounded-xl object-cover shadow"
+                  className="w-12 h-12 rounded-xl object-cover border border-purple-500/20 group-hover:scale-105 transition"
                 />
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-xs font-bold text-white truncate">{rel.name}</h4>
-                  <p className="text-[10px] text-purple-400 font-medium mt-0.5">
-                    {rel.mb} MB
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1">
+                    <h4 className="text-xs font-black text-white truncate group-hover:text-purple-400 transition">
+                      {rel.name}
+                    </h4>
+                    <VerifiedBadge size={14} />
+                  </div>
+                  <p className="text-[10px] text-purple-400 font-bold">
+                    {rel.mb} MB • {rel.cat}
                   </p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-500" />
               </div>
             ))}
           </div>

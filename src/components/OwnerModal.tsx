@@ -1,32 +1,52 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import {
-  Youtube,
   ShieldCheck,
   Sparkles,
-  ExternalLink,
-  Users,
   CheckCircle,
   X,
-  Heart
+  Heart,
+  Instagram,
+  ExternalLink
 } from 'lucide-react';
+import { STORE_CONFIG } from '../config';
+import { VerifiedBadge } from './AppDetailView';
 
 interface OwnerModalProps {
   isOpen: boolean;
   onClose: () => void;
   ownerImg?: string;
-  youtubeLink?: string;
+  instagramLink?: string;
+  instagramUsername?: string;
   theme: 'dark' | 'light';
 }
 
 export const OwnerModal: React.FC<OwnerModalProps> = ({
   isOpen,
   onClose,
-  ownerImg = "https://i.ibb.co/HffVtwhY/image.jpg",
-  youtubeLink = "https://youtube.com/@smsumit06",
+  ownerImg = STORE_CONFIG.OWNER_IMAGE,
+  instagramLink = STORE_CONFIG.OWNER_INSTAGRAM,
+  instagramUsername = STORE_CONFIG.OWNER_INSTAGRAM_USERNAME,
   theme
 }) => {
   if (!isOpen) return null;
+
+  const handleOpenInstagram = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const appDeepLink = `instagram://user?username=${instagramUsername}`;
+    const webFallbackUrl = instagramLink;
+
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      window.location.href = appDeepLink;
+      setTimeout(() => {
+        window.open(webFallbackUrl, '_blank', 'noopener,noreferrer');
+      }, 1200);
+    } else {
+      window.open(webFallbackUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[8600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
@@ -41,38 +61,41 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
         }`}
       >
         {/* Glow behind avatar */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-purple-600/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-pink-600/20 rounded-full blur-3xl pointer-events-none" />
 
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-full bg-slate-800/80 hover:bg-slate-700 transition"
+          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-full bg-slate-800/80 hover:bg-slate-700 transition cursor-pointer"
         >
           <X className="w-4 h-4" />
         </button>
 
-        {/* Avatar */}
+        {/* Avatar with Instagram Badge */}
         <div className="relative mx-auto w-24 h-24 mb-4">
-          <div className="absolute -inset-1 bg-gradient-to-tr from-purple-600 via-pink-600 to-red-600 rounded-full blur-md opacity-80 animate-pulse" />
+          <div className="absolute -inset-1 bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 rounded-full blur-md opacity-80 animate-pulse" />
           <img
             src={ownerImg}
-            alt="SMSUMIT"
-            className="relative w-full h-full rounded-full object-cover border-2 border-white shadow-2xl"
+            alt="Sumit Yadav"
+            className="relative w-full h-full rounded-full object-cover border-2 border-pink-500 shadow-2xl"
             onError={(e) => {
               (e.target as HTMLImageElement).src =
                 "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80";
             }}
           />
-          <div className="absolute bottom-0 right-0 bg-red-600 text-white p-1 rounded-full border-2 border-slate-950 shadow">
-            <Youtube className="w-3.5 h-3.5" />
+          {/* Instagram Avatar Badge */}
+          <div className="absolute bottom-0 right-0 bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white p-1.5 rounded-full border-2 border-slate-950 shadow-md">
+            <Instagram className="w-3.5 h-3.5" />
           </div>
         </div>
 
-        <h3 className="font-black text-xl flex items-center justify-center gap-1.5 leading-tight">
-          <span>SMSUMIT</span>
-          <ShieldCheck className="w-4 h-4 text-blue-400" />
-        </h3>
+        <div className="flex items-center justify-center gap-1.5 leading-tight mb-1">
+          <h3 className="font-black text-xl">
+            {STORE_CONFIG.OWNER_NAME}
+          </h3>
+          <VerifiedBadge size={20} />
+        </div>
 
-        <p className="text-xs text-purple-400 font-bold uppercase tracking-widest mt-0.5">
+        <p className="text-xs text-pink-400 font-bold uppercase tracking-widest mt-0.5">
           Official Content Creator & Store Owner
         </p>
 
@@ -87,18 +110,18 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
           </div>
           <div className="flex items-center gap-2 text-slate-200 font-medium">
             <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-            <span>Direct Community Support & Reviews</span>
+            <span>Direct Community Support on Instagram</span>
           </div>
         </div>
 
+        {/* Direct In-App Instagram Profile Launcher Button */}
         <a
-          href={youtubeLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full py-3.5 px-4 rounded-2xl font-black text-xs uppercase tracking-wider text-white bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 shadow-xl shadow-red-600/30 active:scale-95 transition flex items-center justify-center gap-2 mb-2"
+          href={`instagram://user?username=${instagramUsername}`}
+          onClick={handleOpenInstagram}
+          className="w-full py-3.5 px-4 rounded-2xl font-black text-xs uppercase tracking-wider text-white bg-gradient-to-r from-amber-500 via-pink-600 to-purple-600 hover:from-amber-400 hover:via-pink-500 hover:to-purple-500 shadow-xl shadow-pink-600/30 active:scale-95 transition flex items-center justify-center gap-2 mb-2 cursor-pointer"
         >
-          <Youtube className="w-4 h-4" />
-          <span>Visit YouTube Channel</span>
+          <Instagram className="w-4 h-4" />
+          <span>Follow on Instagram</span>
           <ExternalLink className="w-3.5 h-3.5 opacity-80" />
         </a>
 

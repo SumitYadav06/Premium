@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, Download, Star, ShieldCheck, ChevronRight, ChevronLeft } from 'lucide-react';
 import { AppItem } from '../types';
+import { VerifiedBadge } from './AppDetailView';
 
 interface BannerSliderProps {
   apps: AppItem[];
@@ -74,9 +75,10 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
 
               <h2
                 onClick={() => onSelectApp(current)}
-                className="text-xl sm:text-2xl font-black text-white truncate cursor-pointer hover:text-purple-300 transition"
+                className="text-xl sm:text-2xl font-black text-white truncate cursor-pointer hover:text-purple-300 transition flex items-center gap-1.5"
               >
-                {current.name}
+                <span>{current.name}</span>
+                <VerifiedBadge size={18} />
               </h2>
 
               <p className="text-xs text-slate-300 line-clamp-2 max-w-lg mt-1 font-normal">
@@ -107,7 +109,7 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
                   </button>
                   <button
                     onClick={() => onQuickDownload(current)}
-                    className="py-1.5 px-4 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-purple-600/30 active:scale-95 transition flex items-center gap-1.5"
+                    className="py-1.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 via-rose-600 to-purple-600 hover:from-amber-400 hover:via-rose-500 hover:to-purple-500 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-pink-600/30 active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Install</span>

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { AppItem, DownloadTask } from '../types';
 import { incrementAppDownload } from '../services/firebase';
+import { VerifiedBadge } from './AppDetailView';
 
 interface DirectInstallerModalProps {
   app: AppItem | null;
@@ -169,7 +170,7 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
           <div>
             <h3 className="font-bold text-lg text-white leading-tight flex items-center gap-1.5">
               <span>{app.name}</span>
-              <ShieldCheck className="w-4 h-4 text-blue-400 flex-shrink-0" />
+              <VerifiedBadge size={18} />
             </h3>
             <p className="text-xs text-slate-400 font-medium mt-0.5">
               v{app.ver} • {app.mb} MB • Direct Installer

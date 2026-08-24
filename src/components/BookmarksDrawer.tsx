@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Bookmark, Trash2, X, Download, Star, ChevronRight } from 'lucide-react';
 import { AppItem } from '../types';
+import { VerifiedBadge } from './AppDetailView';
 
 interface BookmarksDrawerProps {
   isOpen: boolean;
@@ -87,9 +88,12 @@ export const BookmarksDrawer: React.FC<BookmarksDrawerProps> = ({
                   className="w-12 h-12 rounded-xl object-cover border border-purple-500/30"
                 />
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-xs text-white truncate group-hover:text-purple-300">
-                    {app.name}
-                  </h4>
+                  <div className="flex items-center gap-1">
+                    <h4 className="font-bold text-xs text-white truncate group-hover:text-purple-300">
+                      {app.name}
+                    </h4>
+                    <VerifiedBadge size={14} />
+                  </div>
                   <p className="text-[10px] text-purple-400 font-mono">
                     v{app.ver} • {app.mb} MB
                   </p>

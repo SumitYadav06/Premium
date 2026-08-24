@@ -79,52 +79,62 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
             </div>
           </div>
 
-          {/* 3 Step Visual Sequence */}
+          {/* 3 Step Visual Sequence - Play Protect & Mod APK Installation Guide */}
           <div className="space-y-4 mb-6">
             {/* Step 1 */}
             <div className="p-4 rounded-2xl bg-purple-950/20 border border-purple-800/30 flex items-start gap-3.5">
-              <div className="w-7 h-7 rounded-xl bg-purple-600 text-white font-black text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
+              <div className="w-8 h-8 rounded-xl bg-purple-600 text-white font-black text-sm flex items-center justify-center flex-shrink-0 mt-0.5 shadow-md">
                 1
               </div>
               <div className="flex-1">
                 <h3 className="text-xs font-black uppercase tracking-wider text-purple-300 mb-1 flex items-center gap-1.5">
-                  <Download className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Download the APK Package</span>
+                  <Settings className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Open Play Store & Go to Settings</span>
                 </h3>
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  Click the <strong>Direct Download</strong> button on any app. The high-speed APK file will download directly to your Android device via browser.
+                  Apne phone me <strong>Google Play Store</strong> open karein aur upar profile icon par tap karke <strong>Play Protect</strong> option me jayein.
                 </p>
               </div>
             </div>
 
             {/* Step 2 */}
-            <div className="p-4 rounded-2xl bg-blue-950/20 border border-blue-800/30 flex items-start gap-3.5">
-              <div className="w-7 h-7 rounded-xl bg-blue-600 text-white font-black text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div className="p-4 rounded-2xl bg-amber-950/25 border border-amber-800/40 flex items-start gap-3.5">
+              <div className="w-8 h-8 rounded-xl bg-amber-600 text-white font-black text-sm flex items-center justify-center flex-shrink-0 mt-0.5 shadow-md">
                 2
               </div>
               <div className="flex-1">
-                <h3 className="text-xs font-black uppercase tracking-wider text-blue-300 mb-1 flex items-center gap-1.5">
-                  <Settings className="w-3.5 h-3.5 text-blue-400" />
-                  <span>Enable "Install Unknown Apps"</span>
+                <h3 className="text-xs font-black uppercase tracking-wider text-amber-300 mb-1 flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Turn Off 2 Play Protect Settings</span>
                 </h3>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  If prompted by your phone: Go to <em>Settings → Apps → Special app access → Install unknown apps</em> and allow permission for Chrome or your file manager.
+                <p className="text-xs text-slate-300 leading-relaxed mb-2">
+                  Play Protect ke upar diye gaye <strong>Gear (Settings ⚙️)</strong> icon par tap karein aur yeh <strong>dono options OFF (Disable)</strong> kar dein:
                 </p>
+                <div className="bg-slate-950/60 rounded-xl p-2.5 border border-amber-500/20 space-y-1.5 text-[11px] font-mono text-amber-200">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-red-400"></span>
+                    <span>1. Scan apps with Play Protect ➔ <strong>OFF</strong></span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-red-400"></span>
+                    <span>2. Improve harmful app detection ➔ <strong>OFF</strong></span>
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Step 3 */}
             <div className="p-4 rounded-2xl bg-emerald-950/20 border border-emerald-800/30 flex items-start gap-3.5">
-              <div className="w-7 h-7 rounded-xl bg-emerald-600 text-white font-black text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
+              <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white font-black text-sm flex items-center justify-center flex-shrink-0 mt-0.5 shadow-md">
                 3
               </div>
               <div className="flex-1">
                 <h3 className="text-xs font-black uppercase tracking-wider text-emerald-300 mb-1 flex items-center gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Tap Install & Enjoy VIP Features</span>
+                  <span>Direct Install & Enjoy VIP Mods</span>
                 </h3>
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  Open the downloaded file from your notification panel or Downloads folder, tap <strong>Install</strong>, and launch your unlocked app!
+                  Ab download kiye gaye Mod APK file par tap karke <strong>Install</strong> karein. Bina kisi blockage ya error ke app 100% install ho jayegi!
                 </p>
               </div>
             </div>

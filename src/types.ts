@@ -12,6 +12,9 @@ export interface AppItem {
   p3?: string;
   p4?: string;
   p5?: string;
+  screenshots?: string[] | string;
+  images?: string[];
+  pics?: string[];
   packageName?: string;
   minAndroid?: string;
   developer?: string;
