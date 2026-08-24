@@ -70,7 +70,7 @@ jobs:
           rm -rf android
           npx cap add android
 
-      - name: Add Internet permission
+      - name: Add Android permissions
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -78,16 +78,28 @@ jobs:
           manifest = Path("android/app/src/main/AndroidManifest.xml")
           text = manifest.read_text()
 
-          permission = '    <uses-permission android:name="android.permission.INTERNET" />'
+          permissions = [
+              '    <uses-permission android:name="android.permission.INTERNET" />',
+              '    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />',
+              '    <uses-permission android:name="android.permission.RECORD_AUDIO" />',
+              '    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />',
+              '    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />',
+              '    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />'
+          ]
 
-          if "android.permission.INTERNET" not in text:
-              text = text.replace(
-                  '<application',
-                  permission + '\n    <application',
-                  1
-              )
+          for permission in permissions:
+              permission_name = permission.split('android.permission.')[1].split('"')[0]
+
+              if f'android.permission.{permission_name}' not in text:
+                  text = text.replace(
+                      '<application',
+                      permission + '\n    <application',
+                      1
+                  )
 
           manifest.write_text(text)
+
+          print("Android permissions added successfully.")
           PY
 
       - name: Configure MainActivity
@@ -134,6 +146,11 @@ jobs:
       - name: Sync Capacitor
         run: |
           npx cap sync android
+
+      - name: Verify Android permissions
+        run: |
+          echo "===== AndroidManifest.xml ====="
+          cat android/app/src/main/AndroidManifest.xml
 
       - name: Build Debug APK
         run: |
