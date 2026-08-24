@@ -22,7 +22,7 @@ jobs:
           npx cap init "PremiumApp" "com.premium.app" --web-dir dist
           npx cap add android
           
-          # आपकी Live GitHub Link यहाँ ऐड कर दी गई है
+          # लाइव GitHub Pages लिंक सेट करना
           cat <<EOF > capacitor.config.json
           {
             "appId": "com.premium.app",
@@ -35,7 +35,7 @@ jobs:
           }
           EOF
 
-          npx cap copy android
+          npx cap update android
           cd android && ./gradlew assembleDebug
 
       - name: Upload APK
