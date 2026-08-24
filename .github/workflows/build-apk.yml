@@ -2,52 +2,164 @@ name: Build Live Sync Android APK
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
 
       - name: Set up Java 21
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: temurin
           java-version: '21'
 
-      - name: Build Android App
+      - name: Install Capacitor
         run: |
-          npm install @capacitor/core @capacitor/cli @capacitor/android
-          
+          npm install @capacitor/core@8.3.2 @capacitor/cli@8.3.2 @capacitor/android@8.3.2
+
+      - name: Create temporary web directory
+        run: |
+          rm -rf dist
           mkdir -p dist
-          echo "<html><body>Loading...</body></html>" > dist/index.html
-          
-          npx cap init "PremiumApp" "com.premium.app" --web-dir dist
-          
-          cat <<EOF > capacitor.config.json
+
+          cat > dist/index.html <<'EOF'
+          <!doctype html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>PremiumApp</title>
+          </head>
+          <body>
+            <p>Loading...</p>
+          </body>
+          </html>
+          EOF
+
+      - name: Create Capacitor configuration
+        run: |
+          cat > capacitor.config.json <<'EOF'
           {
             "appId": "com.premium.app",
             "appName": "PremiumApp",
             "webDir": "dist",
             "server": {
               "url": "https://sumityadav06.github.io/Premium/",
-              "cleartext": true
+              "cleartext": false,
+              "allowNavigation": [
+                "sumityadav06.github.io"
+              ]
             }
           }
           EOF
 
+      - name: Add Android platform
+        run: |
+          rm -rf android
           npx cap add android
-          npx cap copy android
-          
-          # इंटरनेट परमिशन जोड़ना ताकि ऐप लाइव वेबसाइट लोड कर सके
-          sed -i '/<application/i \    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />' android/app/src/main/AndroidManifest.xml
-          
-          npx cap update android
-          cd android && ./gradlew assembleDebug
+
+      - name: Add Internet permission
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          text = manifest.read_text()
+
+          permission = '    <uses-permission android:name="android.permission.INTERNET" />'
+
+          if "android.permission.INTERNET" not in text:
+              text = text.replace(
+                  '<application',
+                  permission + '\n    <application',
+                  1
+              )
+
+          manifest.write_text(text)
+          PY
+
+      - name: Force Android MainActivity to open live website
+        run: |
+          MAIN_ACTIVITY=$(find android/app/src/main -type f -name "MainActivity.java" | head -n 1)
+
+          if [ -z "$MAIN_ACTIVITY" ]; then
+            echo "MainActivity.java not found"
+            exit 1
+          fi
+
+          cat > "$MAIN_ACTIVITY" <<'EOF'
+          package com.premium.app;
+
+          import android.os.Bundle;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+
+              private static final String LIVE_URL =
+                      "https://sumityadav06.github.io/Premium/";
+
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+
+                  WebView webView = getBridge().getWebView();
+
+                  WebSettings settings = webView.getSettings();
+                  settings.setJavaScriptEnabled(true);
+                  settings.setDomStorageEnabled(true);
+                  settings.setDatabaseEnabled(true);
+                  settings.setLoadWithOverviewMode(true);
+                  settings.setUseWideViewPort(true);
+
+                  webView.loadUrl(LIVE_URL);
+              }
+          }
+          EOF
+
+          echo "MainActivity configured:"
+          cat "$MAIN_ACTIVITY"
+
+      - name: Sync Capacitor
+        run: |
+          npx cap sync android
+
+      - name: Verify configuration
+        run: |
+          echo "===== Capacitor config ====="
+          cat capacitor.config.json
+
+          echo "===== Android Manifest ====="
+          cat android/app/src/main/AndroidManifest.xml
+
+          echo "===== MainActivity ====="
+          find android/app/src/main -type f -name "MainActivity.java" -print -exec cat {} \;
+
+      - name: Build Debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew clean
+          ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug.apk
+          name: PremiumApp-live-sync-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
