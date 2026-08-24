@@ -24,7 +24,7 @@ jobs:
       - name: Build Android App with Capacitor
         run: |
           npm install @capacitor/core @capacitor/cli @capacitor/android
-          npx cap init Premium App com.premium.app --web-dir dist
+          npx cap init "PremiumApp" "com.premium.app" --web-dir dist
           npx cap add android
           npx cap copy android
           cd android && ./gradlew assembleDebug
