@@ -20,13 +20,11 @@ jobs:
         run: |
           npm install @capacitor/core @capacitor/cli @capacitor/android
           
-          # एरर फिक्स: Capacitor के लिए dist फोल्डर बनाना जरूरी है
           mkdir -p dist
           echo "<html><body>Loading...</body></html>" > dist/index.html
           
           npx cap init "PremiumApp" "com.premium.app" --web-dir dist
           
-          # आपकी Live GitHub Link
           cat <<EOF > capacitor.config.json
           {
             "appId": "com.premium.app",
@@ -41,6 +39,10 @@ jobs:
 
           npx cap add android
           npx cap copy android
+          
+          # इंटरनेट परमिशन जोड़ना ताकि ऐप लाइव वेबसाइट लोड कर सके
+          sed -i '/<application/i \    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />' android/app/src/main/AndroidManifest.xml
+          
           npx cap update android
           cd android && ./gradlew assembleDebug
 
