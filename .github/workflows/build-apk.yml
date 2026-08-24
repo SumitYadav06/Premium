@@ -70,7 +70,7 @@ jobs:
           rm -rf android
           npx cap add android
 
-      - name: Add Android permissions
+      - name: Add microphone and internet permissions
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -81,10 +81,7 @@ jobs:
           permissions = [
               '    <uses-permission android:name="android.permission.INTERNET" />',
               '    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />',
-              '    <uses-permission android:name="android.permission.RECORD_AUDIO" />',
-              '    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />',
-              '    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />',
-              '    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />'
+              '    <uses-permission android:name="android.permission.RECORD_AUDIO" />'
           ]
 
           for permission in permissions:
@@ -99,7 +96,7 @@ jobs:
 
           manifest.write_text(text)
 
-          print("Android permissions added successfully.")
+          print("Required Android permissions added successfully.")
           PY
 
       - name: Configure MainActivity
@@ -147,10 +144,27 @@ jobs:
         run: |
           npx cap sync android
 
-      - name: Verify Android permissions
+      - name: Add microphone permission again after sync
         run: |
-          echo "===== AndroidManifest.xml ====="
-          cat android/app/src/main/AndroidManifest.xml
+          python3 - <<'PY'
+          from pathlib import Path
+
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          text = manifest.read_text()
+
+          permission = '    <uses-permission android:name="android.permission.RECORD_AUDIO" />'
+
+          if "android.permission.RECORD_AUDIO" not in text:
+              text = text.replace(
+                  '<application',
+                  permission + '\n    <application',
+                  1
+              )
+
+          manifest.write_text(text)
+
+          print("Microphone permission confirmed.")
+          PY
 
       - name: Build Debug APK
         run: |
