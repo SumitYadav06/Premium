@@ -76,10 +76,11 @@ jobs:
           rm -rf android
           npx cap add android
 
-      - name: Add Android permissions
+      - name: Configure Android permissions
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           p = Path("android/app/src/main/AndroidManifest.xml")
           s = p.read_text()
@@ -88,62 +89,53 @@ jobs:
               "android.permission.INTERNET",
               "android.permission.ACCESS_NETWORK_STATE",
               "android.permission.RECORD_AUDIO",
+              "android.permission.MODIFY_AUDIO_SETTINGS",
               "android.permission.REQUEST_INSTALL_PACKAGES"
           ]
 
-          marker = "<application"
-
-          permission_lines = "".join(
-              f'    <uses-permission android:name="{perm}" />\n'
-              for perm in permissions
-          )
-
-          # Remove existing copies first so the step is always clean
-          import re
-
           for perm in permissions:
               s = re.sub(
-                  rf'\s*<uses-permission android:name="{re.escape(perm)}"\s*/>',
+                  rf'\s*<uses-permission\s+android:name="{re.escape(perm)}"\s*/>',
                   '',
                   s
               )
 
-          if marker not in s:
-              raise RuntimeError("AndroidManifest.xml: <application> not found")
+          permission_block = "\n".join(
+              f'    <uses-permission android:name="{perm}" />'
+              for perm in permissions
+          )
 
           s = s.replace(
-              marker,
-              permission_lines + marker,
+              "<application",
+              permission_block + "\n\n    <application",
               1
           )
 
           p.write_text(s)
-          print("Android permissions configured.")
+
+          print("Permissions configured:")
+          for perm in permissions:
+              print(" -", perm)
           PY
 
-      - name: Set application icon
+      - name: Set app icon
         run: |
           if [ ! -f "app-icon.png" ]; then
-            echo "ERROR: app-icon.png not found in repository root."
+            echo "ERROR: app-icon.png not found!"
             exit 1
           fi
 
-          echo "Using repository icon: app-icon.png"
-
           RES="android/app/src/main/res"
 
-          # Remove Capacitor/Android generated launcher icons.
-          rm -rf "$RES/mipmap-anydpi-v26"
           rm -rf "$RES/mipmap-anydpi"
+          rm -rf "$RES/mipmap-anydpi-v26"
 
-          # Create all required density folders.
           mkdir -p "$RES/mipmap-mdpi"
           mkdir -p "$RES/mipmap-hdpi"
           mkdir -p "$RES/mipmap-xhdpi"
           mkdir -p "$RES/mipmap-xxhdpi"
           mkdir -p "$RES/mipmap-xxxhdpi"
 
-          # Generate launcher icons directly from app-icon.png.
           convert app-icon.png -resize 48x48 \
             "$RES/mipmap-mdpi/ic_launcher.png"
 
@@ -159,7 +151,6 @@ jobs:
           convert app-icon.png -resize 192x192 \
             "$RES/mipmap-xxxhdpi/ic_launcher.png"
 
-          # Round launcher icon uses the exact same image.
           cp "$RES/mipmap-mdpi/ic_launcher.png" \
              "$RES/mipmap-mdpi/ic_launcher_round.png"
 
@@ -175,9 +166,7 @@ jobs:
           cp "$RES/mipmap-xxxhdpi/ic_launcher.png" \
              "$RES/mipmap-xxxhdpi/ic_launcher_round.png"
 
-          echo "Launcher icons generated successfully."
-
-      - name: Force launcher icon in AndroidManifest
+      - name: Configure launcher icon
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -186,57 +175,110 @@ jobs:
           p = Path("android/app/src/main/AndroidManifest.xml")
           s = p.read_text()
 
-          # Make sure application uses our PNG launcher icon.
           s = re.sub(
-              r'<application([^>]*)android:icon="[^"]*"',
-              r'<application\1android:icon="@mipmap/ic_launcher"',
+              r'\s*android:icon="[^"]*"',
+              '',
               s,
               count=1
           )
 
-          if 'android:icon="@mipmap/ic_launcher"' not in s:
-              s = s.replace(
-                  "<application",
-                  '<application android:icon="@mipmap/ic_launcher"',
-                  1
-              )
+          s = re.sub(
+              r'\s*android:roundIcon="[^"]*"',
+              '',
+              s,
+              count=1
+          )
 
-          # Force the round icon too.
-          if 'android:roundIcon=' in s:
-              s = re.sub(
-                  r'android:roundIcon="[^"]*"',
-                  'android:roundIcon="@mipmap/ic_launcher_round"',
-                  s,
-                  count=1
-              )
-          else:
-              s = s.replace(
-                  'android:icon="@mipmap/ic_launcher"',
-                  'android:icon="@mipmap/ic_launcher" '
-                  'android:roundIcon="@mipmap/ic_launcher_round"',
-                  1
-              )
+          s = s.replace(
+              "<application",
+              '<application '
+              'android:icon="@mipmap/ic_launcher" '
+              'android:roundIcon="@mipmap/ic_launcher_round"',
+              1
+          )
 
           p.write_text(s)
-          print("Manifest launcher icon configured.")
+          PY
+
+      - name: Add native microphone startup permission
+        run: |
+          MAIN_ACTIVITY=$(find android/app/src/main/java -name "MainActivity.java" | head -n 1)
+
+          if [ -z "$MAIN_ACTIVITY" ]; then
+            echo "ERROR: MainActivity.java not found"
+            exit 1
+          fi
+
+          echo "MainActivity: $MAIN_ACTIVITY"
+
+          python3 - "$MAIN_ACTIVITY" <<'PY'
+          from pathlib import Path
+          import sys
+          import re
+
+          p = Path(sys.argv[1])
+          s = p.read_text()
+
+          package_match = re.search(r'^\s*package\s+([^;]+);', s, re.MULTILINE)
+
+          if not package_match:
+              raise RuntimeError("Package declaration not found")
+
+          package_name = package_match.group(1)
+
+          s = f'''package {package_name};
+
+          import android.Manifest;
+          import android.os.Bundle;
+          import androidx.core.app.ActivityCompat;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {{
+
+              private static final int MICROPHONE_PERMISSION_CODE = 1001;
+
+              @Override
+              public void onCreate(Bundle savedInstanceState) {{
+                  super.onCreate(savedInstanceState);
+
+                  if (android.os.Build.VERSION.SDK_INT >= 23 &&
+                      checkSelfPermission(Manifest.permission.RECORD_AUDIO)
+                          != android.content.pm.PackageManager.PERMISSION_GRANTED) {{
+
+                      ActivityCompat.requestPermissions(
+                          this,
+                          new String[] {{
+                              Manifest.permission.RECORD_AUDIO,
+                              Manifest.permission.MODIFY_AUDIO_SETTINGS
+                          }},
+                          MICROPHONE_PERMISSION_CODE
+                      );
+                  }}
+              }}
+          }}
+          '''
+
+          p.write_text(s)
+          print("Native microphone permission added.")
           PY
 
       - name: Sync Capacitor
         run: |
           npx cap sync android
 
-      - name: Verify launcher icon
+      - name: Verify microphone configuration
         run: |
-          echo "Checking launcher icons..."
-          find android/app/src/main/res \
-            -type f \
-            \( -name "ic_launcher.png" -o -name "ic_launcher_round.png" \) \
-            -print
+          echo "===== Android Manifest ====="
+          grep -n "RECORD_AUDIO" \
+            android/app/src/main/AndroidManifest.xml || true
 
-          echo "Checking manifest..."
-          grep -n "uses-permission" android/app/src/main/AndroidManifest.xml || true
-          grep -n "android:icon" android/app/src/main/AndroidManifest.xml || true
-          grep -n "android:roundIcon" android/app/src/main/AndroidManifest.xml || true
+          grep -n "MODIFY_AUDIO_SETTINGS" \
+            android/app/src/main/AndroidManifest.xml || true
+
+          echo "===== MainActivity ====="
+          find android/app/src/main/java \
+            -name "MainActivity.java" \
+            -print
 
       - name: Build APK
         run: |
