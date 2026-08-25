@@ -25,6 +25,12 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      - name: Install ImageMagick
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+          convert --version
+
       - name: Install Capacitor
         run: |
           npm install @capacitor/core@8.3.2 @capacitor/cli@8.3.2 @capacitor/android@8.3.2
