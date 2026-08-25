@@ -11,15 +11,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Set up Java 21
+      - name: Setup Java 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -29,7 +29,7 @@ jobs:
         run: |
           npm install @capacitor/core@8.3.2 @capacitor/cli@8.3.2 @capacitor/android@8.3.2
 
-      - name: Create temporary web directory
+      - name: Create temporary web files
         run: |
           rm -rf dist
           mkdir -p dist
@@ -48,7 +48,7 @@ jobs:
           </html>
           EOF
 
-      - name: Create Capacitor configuration
+      - name: Create Capacitor config
         run: |
           cat > capacitor.config.json <<'EOF'
           {
@@ -65,148 +65,72 @@ jobs:
           }
           EOF
 
-      - name: Add Android platform
+      - name: Add Android
         run: |
           rm -rf android
           npx cap add android
-
-      - name: Set Android app name
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          manifest = Path("android/app/src/main/AndroidManifest.xml")
-          text = manifest.read_text()
-
-          text = text.replace(
-              'android:label="@string/app_name"',
-              'android:label="Premium App Store"'
-          )
-
-          manifest.write_text(text)
-          PY
 
       - name: Add Android permissions
         run: |
           python3 - <<'PY'
           from pathlib import Path
 
-          manifest = Path("android/app/src/main/AndroidManifest.xml")
-          text = manifest.read_text()
+          p = Path("android/app/src/main/AndroidManifest.xml")
+          s = p.read_text()
 
           permissions = [
-              '    <uses-permission android:name="android.permission.INTERNET" />',
-              '    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />',
-              '    <uses-permission android:name="android.permission.RECORD_AUDIO" />'
+              "android.permission.INTERNET",
+              "android.permission.ACCESS_NETWORK_STATE",
+              "android.permission.RECORD_AUDIO",
+              "android.permission.REQUEST_INSTALL_PACKAGES"
           ]
 
-          for permission in permissions:
-              permission_name = permission.split('android.permission.')[1].split('"')[0]
-
-              if f'android.permission.{permission_name}' not in text:
-                  text = text.replace(
-                      '<application',
-                      permission + '\n    <application',
+          for perm in permissions:
+              if perm not in s:
+                  s = s.replace(
+                      "<application",
+                      f'    <uses-permission android:name="{perm}" />\n    <application',
                       1
                   )
 
-          manifest.write_text(text)
-
-          print("Internet, network and microphone permissions added.")
+          p.write_text(s)
+          print("Permissions added.")
           PY
 
-      - name: Add custom app icon
+      - name: Set app name and icon
         run: |
-          mkdir -p android/app/src/main/res/drawable
+          mkdir -p android/app/src/main/res/mipmap-mdpi
+          mkdir -p android/app/src/main/res/mipmap-hdpi
+          mkdir -p android/app/src/main/res/mipmap-xhdpi
+          mkdir -p android/app/src/main/res/mipmap-xxhdpi
+          mkdir -p android/app/src/main/res/mipmap-xxxhdpi
 
-          cp app-icon.png android/app/src/main/res/drawable/app_icon.png
+          convert app-icon.png -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+          convert app-icon.png -resize 72x72 android/app/src/main/res/mipmap-hdpi/ic_launcher.png
+          convert app-icon.png -resize 96x96 android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+          convert app-icon.png -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+          convert app-icon.png -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
 
-          python3 - <<'PY'
-          from pathlib import Path
-
-          manifest = Path("android/app/src/main/AndroidManifest.xml")
-          text = manifest.read_text()
-
-          text = text.replace(
-              'android:icon="@mipmap/ic_launcher"',
-              'android:icon="@drawable/app_icon"'
-          )
-
-          text = text.replace(
-              'android:roundIcon="@mipmap/ic_launcher_round"',
-              'android:roundIcon="@drawable/app_icon"'
-          )
-
-          manifest.write_text(text)
-          PY
-
-          echo "Custom Premium App Store icon added."
+          cp android/app/src/main/res/mipmap-mdpi/ic_launcher.png android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
+          cp android/app/src/main/res/mipmap-hdpi/ic_launcher.png android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png
+          cp android/app/src/main/res/mipmap-xhdpi/ic_launcher.png android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
+          cp android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
+          cp android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
 
       - name: Sync Capacitor
         run: |
           npx cap sync android
 
-      - name: Confirm microphone permission after sync
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          manifest = Path("android/app/src/main/AndroidManifest.xml")
-          text = manifest.read_text()
-
-          permission = '    <uses-permission android:name="android.permission.RECORD_AUDIO" />'
-
-          if "android.permission.RECORD_AUDIO" not in text:
-              text = text.replace(
-                  '<application',
-                  permission + '\n    <application',
-                  1
-              )
-
-          manifest.write_text(text)
-
-          print("Microphone permission confirmed.")
-          PY
-
-      - name: Confirm custom icon after sync
-        run: |
-          mkdir -p android/app/src/main/res/drawable
-          cp app-icon.png android/app/src/main/res/drawable/app_icon.png
-
-          python3 - <<'PY'
-          from pathlib import Path
-
-          manifest = Path("android/app/src/main/AndroidManifest.xml")
-          text = manifest.read_text()
-
-          text = text.replace(
-              'android:icon="@mipmap/ic_launcher"',
-              'android:icon="@drawable/app_icon"'
-          )
-
-          text = text.replace(
-              'android:roundIcon="@mipmap/ic_launcher_round"',
-              'android:roundIcon="@drawable/app_icon"'
-          )
-
-          text = text.replace(
-              'android:label="@string/app_name"',
-              'android:label="Premium App Store"'
-          )
-
-          manifest.write_text(text)
-          PY
-
-      - name: Build Debug APK
+      - name: Build APK
         run: |
           cd android
           chmod +x gradlew
           ./gradlew clean
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Premium-App-Store-debug
+          name: Premium-App-Store-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
