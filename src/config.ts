@@ -10,7 +10,7 @@ export const STORE_CONFIG = {
 
   // 2. Official Store App APK Direct Download Link (For the "Download Store APK" button)
   // Replace this sample URL with your uploaded Store APK direct download link:
-  STORE_APP_APK_URL: "https://archive.org/download/sample-apk-files/sample-app.apk",
+  STORE_APP_APK_URL: "https://github.com/SumitYadav06/Premium/releases/download/1.0.3/Premium.App.Store_1.0.apk",
   
   // Store Branding & Owner
   STORE_NAME: "PREMIUM STORE",
