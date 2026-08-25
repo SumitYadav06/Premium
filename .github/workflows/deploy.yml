@@ -21,26 +21,27 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: 22
 
       - name: Install dependencies
         run: npm install
 
-      - name: Build website
+      - name: Build
         run: npm run build
 
       - name: Create PWA manifest
         run: |
+          cp app-icon.png dist/app-icon.png
+
           cat > dist/manifest.webmanifest <<'EOF'
           {
             "name": "Premium App Store",
-            "short_name": "Premium Store",
-            "description": "Premium App Store",
+            "short_name": "Premium App Store",
             "start_url": "/Premium/",
             "scope": "/Premium/",
             "display": "standalone",
@@ -57,63 +58,26 @@ jobs:
           }
           EOF
 
-      - name: Copy app icon
-        run: |
-          cp app-icon.png dist/app-icon.png
-
-      - name: Create service worker
-        run: |
-          cat > dist/service-worker.js <<'EOF'
-          const CACHE_NAME = "premium-app-store-v1";
-
-          self.addEventListener("install", event => {
-            self.skipWaiting();
-          });
-
-          self.addEventListener("activate", event => {
-            event.waitUntil(self.clients.claim());
-          });
-
-          self.addEventListener("fetch", event => {
-            if (event.request.method !== "GET") return;
-
-            event.respondWith(
-              fetch(event.request).catch(() => caches.match(event.request))
-            );
-          });
-          EOF
-
-      - name: Add PWA settings to index.html
+      - name: Add PWA settings
         run: |
           python3 - <<'PY'
           from pathlib import Path
 
-          path = Path("dist/index.html")
-          text = path.read_text()
+          p = Path("dist/index.html")
+          s = p.read_text()
 
-          if 'rel="manifest"' not in text:
-              text = text.replace(
-                  "</head>",
-                  """<link rel="manifest" href="/Premium/manifest.webmanifest">
-          <meta name="theme-color" content="#020617">
-          <link rel="apple-touch-icon" href="/Premium/app-icon.png">
-          </head>"""
-              )
+          s = s.replace(
+              "</head>",
+              '<link rel="manifest" href="/Premium/manifest.webmanifest">'
+              '<meta name="theme-color" content="#020617">'
+              '<meta name="mobile-web-app-capable" content="yes">'
+              '<meta name="apple-mobile-web-app-capable" content="yes">'
+              '<meta name="apple-mobile-web-app-title" content="Premium App Store">'
+              '<link rel="apple-touch-icon" href="/Premium/app-icon.png">'
+              "</head>"
+          )
 
-          if "service-worker.js" not in text:
-              text = text.replace(
-                  "</body>",
-                  """<script>
-          if ("serviceWorker" in navigator) {
-            window.addEventListener("load", () => {
-              navigator.serviceWorker.register("/Premium/service-worker.js");
-            });
-          }
-          </script>
-          </body>"""
-              )
-
-          path.write_text(text)
+          p.write_text(s)
           PY
 
       - name: Setup Pages
