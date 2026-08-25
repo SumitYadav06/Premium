@@ -123,12 +123,12 @@ export const AppCard: React.FC<AppCardProps> = ({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                const storeLink = window.location.href.split('#')[0];
+                const storeLink = STORE_CONFIG.STORE_BASE_URL || window.location.href.split('#')[0];
+                const apkLink = app.link || (app as any).url || 'https://archive.org/download/sample-apk-files/sample-app.apk';
                 const text = `🔥 *${app.name}* (v${app.ver}) - VIP MOD APK\n` +
                   `⚡ Size: ${app.mb} MB | Status: Verified ✅\n\n` +
-                  `📥 *Direct APK Download:*\n${app.url}\n\n` +
+                  `📥 *Direct APK Download:*\n${apkLink}\n\n` +
                   `🌐 *Store Link:*\n${storeLink}\n\n` +
-                  `📸 *Instagram:* ${STORE_CONFIG.OWNER_INSTAGRAM}\n` +
                   `👑 Shared from *${STORE_CONFIG.OWNER_NAME}'s Premium Store*`;
                 const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
                 window.open(whatsappUrl, '_blank', 'noopener,noreferrer');

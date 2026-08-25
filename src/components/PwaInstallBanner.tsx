@@ -28,31 +28,19 @@ export const PwaInstallBanner: React.FC<PwaInstallBannerProps> = ({ theme }) => 
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
-  const handleInstallClick = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        setInstalledSuccess(true);
-        setTimeout(() => setIsDismissed(true), 3000);
-      }
-      setDeferredPrompt(null);
-    } else {
-      // Direct Download Fallback using the easily editable STORE_CONFIG.STORE_APP_APK_URL
-      if (STORE_CONFIG.STORE_APP_APK_URL && STORE_CONFIG.STORE_APP_APK_URL !== '#') {
-        const link = document.createElement('a');
-        link.href = STORE_CONFIG.STORE_APP_APK_URL;
-        link.download = 'PremiumStore.apk';
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setInstalledSuccess(true);
-        setTimeout(() => setIsDismissed(true), 3000);
-      } else {
-        alert('To install: Tap browser menu (⋮) and select "Add to Home Screen" or "Install App".');
-      }
-    }
+  const handleInstallClick = () => {
+    // Direct APK Download using STORE_CONFIG.STORE_APP_APK_URL
+    const apkUrl = STORE_CONFIG.STORE_APP_APK_URL || "https://archive.org/download/sample-apk-files/sample-app.apk";
+    const link = document.createElement('a');
+    link.href = apkUrl;
+    link.download = 'PremiumStore.apk';
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setInstalledSuccess(true);
+    setTimeout(() => setInstalledSuccess(false), 4000);
   };
 
   const handleDismiss = () => {
@@ -94,13 +82,13 @@ export const PwaInstallBanner: React.FC<PwaInstallBannerProps> = ({ theme }) => 
 
             <div>
               <div className="flex items-center gap-2 mb-0.5">
-                <h3 className="text-sm font-black tracking-tight">Install Premium Store App</h3>
+                <h3 className="text-sm font-black tracking-tight">Download Premium Store App</h3>
                 <span className="text-[9px] font-black uppercase tracking-wider bg-purple-500 text-white px-2 py-0.5 rounded-full">
-                  1-Tap APK Access
+                  Direct APK
                 </span>
               </div>
               <p className="text-xs text-slate-400 font-medium max-w-md">
-                Add Premium Store to your phone screen for offline catalog browsing and instant VIP downloads.
+                Get the official 1-Tap VIP Store APK on your Android device for instant app installs and updates.
               </p>
             </div>
           </div>
@@ -108,15 +96,15 @@ export const PwaInstallBanner: React.FC<PwaInstallBannerProps> = ({ theme }) => 
           <div className="flex items-center gap-2 w-full sm:w-auto">
             {installedSuccess ? (
               <div className="py-2.5 px-4 rounded-xl bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4" /> Added to Home Screen!
+                <CheckCircle2 className="w-4 h-4" /> Download Started!
               </div>
             ) : (
               <button
                 onClick={handleInstallClick}
-                className="w-full sm:w-auto py-2.5 px-5 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white text-xs font-black uppercase tracking-wider shadow-md shadow-purple-600/25 active:scale-95 transition flex items-center justify-center gap-2"
+                className="w-full sm:w-auto py-2.5 px-5 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white text-xs font-black uppercase tracking-wider shadow-md shadow-purple-600/25 active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Download className="w-4 h-4" />
-                <span>Install Store App</span>
+                <span>Download Store APK</span>
               </button>
             )}
           </div>

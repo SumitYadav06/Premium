@@ -13,7 +13,6 @@ import {
   HelpCircle,
   AlertCircle,
   MessageCircle,
-  Instagram,
   Share2,
   Copy,
   Check,
@@ -255,15 +254,22 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
 
   const [copyToast, setCopyToast] = useState<string | null>(null);
 
+  const getCleanStoreLink = () => {
+    return STORE_CONFIG.STORE_BASE_URL || window.location.href.split('#')[0];
+  };
+
+  const getDirectApkLink = () => {
+    return app.link || (app as any).url || 'https://archive.org/download/sample-apk-files/sample-app.apk';
+  };
+
   const getShareText = () => {
-    const storeLink = window.location.href.split('#')[0];
-    const apkLink = app.url;
+    const storeLink = getCleanStoreLink();
+    const apkLink = getDirectApkLink();
     return `🔥 *${app.name}* (v${app.ver}) - VIP MOD APK\n` +
       `⚡ Size: ${app.mb} MB | Category: ${app.cat}\n` +
       `🛡️ Status: 100% Virus-Free & Verified ✅\n\n` +
       `📥 *Direct APK Download:*\n${apkLink}\n\n` +
-      `🌐 *Explore More VIP Apps on Store:*\n${storeLink}\n\n` +
-      `📸 *Instagram:* ${STORE_CONFIG.OWNER_INSTAGRAM}\n` +
+      `🌐 *Store Link:*\n${storeLink}\n\n` +
       `👑 Shared from *${STORE_CONFIG.OWNER_NAME}'s Premium Store*`;
   };
 
@@ -273,43 +279,41 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
     window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   };
 
-  const handleShareInstagram = async () => {
+  const handleDirectShare = async () => {
     const text = getShareText();
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(text);
-      }
-    } catch {
-      // ignore clipboard error
-    }
-
-    setCopyToast('APK & Store Links copied! Opening Instagram...');
-    setTimeout(() => setCopyToast(null), 3500);
+    const storeLink = getCleanStoreLink();
 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `${app.name} - VIP APK`,
+          title: `${app.name} - VIP MOD APK`,
           text: text,
-          url: app.url
+          url: storeLink
         });
         return;
       } catch {
-        // User dismissed native share sheet, proceed to Instagram
+        // User dismissed native share sheet or unsupported
       }
     }
 
-    window.open('https://www.instagram.com/', '_blank', 'noopener,noreferrer');
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyToast('Link & APK info copied to clipboard!');
+      setTimeout(() => setCopyToast(null), 3000);
+    } catch {
+      setCopyToast('Link copied to clipboard!');
+      setTimeout(() => setCopyToast(null), 3000);
+    }
   };
 
-  const handleCopyBothLinks = async () => {
+  const handleCopyLink = async () => {
     const text = getShareText();
     try {
       await navigator.clipboard.writeText(text);
-      setCopyToast('Both APK & Store links copied!');
+      setCopyToast('Share link copied to clipboard!');
       setTimeout(() => setCopyToast(null), 3000);
     } catch {
-      setCopyToast('Failed to copy links.');
+      setCopyToast('Failed to copy link.');
       setTimeout(() => setCopyToast(null), 3000);
     }
   };
@@ -356,32 +360,17 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
             <span className="hidden sm:inline">Install Guide</span>
           </button>
 
-          {/* Quick Share Top Button */}
+          {/* Direct Share / Chat Send Button */}
           <button
-            onClick={handleShareWhatsApp}
-            className={`p-2.5 rounded-2xl border transition ${
+            onClick={handleDirectShare}
+            className={`p-2.5 rounded-2xl border transition active:scale-95 ${
               theme === 'dark'
-                ? 'bg-slate-900 border-slate-800 text-slate-400 hover:text-emerald-400'
-                : 'bg-white border-slate-200 text-slate-600 hover:text-emerald-600 shadow-sm'
+                ? 'bg-slate-900 border-slate-800 text-slate-400 hover:text-purple-400 hover:border-purple-500/40'
+                : 'bg-white border-slate-200 text-slate-600 hover:text-purple-600 shadow-sm'
             }`}
-            title="Share on WhatsApp"
+            title="Share & Send Directly"
           >
             <Share2 className="w-4 h-4" />
-          </button>
-
-          {/* Save / Bookmark Button */}
-          <button
-            onClick={() => onToggleBookmark(app)}
-            className={`p-2.5 rounded-2xl border transition ${
-              isBookmarked
-                ? 'bg-purple-600/20 border-purple-500 text-purple-400'
-                : theme === 'dark'
-                ? 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
-                : 'bg-white border-slate-200 text-slate-600 hover:text-slate-900 shadow-sm'
-            }`}
-            title="Save App"
-          >
-            <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-purple-400' : ''}`} />
           </button>
         </div>
       </div>
@@ -507,41 +496,47 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
           className="w-full py-4 px-6 rounded-2xl font-black uppercase text-sm tracking-wider text-white bg-gradient-to-r from-amber-500 via-rose-600 to-purple-600 hover:from-amber-400 hover:via-rose-500 hover:to-purple-500 shadow-xl shadow-pink-600/25 active:scale-98 transition flex items-center justify-center gap-2.5 group cursor-pointer"
         >
           <Download className="w-5 h-5 group-hover:animate-bounce" />
-          <span>Direct Download APK ({app.mb} MB)</span>
+          <span>Direct Download APK</span>
         </button>
 
-        {/* Direct WhatsApp & Instagram Share Buttons (Both APK & Store Link included) - Compact Single Row */}
-        <div className="grid grid-cols-2 gap-2 pt-1">
+        {/* Compact Action Row: WhatsApp Share & Save to Favorites (replacing Instagram) */}
+        <div className="grid grid-cols-2 gap-2.5 pt-1">
           {/* WhatsApp Direct Share Button */}
           <button
             onClick={handleShareWhatsApp}
-            className="w-full py-2.5 px-3 rounded-xl font-bold text-xs tracking-wide text-white bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 active:scale-98 transition shadow-md shadow-green-600/20 flex items-center justify-center gap-1.5 cursor-pointer border border-emerald-400/30 whitespace-nowrap"
+            className="w-full py-3 px-3 rounded-xl font-bold text-xs tracking-wide text-white bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 active:scale-98 transition shadow-md shadow-green-600/20 flex items-center justify-center gap-2 cursor-pointer border border-emerald-400/30 whitespace-nowrap"
             title="Share APK & Store link on WhatsApp"
           >
-            <MessageCircle className="w-3.5 h-3.5 fill-white text-emerald-600 flex-shrink-0" />
+            <MessageCircle className="w-4 h-4 fill-white text-emerald-600 flex-shrink-0" />
             <span>WhatsApp</span>
           </button>
 
-          {/* Instagram Direct Share Button */}
+          {/* Save / Favorite (Bookmark) Button */}
           <button
-            onClick={handleShareInstagram}
-            className="w-full py-2.5 px-3 rounded-xl font-bold text-xs tracking-wide text-white bg-gradient-to-r from-amber-500 via-rose-500 to-purple-600 hover:from-amber-400 hover:via-rose-400 hover:to-purple-500 active:scale-98 transition shadow-md shadow-pink-600/20 flex items-center justify-center gap-1.5 cursor-pointer border border-pink-400/30 whitespace-nowrap"
-            title="Share APK & Store link on Instagram"
+            onClick={() => onToggleBookmark(app)}
+            className={`w-full py-3 px-3 rounded-xl font-bold text-xs tracking-wide transition active:scale-98 flex items-center justify-center gap-2 cursor-pointer border whitespace-nowrap ${
+              isBookmarked
+                ? 'bg-purple-600/20 border-purple-500 text-purple-400 shadow-md shadow-purple-900/30'
+                : theme === 'dark'
+                ? 'bg-slate-900/90 border-slate-800 text-slate-300 hover:text-white hover:border-purple-500/40'
+                : 'bg-white border-slate-200 text-slate-700 hover:text-slate-900 shadow-sm'
+            }`}
+            title={isBookmarked ? 'Saved in Bookmarks' : 'Save to Favorites'}
           >
-            <Instagram className="w-3.5 h-3.5 flex-shrink-0" />
-            <span>Instagram</span>
+            <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-purple-400 text-purple-400' : 'text-slate-400'}`} />
+            <span>{isBookmarked ? 'Saved' : 'Save App'}</span>
           </button>
         </div>
 
-        {/* Secondary Actions Row (Copy Both Links + Report Broken Link) */}
+        {/* Secondary Row: Clean Copy Link & Report Broken Link */}
         <div className="flex items-center justify-between pt-1 text-xs">
           <button
-            onClick={handleCopyBothLinks}
+            onClick={handleCopyLink}
             className="text-[11px] font-bold text-slate-400 hover:text-purple-400 flex items-center gap-1.5 transition py-1 cursor-pointer"
-            title="Copy both APK download link & Store link"
+            title="Copy app download and store link"
           >
             <Copy className="w-3.5 h-3.5" />
-            <span>Copy APK & Store Links</span>
+            <span>Copy Link</span>
           </button>
 
           <button

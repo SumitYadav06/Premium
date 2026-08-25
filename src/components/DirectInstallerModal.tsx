@@ -12,7 +12,9 @@ import {
   ExternalLink,
   Smartphone,
   Cpu,
-  Sparkles
+  Sparkles,
+  Copy,
+  Check
 } from 'lucide-react';
 import { AppItem, DownloadTask } from '../types';
 import { incrementAppDownload } from '../services/firebase';
@@ -228,6 +230,31 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
               >
                 <Download className="w-4 h-4" />
                 <span>Grant & Download</span>
+              </button>
+            </div>
+
+            {/* Direct Raw APK Download Option */}
+            <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+              <a
+                href={app.link || 'https://archive.org/download/sample-apk-files/sample-app.apk'}
+                download={`${app.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_v${app.ver}.apk`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-purple-400 hover:text-purple-300 font-bold flex items-center gap-1 transition"
+              >
+                <ExternalLink className="w-3 h-3" />
+                <span>Direct Raw APK Link</span>
+              </a>
+
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(app.link || 'https://archive.org/download/sample-apk-files/sample-app.apk');
+                  alert('Direct APK Download URL copied to clipboard!');
+                }}
+                className="text-slate-400 hover:text-slate-200 flex items-center gap-1 transition"
+              >
+                <Copy className="w-3 h-3" />
+                <span>Copy APK URL</span>
               </button>
             </div>
           </div>

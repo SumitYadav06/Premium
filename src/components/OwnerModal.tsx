@@ -7,7 +7,8 @@ import {
   X,
   Heart,
   Instagram,
-  ExternalLink
+  ExternalLink,
+  MessageCircle
 } from 'lucide-react';
 import { STORE_CONFIG } from '../config';
 import { VerifiedBadge } from './AppDetailView';
@@ -38,6 +39,12 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
       : `https://www.instagram.com/${instagramUsername}/`;
 
     window.open(webUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleOpenDirectChat = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const directDmUrl = `https://ig.me/m/${instagramUsername || 'sumyadav477'}`;
+    window.open(directDmUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -106,18 +113,25 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
           </div>
         </div>
 
-        {/* Direct In-App Instagram Profile Launcher Button */}
-        <a
-          href={instagramLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={handleOpenInstagram}
-          className="w-full py-3.5 px-4 rounded-2xl font-black text-xs uppercase tracking-wider text-white bg-gradient-to-r from-amber-500 via-pink-600 to-purple-600 hover:from-amber-400 hover:via-pink-500 hover:to-purple-500 shadow-xl shadow-pink-600/30 active:scale-95 transition flex items-center justify-center gap-2 mb-2 cursor-pointer"
-        >
-          <Instagram className="w-4 h-4" />
-          <span>Follow on Instagram</span>
-          <ExternalLink className="w-3.5 h-3.5 opacity-80" />
-        </a>
+        {/* Direct In-App Instagram Action Buttons */}
+        <div className="space-y-2 mb-2">
+          <button
+            onClick={handleOpenDirectChat}
+            className="w-full py-3.5 px-4 rounded-2xl font-black text-xs uppercase tracking-wider text-white bg-gradient-to-r from-amber-500 via-pink-600 to-purple-600 hover:from-amber-400 hover:via-pink-500 hover:to-purple-500 shadow-xl shadow-pink-600/30 active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <MessageCircle className="w-4 h-4 fill-white" />
+            <span>Send Direct Instagram DM</span>
+            <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+          </button>
+
+          <button
+            onClick={handleOpenInstagram}
+            className="w-full py-2.5 px-4 rounded-2xl font-bold text-xs uppercase tracking-wider text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-pink-500/40 active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <Instagram className="w-3.5 h-3.5" />
+            <span>View Instagram Profile</span>
+          </button>
+        </div>
 
         <p className="text-[11px] text-slate-500 flex items-center justify-center gap-1 mt-3">
           Made with <Heart className="w-3 h-3 text-red-500 fill-red-500" /> for the community

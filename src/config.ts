@@ -1,10 +1,15 @@
 /**
  * App Configuration
- * You can easily edit your One-Click Store APK Download link, Owner info, and App defaults here!
+ * You can easily edit all your links, Store APK Download link, Owner info, and App defaults here!
  */
 
 export const STORE_CONFIG = {
-  // Store App One-Click APK Direct Download Link (Update this anytime with your direct release APK URL)
+  // 1. Official Store Website URL (Used in WhatsApp & Share messages)
+  // Edit this whenever your domain / GitHub Pages link changes:
+  STORE_BASE_URL: "https://sumityadav06.github.io/Premium/",
+
+  // 2. Official Store App APK Direct Download Link (For the "Download Store APK" button)
+  // Replace this sample URL with your uploaded Store APK direct download link:
   STORE_APP_APK_URL: "https://archive.org/download/sample-apk-files/sample-app.apk",
   
   // Store Branding & Owner
