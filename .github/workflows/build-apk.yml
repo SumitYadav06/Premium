@@ -102,15 +102,13 @@ jobs:
           print("Required permissions added.")
           PY
 
-      - name: Set app name and custom icon
+      - name: Set custom app icon
         run: |
           mkdir -p android/app/src/main/res/mipmap-mdpi
           mkdir -p android/app/src/main/res/mipmap-hdpi
           mkdir -p android/app/src/main/res/mipmap-xhdpi
           mkdir -p android/app/src/main/res/mipmap-xxhdpi
           mkdir -p android/app/src/main/res/mipmap-xxxhdpi
-          mkdir -p android/app/src/main/res/mipmap-anydpi-v26
-          mkdir -p android/app/src/main/res/values
 
           convert app-icon.png -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher.png
           convert app-icon.png -resize 72x72 android/app/src/main/res/mipmap-hdpi/ic_launcher.png
@@ -124,48 +122,29 @@ jobs:
           cp android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
           cp android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
 
-          cp app-icon.png android/app/src/main/res/drawable/ic_launcher_foreground.png
-
-          cat > android/app/src/main/res/values/colors.xml <<'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <resources>
-              <color name="ic_launcher_background">#020617</color>
-          </resources>
-          EOF
-
-          cat > android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml <<'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-              <background android:drawable="@color/ic_launcher_background"/>
-              <foreground android:drawable="@drawable/ic_launcher_foreground"/>
-          </adaptive-icon>
-          EOF
-
-          cat > android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml <<'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-              <background android:drawable="@color/ic_launcher_background"/>
-              <foreground android:drawable="@drawable/ic_launcher_foreground"/>
-          </adaptive-icon>
-          EOF
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
 
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           p = Path("android/app/src/main/AndroidManifest.xml")
           s = p.read_text()
 
-          s = s.replace(
+          s = re.sub(
+              r'android:icon="[^"]*"',
               'android:icon="@mipmap/ic_launcher"',
-              'android:icon="@mipmap/ic_launcher"'
+              s,
+              count=1
           )
 
           if 'android:roundIcon=' in s:
-              import re
               s = re.sub(
                   r'android:roundIcon="[^"]*"',
                   'android:roundIcon="@mipmap/ic_launcher_round"',
-                  s
+                  s,
+                  count=1
               )
           else:
               s = s.replace(
@@ -177,9 +156,25 @@ jobs:
           p.write_text(s)
           PY
 
+          echo "Custom app icon installed."
+
       - name: Sync Capacitor
         run: |
           npx cap sync android
+
+      - name: Reapply custom icon after Capacitor sync
+        run: |
+          convert app-icon.png -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+          convert app-icon.png -resize 72x72 android/app/src/main/res/mipmap-hdpi/ic_launcher.png
+          convert app-icon.png -resize 96x96 android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+          convert app-icon.png -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+          convert app-icon.png -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+
+          cp android/app/src/main/res/mipmap-mdpi/ic_launcher.png android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
+          cp android/app/src/main/res/mipmap-hdpi/ic_launcher.png android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png
+          cp android/app/src/main/res/mipmap-xhdpi/ic_launcher.png android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
+          cp android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
+          cp android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
 
       - name: Build APK
         run: |
