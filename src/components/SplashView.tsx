@@ -1,31 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { ShieldCheck, Sparkles, Smartphone } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { STORE_CONFIG } from '../config';
 
 interface SplashViewProps {
-  logoUrl?: string;
-  onFinish?: () => void;
+  onFinish: () => void;
 }
 
-export const SplashView: React.FC<SplashViewProps> = ({
-  logoUrl = STORE_CONFIG.STORE_SPLASH_LOGO
-}) => {
+export const SplashView: React.FC<SplashViewProps> = ({ onFinish }) => {
+  const [logoUrl, setLogoUrl] = useState<string>(STORE_CONFIG.STORE_SPLASH_LOGO);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('store_splash_logo');
+    if (saved) {
+      setLogoUrl(saved);
+    }
+  }, []);
+
   return (
-    <motion.div
-      initial={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.5, ease: "easeInOut" }}
-      className="fixed inset-0 z-[9999] bg-[#030712] flex flex-col items-center justify-center p-6 select-none overflow-hidden"
-    >
-      {/* Ambient background glow circles */}
-      <div className="absolute w-96 h-96 bg-purple-600/20 rounded-full blur-3xl pointer-events-none -top-20 -left-20 animate-pulse" />
-      <div className="absolute w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none -bottom-20 -right-20 animate-pulse" />
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 text-white overflow-hidden select-none">
+      {/* Dynamic Background Aurora Lights */}
+      <div className="absolute -top-40 -left-40 w-96 h-96 bg-purple-600/30 rounded-full blur-[120px] pointer-events-none animate-pulse" />
+      <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-pink-600/25 rounded-full blur-[120px] pointer-events-none animate-pulse" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-blue-600/15 rounded-full blur-[100px] pointer-events-none" />
 
       {/* Main Container */}
       <motion.div
-        initial={{ scale: 0.85, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
+        initial={{ opacity: 0, scale: 0.85, y: 15 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
         className="relative flex flex-col items-center text-center z-10"
       >
@@ -43,50 +45,42 @@ export const SplashView: React.FC<SplashViewProps> = ({
             />
           </div>
           
-          <div className="absolute -bottom-2 -right-2 bg-gradient-to-r from-emerald-500 to-green-600 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full shadow-lg flex items-center gap-1 border border-white/20">
-            <ShieldCheck className="w-3 h-3 text-white" /> VIP
+          <div className="absolute -bottom-2 -right-2 bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 text-slate-950 text-[10px] font-black uppercase px-3 py-1 rounded-full shadow-xl shadow-amber-500/30 flex items-center gap-1 border border-amber-200/90 ring-2 ring-slate-950/60">
+            <Sparkles className="w-3 h-3 text-slate-950 fill-slate-950" /> VIP
           </div>
         </div>
 
-        {/* Title with Aurora Text */}
+        {/* Title */}
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="text-3xl sm:text-4xl font-black italic tracking-tight mb-2 rainbow-text drop-shadow"
+          transition={{ delay: 0.2, duration: 0.5 }}
+          className="text-3xl sm:text-4xl font-black tracking-tight font-mono text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-pink-200 to-white"
         >
           {STORE_CONFIG.STORE_NAME}
         </motion.h1>
 
+        {/* Tagline */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="text-xs sm:text-sm font-semibold tracking-widest uppercase text-slate-400 flex items-center gap-2 mb-8"
+          transition={{ delay: 0.35, duration: 0.5 }}
+          className="text-xs sm:text-sm text-purple-300/80 font-medium tracking-wide mt-1.5 max-w-xs"
         >
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
-          <span>Curated Verified Applications</span>
+          {STORE_CONFIG.STORE_TAGLINE}
         </motion.p>
 
-        {/* High-tech Loading Progress */}
-        <div className="w-48 sm:w-56 bg-slate-900/80 border border-slate-800 rounded-full h-2 overflow-hidden p-0.5 shadow-inner">
-          <motion.div
-            initial={{ width: "0%" }}
-            animate={{ width: "100%" }}
-            transition={{ duration: 1.8, ease: "easeInOut" }}
-            className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 rounded-full"
-          />
-        </div>
-
-        <span className="text-[10px] text-slate-500 uppercase tracking-widest mt-3 font-mono">
-          Starting Security Engine...
-        </span>
+        {/* Enter Store Button */}
+        <motion.button
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.5 }}
+          onClick={onFinish}
+          className="mt-8 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 hover:from-purple-500 hover:via-pink-500 hover:to-purple-500 text-white font-bold text-sm uppercase tracking-wider shadow-lg shadow-purple-600/40 hover:shadow-purple-600/60 active:scale-95 transition-all duration-200 cursor-pointer flex items-center gap-2"
+        >
+          <span>Enter Store</span>
+        </motion.button>
       </motion.div>
-
-      {/* Footer Brand */}
-      <div className="absolute bottom-6 text-[11px] text-slate-600 font-medium tracking-wide">
-        Developed & Maintained by <span className="text-purple-400 font-semibold">SMSUMIT</span>
-      </div>
-    </motion.div>
+    </div>
   );
 };
