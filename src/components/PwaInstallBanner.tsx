@@ -11,7 +11,7 @@ export const PwaInstallBanner: React.FC<PwaInstallBannerProps> = ({ theme }) => 
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isDismissed, setIsDismissed] = useState(() => {
     try {
-      return sessionStorage.getItem('pwa_banner_dismissed') === 'true';
+      return localStorage.getItem('pwa_banner_dismissed') === 'true';
     } catch {
       return false;
     }
@@ -46,7 +46,7 @@ export const PwaInstallBanner: React.FC<PwaInstallBannerProps> = ({ theme }) => 
   const handleDismiss = () => {
     setIsDismissed(true);
     try {
-      sessionStorage.setItem('pwa_banner_dismissed', 'true');
+      localStorage.setItem('pwa_banner_dismissed', 'true');
     } catch {}
   };
 

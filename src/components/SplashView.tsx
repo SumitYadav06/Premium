@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { ShieldCheck, Sparkles } from 'lucide-react';
+import { ShieldCheck, Sparkles, Smartphone } from 'lucide-react';
 import { STORE_CONFIG } from '../config';
 
 interface SplashViewProps {
@@ -34,17 +34,17 @@ export const SplashView: React.FC<SplashViewProps> = ({
           <div className="absolute -inset-1.5 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-[2.25rem] blur-lg opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
           <div className="relative w-44 h-44 sm:w-52 sm:h-52 rounded-[2rem] overflow-hidden bg-slate-900 border-2 border-purple-500/40 shadow-2xl p-1.5 flex items-center justify-center">
             <img
-              src={logoUrl || STORE_CONFIG.STORE_SPLASH_LOGO || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80"}
+              src={logoUrl || STORE_CONFIG.STORE_SPLASH_LOGO || "https://i.ibb.co/HffVtwhY/image.jpg"}
               alt={STORE_CONFIG.STORE_NAME}
               className="w-full h-full object-cover rounded-[1.65rem]"
               onError={(e) => {
-                (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80";
+                (e.target as HTMLImageElement).src = "https://i.ibb.co/HffVtwhY/image.jpg";
               }}
             />
           </div>
           
-          <div className="absolute -bottom-2 -right-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full shadow-lg flex items-center gap-1 border border-white/20">
-            <Sparkles className="w-3 h-3" /> VIP
+          <div className="absolute -bottom-2 -right-2 bg-gradient-to-r from-emerald-500 to-green-600 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full shadow-lg flex items-center gap-1 border border-white/20">
+            <ShieldCheck className="w-3 h-3 text-white" /> VIP
           </div>
         </div>
 

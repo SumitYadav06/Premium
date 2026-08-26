@@ -9,7 +9,8 @@ import {
   Smartphone,
   HelpCircle,
   MessageSquare,
-  Instagram
+  Instagram,
+  Bot
 } from 'lucide-react';
 import { STORE_CONFIG } from '../config';
 
@@ -56,10 +57,23 @@ export const Navbar: React.FC<NavbarProps> = ({
           onClick={onBackToHome}
           className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group select-none flex-shrink-0"
         >
-          {/* Store Brand: Elegant Vector Store Icon */}
-          <div className="relative w-10 h-10 rounded-2xl p-0.5 bg-gradient-to-tr from-purple-600 via-pink-600 to-blue-600 shadow-md shadow-purple-600/25 flex items-center justify-center group-hover:scale-105 transition duration-200">
-            <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center text-white">
-              <Sparkles className="w-5 h-5 text-purple-400" />
+          {/* Store Brand: Iconic Large Android Half-Body Mascot Icon */}
+          <div className="relative w-11 h-11 rounded-2xl p-0.5 bg-gradient-to-tr from-emerald-500 via-green-400 to-teal-500 shadow-md shadow-emerald-500/25 flex items-center justify-center group-hover:scale-105 transition duration-200">
+            <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center p-0.5 overflow-hidden">
+              <svg
+                viewBox="0 0 24 24"
+                className="w-8 h-8 text-emerald-400 fill-current"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                {/* Android Antennae */}
+                <line x1="7.2" y1="7.2" x2="4.8" y2="3.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                <line x1="16.8" y1="7.2" x2="19.2" y2="3.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                {/* Android Half-Body Head Dome */}
+                <path d="M4 17.5 C4 9.5 7.5 6.5 12 6.5 C16.5 6.5 20 9.5 20 17.5 Z" />
+                {/* Android Eyes */}
+                <circle cx="8.5" cy="11.8" r="1.1" fill="#020617" />
+                <circle cx="15.5" cy="11.8" r="1.1" fill="#020617" />
+              </svg>
             </div>
           </div>
 
@@ -159,21 +173,22 @@ export const Navbar: React.FC<NavbarProps> = ({
             {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
 
-          {/* Owner Avatar / Instagram Profile */}
+          {/* Owner Avatar / Instagram Circle Profile with Visit Site Hub */}
           <button
             onClick={onOpenOwner}
-            className="relative p-0.5 rounded-full ring-2 ring-pink-500/80 hover:ring-pink-400 transition ml-0.5 cursor-pointer"
-            title="Official Creator Instagram & Info"
+            className="relative p-0.5 rounded-full ring-2 ring-pink-500/80 hover:ring-pink-400 transition ml-0.5 cursor-pointer group active:scale-95"
+            title="Official Creator Profile & Visit Site"
+            aria-label="Creator Profile & Store Hub"
           >
             <img
-              src={ownerImg || STORE_CONFIG.OWNER_IMAGE || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80"}
+              src={ownerImg || STORE_CONFIG.OWNER_IMAGE || "https://i.ibb.co/HffVtwhY/image.jpg"}
               alt={STORE_CONFIG.OWNER_NAME}
               className="w-8 h-8 rounded-full object-cover shadow"
               onError={(e) => {
-                (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80";
+                (e.target as HTMLImageElement).src = "https://i.ibb.co/HffVtwhY/image.jpg";
               }}
             />
-            <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 border-2 border-slate-950 rounded-full flex items-center justify-center">
+            <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 border-2 border-slate-950 rounded-full flex items-center justify-center shadow-sm">
               <Instagram className="w-2 h-2 text-white" />
             </span>
           </button>

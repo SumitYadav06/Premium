@@ -73,38 +73,21 @@ const ScreenshotThumbnail: React.FC<{
   idx: number;
   onSelect: (index: number) => void;
 }> = ({ pic, idx, onSelect }) => {
-  const pointerStartRef = React.useRef<{ x: number; y: number } | null>(null);
-
-  const handlePointerDown = (e: React.PointerEvent) => {
-    pointerStartRef.current = { x: e.clientX, y: e.clientY };
-  };
-
-  const handlePointerUp = (e: React.PointerEvent) => {
-    if (!pointerStartRef.current) return;
-    const dx = Math.abs(e.clientX - pointerStartRef.current.x);
-    const dy = Math.abs(e.clientY - pointerStartRef.current.y);
-    // If movement is very small (< 10px), it's an intentional tap
-    if (dx < 10 && dy < 10) {
-      onSelect(idx);
-    }
-    pointerStartRef.current = null;
-  };
-
   return (
     <div
-      onPointerDown={handlePointerDown}
-      onPointerUp={handlePointerUp}
-      className="relative group flex-shrink-0 cursor-pointer select-none"
+      onClick={() => onSelect(idx)}
+      className="relative group flex-shrink-0 cursor-pointer select-none active:scale-[0.98] transition-transform duration-100"
     >
       <img
         src={pic || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80"}
         alt={`Preview ${idx + 1}`}
-        loading="lazy"
+        loading="eager"
+        decoding="async"
         onError={(e) => {
           (e.target as HTMLImageElement).src =
             'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80';
         }}
-        className="w-36 sm:w-48 h-60 sm:h-72 object-cover rounded-2xl sm:rounded-3xl border-2 border-purple-500/20 group-hover:border-purple-500 shadow-lg transition duration-200 pointer-events-none"
+        className="w-36 sm:w-48 h-60 sm:h-72 object-cover rounded-2xl sm:rounded-3xl border-2 border-purple-500/20 group-hover:border-purple-500 shadow-lg transition duration-150 pointer-events-none"
       />
       <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition rounded-2xl sm:rounded-3xl flex items-center justify-center pointer-events-none">
         <span className="text-[11px] font-bold text-white bg-black/70 px-3 py-1 rounded-full border border-white/20 backdrop-blur-md">

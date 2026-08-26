@@ -11,9 +11,9 @@ interface ScreenshotLightboxProps {
 
 const slideVariants = {
   enter: (direction: number) => ({
-    x: direction > 0 ? 250 : -250,
+    x: direction > 0 ? 180 : -180,
     opacity: 0,
-    scale: 0.96
+    scale: 0.98
   }),
   center: {
     zIndex: 1,
@@ -23,9 +23,9 @@ const slideVariants = {
   },
   exit: (direction: number) => ({
     zIndex: 0,
-    x: direction < 0 ? 250 : -250,
+    x: direction < 0 ? 180 : -180,
     opacity: 0,
-    scale: 0.96
+    scale: 0.98
   })
 };
 
@@ -39,20 +39,27 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
   const [direction, setDirection] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
 
-  // Sync initial index when opened
+  // Sync initial index and preload images when opened
   useEffect(() => {
     if (isOpen) {
       setCurrentIndex(initialIndex);
       setDirection(0);
+      // Preload all images for instant switching without network wait
+      images.forEach((src) => {
+        if (src) {
+          const img = new Image();
+          img.src = src;
+        }
+      });
     }
-  }, [initialIndex, isOpen]);
+  }, [initialIndex, isOpen, images]);
 
   const goToNext = () => {
     if (images.length <= 1 || isSwiping) return;
     setIsSwiping(true);
     setDirection(1);
     setCurrentIndex((prev) => (prev + 1) % images.length);
-    setTimeout(() => setIsSwiping(false), 320);
+    setTimeout(() => setIsSwiping(false), 120);
   };
 
   const goToPrev = () => {
@@ -60,7 +67,7 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
     setIsSwiping(true);
     setDirection(-1);
     setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
-    setTimeout(() => setIsSwiping(false), 320);
+    setTimeout(() => setIsSwiping(false), 120);
   };
 
   const goToIndex = (targetIdx: number) => {
@@ -68,7 +75,7 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
     setIsSwiping(true);
     setDirection(targetIdx > currentIndex ? 1 : -1);
     setCurrentIndex(targetIdx);
-    setTimeout(() => setIsSwiping(false), 320);
+    setTimeout(() => setIsSwiping(false), 120);
   };
 
   useEffect(() => {
@@ -128,7 +135,7 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
           )}
 
           {/* Single Draggable & Animated Screenshot */}
-          <AnimatePresence initial={false} custom={direction} mode="wait">
+          <AnimatePresence initial={false} custom={direction}>
             <motion.div
               key={currentIndex}
               custom={direction}
@@ -137,17 +144,17 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
               animate="center"
               exit="exit"
               transition={{
-                x: { type: 'spring', stiffness: 260, damping: 28 },
-                opacity: { duration: 0.25 }
+                x: { type: 'spring', stiffness: 450, damping: 32 },
+                opacity: { duration: 0.12 }
               }}
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.4}
+              dragElastic={0.3}
               onDragEnd={(_, { offset, velocity }) => {
-                const threshold = 40;
-                if (offset.x < -threshold || velocity.x < -200) {
+                const threshold = 30;
+                if (offset.x < -threshold || velocity.x < -150) {
                   goToNext(); // Single next screenshot
-                } else if (offset.x > threshold || velocity.x > 200) {
+                } else if (offset.x > threshold || velocity.x > 150) {
                   goToPrev(); // Single prev screenshot
                 }
               }}
@@ -156,6 +163,8 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
               <img
                 src={images[currentIndex] || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80"}
                 alt={`Screenshot ${currentIndex + 1}`}
+                decoding="async"
+                loading="eager"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src =
                     'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80';
