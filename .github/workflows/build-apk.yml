@@ -223,7 +223,7 @@ jobs:
       # MICROPHONE - KEEP WORKING CONFIGURATION
       # ============================================================
 
-            - name: Add native microphone startup permission
+      - name: Add native microphone startup permission
         run: |
           MAIN_ACTIVITY=$(find android/app/src/main/java -name "MainActivity.java" | head -n 1)
 
@@ -232,17 +232,19 @@ jobs:
             exit 1
           fi
 
+          echo "MainActivity: $MAIN_ACTIVITY"
+
           python3 - "$MAIN_ACTIVITY" <<'PY'
           from pathlib import Path
           import sys
           import re
 
           p = Path(sys.argv[1])
-          old = p.read_text()
+          s = p.read_text()
 
           package_match = re.search(
               r'^\s*package\s+([^;]+);',
-              old,
+              s,
               re.MULTILINE
           )
 
@@ -251,22 +253,11 @@ jobs:
 
           package_name = package_match.group(1)
 
-          code = f'''package {package_name};
+          s = f'''package {package_name};
 
           import android.Manifest;
-          import android.app.DownloadManager;
-          import android.content.Context;
-          import android.content.pm.PackageManager;
-          import android.net.Uri;
           import android.os.Bundle;
-          import android.os.Environment;
-          import android.webkit.CookieManager;
-          import android.webkit.DownloadListener;
-          import android.webkit.URLUtil;
-          import android.webkit.WebView;
-
           import androidx.core.app.ActivityCompat;
-
           import com.getcapacitor.BridgeActivity;
 
           public class MainActivity extends BridgeActivity {{
@@ -279,7 +270,7 @@ jobs:
 
                   if (android.os.Build.VERSION.SDK_INT >= 23 &&
                       checkSelfPermission(Manifest.permission.RECORD_AUDIO)
-                          != PackageManager.PERMISSION_GRANTED) {{
+                          != android.content.pm.PackageManager.PERMISSION_GRANTED) {{
 
                       ActivityCompat.requestPermissions(
                           this,
@@ -290,87 +281,12 @@ jobs:
                           MICROPHONE_PERMISSION_CODE
                       );
                   }}
-
-                  WebView webView = getBridge().getWebView();
-
-                  if (webView != null) {{
-                      webView.setDownloadListener(new DownloadListener() {{
-                          @Override
-                          public void onDownloadStart(
-                                  String url,
-                                  String userAgent,
-                                  String contentDisposition,
-                                  String mimetype,
-                                  long contentLength) {{
-
-                              try {{
-                                  String fileName = URLUtil.guessFileName(
-                                      url,
-                                      contentDisposition,
-                                      mimetype
-                                  );
-
-                                  DownloadManager.Request request =
-                                      new DownloadManager.Request(Uri.parse(url));
-
-                                  request.setTitle(fileName);
-                                  request.setDescription("Downloading " + fileName);
-                                  request.setNotificationVisibility(
-                                      DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED
-                                  );
-                                  request.setAllowedOverMetered(true);
-                                  request.setAllowedOverRoaming(true);
-                                  request.setVisibleInDownloadsUi(true);
-                                  request.setDestinationInExternalPublicDir(
-                                      Environment.DIRECTORY_DOWNLOADS,
-                                      fileName
-                                  );
-
-                                  if (mimetype != null &&
-                                      !mimetype.isEmpty()) {{
-                                      request.setMimeType(mimetype);
-                                  }}
-
-                                  if (userAgent != null &&
-                                      !userAgent.isEmpty()) {{
-                                      request.addRequestHeader(
-                                          "User-Agent",
-                                          userAgent
-                                      );
-                                  }}
-
-                                  String cookie =
-                                      CookieManager.getInstance().getCookie(url);
-
-                                  if (cookie != null &&
-                                      !cookie.isEmpty()) {{
-                                      request.addRequestHeader(
-                                          "Cookie",
-                                          cookie
-                                      );
-                                  }}
-
-                                  DownloadManager manager =
-                                      (DownloadManager)
-                                          getSystemService(
-                                              Context.DOWNLOAD_SERVICE
-                                          );
-
-                                  if (manager != null) {{
-                                      manager.enqueue(request);
-                                  }}
-
-                              }} catch (Exception e) {{
-                                  e.printStackTrace();
-                              }}
-                          }}
-                      }});
-                  }}
               }}
           }}
           '''
 
-          p.write_text(code)
+          p.write_text(s)
+          print("Native microphone permission configured.")
           PY
 
       - name: Sync Capacitor
