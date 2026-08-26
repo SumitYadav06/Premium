@@ -112,9 +112,16 @@ jobs:
           )
 
           p.write_text(s)
+
+          print("Permissions configured:")
+          for perm in permissions:
+              print(" -", perm)
           PY
 
-      - name: Create app icon
+      # ============================================================
+      # HIGH QUALITY ADAPTIVE APP ICON
+      # ============================================================
+      - name: Create high quality adaptive launcher icon
         run: |
           set -e
 
@@ -125,7 +132,6 @@ jobs:
 
           RES="android/app/src/main/res"
 
-          rm -rf "$RES/mipmap-anydpi"
           rm -rf "$RES/mipmap-anydpi-v26"
           rm -rf "$RES/drawable-nodpi"
 
@@ -137,6 +143,7 @@ jobs:
           mkdir -p "$RES/drawable-nodpi"
           mkdir -p "$RES/mipmap-anydpi-v26"
 
+          # Legacy icons
           convert app-icon.png -resize 48x48 \
             "$RES/mipmap-mdpi/ic_launcher.png"
 
@@ -167,9 +174,17 @@ jobs:
           cp "$RES/mipmap-xxxhdpi/ic_launcher.png" \
              "$RES/mipmap-xxxhdpi/ic_launcher_round.png"
 
+          # --------------------------------------------------
+          # ADAPTIVE ICON
+          # Keep the complete logo inside Android safe area.
+          # --------------------------------------------------
+
+          # Transparent 432x432 canvas
           convert -size 432x432 xc:none \
             "$RES/drawable-nodpi/ic_launcher_foreground.png"
 
+          # Put the complete original icon at 280x280
+          # in the exact center.
           convert app-icon.png \
             -resize 280x280 \
             "$RES/drawable-nodpi/icon_center.png"
@@ -180,9 +195,12 @@ jobs:
             "$RES/drawable-nodpi/ic_launcher_foreground.png" \
             "$RES/drawable-nodpi/ic_launcher_foreground.png"
 
+          # Transparent background.
+          # The actual complete logo is in the foreground.
           convert -size 432x432 xc:none \
             "$RES/drawable-nodpi/ic_launcher_background.png"
 
+          # Adaptive icon
           cat > "$RES/mipmap-anydpi-v26/ic_launcher.xml" <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
@@ -199,41 +217,13 @@ jobs:
           </adaptive-icon>
           EOF
 
-      - name: Configure launcher icon
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
+          echo "Safe-area adaptive icon created successfully."
 
-          p = Path("android/app/src/main/AndroidManifest.xml")
-          s = p.read_text()
+      # ============================================================
+      # MICROPHONE - KEEP WORKING CONFIGURATION
+      # ============================================================
 
-          s = re.sub(
-              r'\s*android:icon="[^"]*"',
-              '',
-              s,
-              count=1
-          )
-
-          s = re.sub(
-              r'\s*android:roundIcon="[^"]*"',
-              '',
-              s,
-              count=1
-          )
-
-          s = s.replace(
-              "<application",
-              '<application '
-              'android:icon="@mipmap/ic_launcher" '
-              'android:roundIcon="@mipmap/ic_launcher_round"',
-              1
-          )
-
-          p.write_text(s)
-          PY
-
-      - name: Configure MainActivity
+      - name: Add native microphone startup permission
         run: |
           MAIN_ACTIVITY=$(find android/app/src/main/java -name "MainActivity.java" | head -n 1)
 
@@ -242,16 +232,19 @@ jobs:
             exit 1
           fi
 
+          echo "MainActivity: $MAIN_ACTIVITY"
+
           python3 - "$MAIN_ACTIVITY" <<'PY'
           from pathlib import Path
           import sys
           import re
 
           p = Path(sys.argv[1])
+          s = p.read_text()
 
           package_match = re.search(
               r'^\s*package\s+([^;]+);',
-              p.read_text(),
+              s,
               re.MULTILINE
           )
 
@@ -260,63 +253,24 @@ jobs:
 
           package_name = package_match.group(1)
 
-          p.write_text(f'''package {package_name};
+          s = f'''package {package_name};
 
           import android.Manifest;
-          import android.app.DownloadManager;
-          import android.content.Context;
-          import android.content.pm.PackageManager;
-          import android.net.Uri;
-          import android.os.Build;
           import android.os.Bundle;
-          import android.os.Environment;
-          import android.webkit.CookieManager;
-          import android.webkit.DownloadListener;
-          import android.webkit.URLUtil;
-          import android.webkit.WebView;
-
           import androidx.core.app.ActivityCompat;
-
           import com.getcapacitor.BridgeActivity;
 
           public class MainActivity extends BridgeActivity {{
 
               private static final int MICROPHONE_PERMISSION_CODE = 1001;
-              private static final int STORAGE_PERMISSION_CODE = 1002;
 
               @Override
               public void onCreate(Bundle savedInstanceState) {{
                   super.onCreate(savedInstanceState);
 
-                  requestPermissionsIfNeeded();
-
-                  WebView webView = getBridge().getWebView();
-
-                  if (webView != null) {{
-                      webView.setDownloadListener(new DownloadListener() {{
-                          @Override
-                          public void onDownloadStart(
-                                  String url,
-                                  String userAgent,
-                                  String contentDisposition,
-                                  String mimetype,
-                                  long contentLength) {{
-
-                              startDownload(
-                                  url,
-                                  userAgent,
-                                  contentDisposition,
-                                  mimetype
-                              );
-                          }}
-                      }});
-                  }}
-              }}
-
-              private void requestPermissionsIfNeeded() {{
-                  if (Build.VERSION.SDK_INT >= 23 &&
+                  if (android.os.Build.VERSION.SDK_INT >= 23 &&
                       checkSelfPermission(Manifest.permission.RECORD_AUDIO)
-                          != PackageManager.PERMISSION_GRANTED) {{
+                          != android.content.pm.PackageManager.PERMISSION_GRANTED) {{
 
                       ActivityCompat.requestPermissions(
                           this,
@@ -327,133 +281,62 @@ jobs:
                           MICROPHONE_PERMISSION_CODE
                       );
                   }}
-
-                  if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P &&
-                      checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                          != PackageManager.PERMISSION_GRANTED) {{
-
-                      ActivityCompat.requestPermissions(
-                          this,
-                          new String[] {{
-                              Manifest.permission.WRITE_EXTERNAL_STORAGE
-                          }},
-                          STORAGE_PERMISSION_CODE
-                      );
-                  }}
-              }}
-
-              private void startDownload(
-                      String url,
-                      String userAgent,
-                      String contentDisposition,
-                      String mimetype) {{
-
-                  try {{
-                      Uri uri = Uri.parse(url);
-
-                      String fileName = URLUtil.guessFileName(
-                          url,
-                          contentDisposition,
-                          mimetype
-                      );
-
-                      if (fileName == null || fileName.trim().isEmpty()) {{
-                          fileName = "download";
-                      }}
-
-                      fileName = fileName.replaceAll(
-                          "[\\\\\\\\/:*?\\\"<>|]",
-                          "_"
-                      );
-
-                      DownloadManager.Request request =
-                          new DownloadManager.Request(uri);
-
-                      request.setTitle(fileName);
-                      request.setDescription("Downloading " + fileName);
-
-                      if (mimetype != null &&
-                          !mimetype.trim().isEmpty()) {{
-                          request.setMimeType(mimetype);
-                      }}
-
-                      if (userAgent != null &&
-                          !userAgent.trim().isEmpty()) {{
-                          request.addRequestHeader(
-                              "User-Agent",
-                              userAgent
-                          );
-                      }}
-
-                      String cookie =
-                          CookieManager.getInstance().getCookie(url);
-
-                      if (cookie != null &&
-                          !cookie.trim().isEmpty()) {{
-                          request.addRequestHeader(
-                              "Cookie",
-                              cookie
-                          );
-                      }}
-
-                      request.setAllowedOverMetered(true);
-                      request.setAllowedOverRoaming(true);
-
-                      request.setNotificationVisibility(
-                          DownloadManager.Request
-                              .VISIBILITY_VISIBLE_NOTIFY_COMPLETED
-                      );
-
-                      request.setVisibleInDownloadsUi(true);
-
-                      request.setDestinationInExternalPublicDir(
-                          Environment.DIRECTORY_DOWNLOADS,
-                          fileName
-                      );
-
-                      DownloadManager manager =
-                          (DownloadManager)
-                              getSystemService(
-                                  Context.DOWNLOAD_SERVICE
-                              );
-
-                      if (manager != null) {{
-                          manager.enqueue(request);
-                      }}
-
-                  }} catch (Exception e) {{
-                      e.printStackTrace();
-                  }}
               }}
           }}
-          ''')
-
-          print("Microphone and native download handling configured.")
-          PY
-
-      - name: Add legacy storage permission
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          p = Path("android/app/src/main/AndroidManifest.xml")
-          s = p.read_text()
-
-          permission = '    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />'
-
-          if permission not in s:
-              s = s.replace(
-                  "<application",
-                  permission + "\n\n    <application",
-                  1
-              )
+          '''
 
           p.write_text(s)
+          print("Native microphone permission configured.")
           PY
 
       - name: Sync Capacitor
         run: |
           npx cap sync android
+
+      # ============================================================
+      # VERIFY EVERYTHING
+      # ============================================================
+
+      - name: Verify Android configuration
+        run: |
+          echo "================================"
+          echo "ANDROID PERMISSIONS"
+          echo "================================"
+
+          grep -n "RECORD_AUDIO" \
+            android/app/src/main/AndroidManifest.xml || true
+
+          grep -n "MODIFY_AUDIO_SETTINGS" \
+            android/app/src/main/AndroidManifest.xml || true
+
+          echo "================================"
+          echo "LAUNCHER ICON"
+          echo "================================"
+
+          grep -n "android:icon" \
+            android/app/src/main/AndroidManifest.xml || true
+
+          grep -n "android:roundIcon" \
+            android/app/src/main/AndroidManifest.xml || true
+
+          echo "================================"
+          echo "ICON FILES"
+          echo "================================"
+
+          find android/app/src/main/res \
+            -type f \
+            \( \
+              -name "ic_launcher.png" \
+              -o -name "ic_launcher.xml" \
+              -o -name "ic_launcher_round.xml" \
+              -o -name "ic_launcher_background.png" \
+              -o -name "ic_launcher_foreground.png" \
+            \) \
+            -print
+
+      # ============================================================
+      # BUILD APK
+      # ============================================================
 
       - name: Build APK
         run: |
