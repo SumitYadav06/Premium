@@ -112,17 +112,9 @@ jobs:
           )
 
           p.write_text(s)
-
-          print("Permissions configured:")
-          for perm in permissions:
-              print(" -", perm)
           PY
 
-      # ============================================================
-      # HIGH QUALITY ADAPTIVE APP ICON
-      # ============================================================
-
-      - name: Create high quality adaptive launcher icon
+      - name: Set app icon
         run: |
           set -e
 
@@ -133,24 +125,17 @@ jobs:
 
           RES="android/app/src/main/res"
 
-          # Remove automatically generated launcher resources
           rm -rf "$RES/mipmap-anydpi"
           rm -rf "$RES/mipmap-anydpi-v26"
+          rm -rf "$RES/drawable-nodpi"
 
           mkdir -p "$RES/mipmap-mdpi"
           mkdir -p "$RES/mipmap-hdpi"
           mkdir -p "$RES/mipmap-xhdpi"
           mkdir -p "$RES/mipmap-xxhdpi"
           mkdir -p "$RES/mipmap-xxxhdpi"
-
-          mkdir -p "$RES/drawable-nodpi"
           mkdir -p "$RES/mipmap-anydpi-v26"
-          mkdir -p "$RES/values"
-
-          # ----------------------------------------------------------
-          # Legacy launcher icons
-          # High resolution PNGs
-          # ----------------------------------------------------------
+          mkdir -p "$RES/drawable-nodpi"
 
           convert app-icon.png -resize 48x48 \
             "$RES/mipmap-mdpi/ic_launcher.png"
@@ -182,48 +167,37 @@ jobs:
           cp "$RES/mipmap-xxxhdpi/ic_launcher.png" \
              "$RES/mipmap-xxxhdpi/ic_launcher_round.png"
 
-          # ----------------------------------------------------------
-          # Adaptive icon background
-          # Use the original artwork as the full background.
-          # This prevents the launcher from shrinking the complete logo.
-          # ----------------------------------------------------------
-
-          convert app-icon.png \
-            -resize 432x432^ \
-            -gravity center \
-            -extent 432x432 \
-            "$RES/drawable-nodpi/ic_launcher_background.png"
-
-          # ----------------------------------------------------------
-          # Transparent foreground
-          # Kept transparent because the complete high-quality artwork
-          # is already used as the adaptive background.
-          # ----------------------------------------------------------
-
           convert -size 432x432 xc:none \
             "$RES/drawable-nodpi/ic_launcher_foreground.png"
 
-          # ----------------------------------------------------------
-          # Adaptive icon XML
-          # ----------------------------------------------------------
+          convert app-icon.png \
+            -resize 280x280 \
+            "$RES/drawable-nodpi/icon_center.png"
+
+          composite \
+            -gravity center \
+            "$RES/drawable-nodpi/icon_center.png" \
+            "$RES/drawable-nodpi/ic_launcher_foreground.png" \
+            "$RES/drawable-nodpi/ic_launcher_foreground.png"
+
+          convert -size 432x432 xc:none \
+            "$RES/drawable-nodpi/ic_launcher_background.png"
 
           cat > "$RES/mipmap-anydpi-v26/ic_launcher.xml" <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-              <background android:drawable="@drawable/ic_launcher_background" />
-              <foreground android:drawable="@drawable/ic_launcher_foreground" />
+              <background android:drawable="@drawable/ic_launcher_background"/>
+              <foreground android:drawable="@drawable/ic_launcher_foreground"/>
           </adaptive-icon>
           EOF
 
           cat > "$RES/mipmap-anydpi-v26/ic_launcher_round.xml" <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-              <background android:drawable="@drawable/ic_launcher_background" />
-              <foreground android:drawable="@drawable/ic_launcher_foreground" />
+              <background android:drawable="@drawable/ic_launcher_background"/>
+              <foreground android:drawable="@drawable/ic_launcher_foreground"/>
           </adaptive-icon>
           EOF
-
-          echo "High quality adaptive icon created."
 
       - name: Configure launcher icon
         run: |
@@ -234,7 +208,6 @@ jobs:
           p = Path("android/app/src/main/AndroidManifest.xml")
           s = p.read_text()
 
-          # Remove existing launcher icon attributes
           s = re.sub(
               r'\s*android:icon="[^"]*"',
               '',
@@ -249,7 +222,6 @@ jobs:
               count=1
           )
 
-          # Add our adaptive launcher icon
           s = s.replace(
               "<application",
               '<application '
@@ -259,13 +231,7 @@ jobs:
           )
 
           p.write_text(s)
-
-          print("Adaptive launcher icon configured.")
           PY
-
-      # ============================================================
-      # MICROPHONE - KEEP WORKING CONFIGURATION
-      # ============================================================
 
       - name: Add native microphone startup permission
         run: |
@@ -276,19 +242,16 @@ jobs:
             exit 1
           fi
 
-          echo "MainActivity: $MAIN_ACTIVITY"
-
           python3 - "$MAIN_ACTIVITY" <<'PY'
           from pathlib import Path
           import sys
           import re
 
           p = Path(sys.argv[1])
-          s = p.read_text()
 
           package_match = re.search(
               r'^\s*package\s+([^;]+);',
-              s,
+              p.read_text(),
               re.MULTILINE
           )
 
@@ -297,7 +260,7 @@ jobs:
 
           package_name = package_match.group(1)
 
-          s = f'''package {package_name};
+          p.write_text(f'''package {package_name};
 
           import android.Manifest;
           import android.os.Bundle;
@@ -327,60 +290,12 @@ jobs:
                   }}
               }}
           }}
-          '''
-
-          p.write_text(s)
-          print("Native microphone permission configured.")
+          ''')
           PY
 
       - name: Sync Capacitor
         run: |
           npx cap sync android
-
-      # ============================================================
-      # VERIFY EVERYTHING
-      # ============================================================
-
-      - name: Verify Android configuration
-        run: |
-          echo "================================"
-          echo "ANDROID PERMISSIONS"
-          echo "================================"
-
-          grep -n "RECORD_AUDIO" \
-            android/app/src/main/AndroidManifest.xml || true
-
-          grep -n "MODIFY_AUDIO_SETTINGS" \
-            android/app/src/main/AndroidManifest.xml || true
-
-          echo "================================"
-          echo "LAUNCHER ICON"
-          echo "================================"
-
-          grep -n "android:icon" \
-            android/app/src/main/AndroidManifest.xml || true
-
-          grep -n "android:roundIcon" \
-            android/app/src/main/AndroidManifest.xml || true
-
-          echo "================================"
-          echo "ICON FILES"
-          echo "================================"
-
-          find android/app/src/main/res \
-            -type f \
-            \( \
-              -name "ic_launcher.png" \
-              -o -name "ic_launcher.xml" \
-              -o -name "ic_launcher_round.xml" \
-              -o -name "ic_launcher_background.png" \
-              -o -name "ic_launcher_foreground.png" \
-            \) \
-            -print
-
-      # ============================================================
-      # BUILD APK
-      # ============================================================
 
       - name: Build APK
         run: |
