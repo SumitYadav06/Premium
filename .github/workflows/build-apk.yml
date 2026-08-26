@@ -121,7 +121,6 @@ jobs:
       # ============================================================
       # HIGH QUALITY ADAPTIVE APP ICON
       # ============================================================
-
       - name: Create high quality adaptive launcher icon
         run: |
           set -e
@@ -133,25 +132,18 @@ jobs:
 
           RES="android/app/src/main/res"
 
-          # Remove automatically generated launcher resources
-          rm -rf "$RES/mipmap-anydpi"
           rm -rf "$RES/mipmap-anydpi-v26"
+          rm -rf "$RES/drawable-nodpi"
 
           mkdir -p "$RES/mipmap-mdpi"
           mkdir -p "$RES/mipmap-hdpi"
           mkdir -p "$RES/mipmap-xhdpi"
           mkdir -p "$RES/mipmap-xxhdpi"
           mkdir -p "$RES/mipmap-xxxhdpi"
-
           mkdir -p "$RES/drawable-nodpi"
           mkdir -p "$RES/mipmap-anydpi-v26"
-          mkdir -p "$RES/values"
 
-          # ----------------------------------------------------------
-          # Legacy launcher icons
-          # High resolution PNGs
-          # ----------------------------------------------------------
-
+          # Legacy icons
           convert app-icon.png -resize 48x48 \
             "$RES/mipmap-mdpi/ic_launcher.png"
 
@@ -182,86 +174,50 @@ jobs:
           cp "$RES/mipmap-xxxhdpi/ic_launcher.png" \
              "$RES/mipmap-xxxhdpi/ic_launcher_round.png"
 
-          # ----------------------------------------------------------
-          # Adaptive icon background
-          # Use the original artwork as the full background.
-          # This prevents the launcher from shrinking the complete logo.
-          # ----------------------------------------------------------
+          # --------------------------------------------------
+          # ADAPTIVE ICON
+          # Keep the complete logo inside Android safe area.
+          # --------------------------------------------------
 
-          convert app-icon.png \
-            -resize 432x432^ \
-            -gravity center \
-            -extent 432x432 \
-            "$RES/drawable-nodpi/ic_launcher_background.png"
-
-          # ----------------------------------------------------------
-          # Transparent foreground
-          # Kept transparent because the complete high-quality artwork
-          # is already used as the adaptive background.
-          # ----------------------------------------------------------
-
+          # Transparent 432x432 canvas
           convert -size 432x432 xc:none \
             "$RES/drawable-nodpi/ic_launcher_foreground.png"
 
-          # ----------------------------------------------------------
-          # Adaptive icon XML
-          # ----------------------------------------------------------
+          # Put the complete original icon at 280x280
+          # in the exact center.
+          convert app-icon.png \
+            -resize 280x280 \
+            "$RES/drawable-nodpi/icon_center.png"
 
+          composite \
+            -gravity center \
+            "$RES/drawable-nodpi/icon_center.png" \
+            "$RES/drawable-nodpi/ic_launcher_foreground.png" \
+            "$RES/drawable-nodpi/ic_launcher_foreground.png"
+
+          # Transparent background.
+          # The actual complete logo is in the foreground.
+          convert -size 432x432 xc:none \
+            "$RES/drawable-nodpi/ic_launcher_background.png"
+
+          # Adaptive icon
           cat > "$RES/mipmap-anydpi-v26/ic_launcher.xml" <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-              <background android:drawable="@drawable/ic_launcher_background" />
-              <foreground android:drawable="@drawable/ic_launcher_foreground" />
+              <background android:drawable="@drawable/ic_launcher_background"/>
+              <foreground android:drawable="@drawable/ic_launcher_foreground"/>
           </adaptive-icon>
           EOF
 
           cat > "$RES/mipmap-anydpi-v26/ic_launcher_round.xml" <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-              <background android:drawable="@drawable/ic_launcher_background" />
-              <foreground android:drawable="@drawable/ic_launcher_foreground" />
+              <background android:drawable="@drawable/ic_launcher_background"/>
+              <foreground android:drawable="@drawable/ic_launcher_foreground"/>
           </adaptive-icon>
           EOF
 
-          echo "High quality adaptive icon created."
-
-      - name: Configure launcher icon
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-
-          p = Path("android/app/src/main/AndroidManifest.xml")
-          s = p.read_text()
-
-          # Remove existing launcher icon attributes
-          s = re.sub(
-              r'\s*android:icon="[^"]*"',
-              '',
-              s,
-              count=1
-          )
-
-          s = re.sub(
-              r'\s*android:roundIcon="[^"]*"',
-              '',
-              s,
-              count=1
-          )
-
-          # Add our adaptive launcher icon
-          s = s.replace(
-              "<application",
-              '<application '
-              'android:icon="@mipmap/ic_launcher" '
-              'android:roundIcon="@mipmap/ic_launcher_round"',
-              1
-          )
-
-          p.write_text(s)
-
-          print("Adaptive launcher icon configured.")
-          PY
+          echo "Safe-area adaptive icon created successfully."
 
       # ============================================================
       # MICROPHONE - KEEP WORKING CONFIGURATION
