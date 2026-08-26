@@ -1,5 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { X, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 
 interface ScreenshotLightboxProps {
@@ -9,26 +8,6 @@ interface ScreenshotLightboxProps {
   onClose: () => void;
 }
 
-const slideVariants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? 180 : -180,
-    opacity: 0,
-    scale: 0.98
-  }),
-  center: {
-    zIndex: 1,
-    x: 0,
-    opacity: 1,
-    scale: 1
-  },
-  exit: (direction: number) => ({
-    zIndex: 0,
-    x: direction < 0 ? 180 : -180,
-    opacity: 0,
-    scale: 0.98
-  })
-};
-
 export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
   images,
   initialIndex,
@@ -36,15 +15,24 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
   onClose
 }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
-  const [direction, setDirection] = useState(0);
-  const [isSwiping, setIsSwiping] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
-  // Sync initial index and preload images when opened
+  const touchStartXRef = useRef(0);
+  const touchStartYRef = useRef(0);
+  const touchCurrentXRef = useRef(0);
+  const touchStartTimeRef = useRef(0);
+
+  // Sync initial index and preload all screenshots immediately
   useEffect(() => {
     if (isOpen) {
       setCurrentIndex(initialIndex);
-      setDirection(0);
-      // Preload all images for instant switching without network wait
+      setDragOffset(0);
+      setIsDragging(false);
+      setIsTransitioning(false);
+
+      // Preload images into browser memory cache for instantaneous switching
       images.forEach((src) => {
         if (src) {
           const img = new Image();
@@ -54,30 +42,31 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
     }
   }, [initialIndex, isOpen, images]);
 
-  const goToNext = () => {
-    if (images.length <= 1 || isSwiping) return;
-    setIsSwiping(true);
-    setDirection(1);
+  const goToNext = useCallback(() => {
+    if (images.length <= 1) return;
+    setIsTransitioning(true);
+    setDragOffset(0);
     setCurrentIndex((prev) => (prev + 1) % images.length);
-    setTimeout(() => setIsSwiping(false), 120);
-  };
+    setTimeout(() => setIsTransitioning(false), 200);
+  }, [images.length]);
 
-  const goToPrev = () => {
-    if (images.length <= 1 || isSwiping) return;
-    setIsSwiping(true);
-    setDirection(-1);
+  const goToPrev = useCallback(() => {
+    if (images.length <= 1) return;
+    setIsTransitioning(true);
+    setDragOffset(0);
     setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
-    setTimeout(() => setIsSwiping(false), 120);
-  };
+    setTimeout(() => setIsTransitioning(false), 200);
+  }, [images.length]);
 
   const goToIndex = (targetIdx: number) => {
-    if (targetIdx === currentIndex || isSwiping) return;
-    setIsSwiping(true);
-    setDirection(targetIdx > currentIndex ? 1 : -1);
+    if (targetIdx === currentIndex) return;
+    setIsTransitioning(true);
+    setDragOffset(0);
     setCurrentIndex(targetIdx);
-    setTimeout(() => setIsSwiping(false), 120);
+    setTimeout(() => setIsTransitioning(false), 200);
   };
 
+  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpen) return;
@@ -87,138 +76,174 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, images.length, currentIndex, isSwiping]);
+  }, [isOpen, goToNext, goToPrev, onClose]);
+
+  // Touch Swipe Handlers (Smooth native 60fps gesture without animation fighting)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (images.length <= 1) return;
+    const touch = e.touches[0];
+    touchStartXRef.current = touch.clientX;
+    touchStartYRef.current = touch.clientY;
+    touchCurrentXRef.current = touch.clientX;
+    touchStartTimeRef.current = Date.now();
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || images.length <= 1) return;
+    const touch = e.touches[0];
+    const diffX = touch.clientX - touchStartXRef.current;
+    const diffY = touch.clientY - touchStartYRef.current;
+
+    // Prevent gesture conflict if vertical scroll intent
+    if (Math.abs(diffX) > Math.abs(diffY)) {
+      touchCurrentXRef.current = touch.clientX;
+      // Damped drag resistance
+      setDragOffset(diffX * 0.75);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging || images.length <= 1) {
+      setIsDragging(false);
+      setDragOffset(0);
+      return;
+    }
+
+    const diffX = touchCurrentXRef.current - touchStartXRef.current;
+    const timeTaken = Date.now() - touchStartTimeRef.current;
+    const velocity = Math.abs(diffX) / Math.max(timeTaken, 1);
+
+    setIsDragging(false);
+
+    // Fast swipe velocity or distance threshold (> 40px)
+    if (diffX < -40 || (diffX < -15 && velocity > 0.3)) {
+      goToNext();
+    } else if (diffX > 40 || (diffX > 15 && velocity > 0.3)) {
+      goToPrev();
+    } else {
+      // Snap back smoothly
+      setDragOffset(0);
+    }
+  };
 
   if (!isOpen || images.length === 0) return null;
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[9000] bg-black/95 backdrop-blur-2xl flex flex-col justify-between p-3 sm:p-5 select-none"
-      >
-        {/* Header Bar */}
-        <div className="flex items-center justify-between text-white pb-3 border-b border-white/10">
-          <div className="flex items-center gap-2">
-            <span className="text-xs uppercase font-black text-slate-300 tracking-wider">
-              Screenshot {currentIndex + 1} / {images.length}
-            </span>
-            <span className="text-[10px] bg-gradient-to-r from-purple-600/40 to-pink-600/40 text-purple-200 border border-purple-500/40 px-2.5 py-0.5 rounded-full font-black flex items-center gap-1">
-              <Sparkles className="w-2.5 h-2.5 text-amber-300" />
-              <span>HD Preview</span>
-            </span>
-          </div>
-
-          {/* Close Button */}
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition active:scale-95 cursor-pointer"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
+    <div
+      className="fixed inset-0 z-[9000] bg-black/95 backdrop-blur-xl flex flex-col justify-between p-3 sm:p-5 select-none animate-fade-in"
+      style={{ WebkitUserSelect: 'none' }}
+    >
+      {/* Top Header Bar */}
+      <div className="flex items-center justify-between text-white pb-3 border-b border-white/10">
+        <div className="flex items-center gap-2">
+          <span className="text-xs uppercase font-black text-slate-300 tracking-wider">
+            Screenshot {currentIndex + 1} / {images.length}
+          </span>
+          <span className="text-[10px] bg-gradient-to-r from-purple-600/40 to-pink-600/40 text-purple-200 border border-purple-500/40 px-2.5 py-0.5 rounded-full font-black flex items-center gap-1">
+            <Sparkles className="w-2.5 h-2.5 text-amber-300" />
+            <span>HD Preview</span>
+          </span>
         </div>
 
-        {/* Main Image Stage with Ultra-Smooth Single-Image Gesture Drag */}
-        <div className="relative flex-1 flex items-center justify-center overflow-hidden py-3">
-          {/* Previous Arrow Button */}
-          {images.length > 1 && (
-            <button
-              onClick={goToPrev}
-              className="absolute left-2 sm:left-6 z-20 p-3 rounded-full bg-black/60 hover:bg-purple-600 text-white border border-white/20 backdrop-blur-md transition active:scale-90 shadow-2xl cursor-pointer"
-              aria-label="Previous Screenshot"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-          )}
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition active:scale-95 cursor-pointer"
+          aria-label="Close Preview"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
 
-          {/* Single Draggable & Animated Screenshot */}
-          <AnimatePresence initial={false} custom={direction}>
-            <motion.div
-              key={currentIndex}
-              custom={direction}
-              variants={slideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{
-                x: { type: 'spring', stiffness: 450, damping: 32 },
-                opacity: { duration: 0.12 }
-              }}
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.3}
-              onDragEnd={(_, { offset, velocity }) => {
-                const threshold = 30;
-                if (offset.x < -threshold || velocity.x < -150) {
-                  goToNext(); // Single next screenshot
-                } else if (offset.x > threshold || velocity.x > 150) {
-                  goToPrev(); // Single prev screenshot
-                }
-              }}
-              className="w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing touch-none"
+      {/* Main Image Stage */}
+      <div
+        className="relative flex-1 flex items-center justify-center overflow-hidden py-3 touch-pan-y"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Previous Arrow */}
+        {images.length > 1 && (
+          <button
+            onClick={goToPrev}
+            className="absolute left-2 sm:left-6 z-30 p-3 rounded-full bg-black/60 hover:bg-purple-600 text-white border border-white/20 backdrop-blur-md transition hover:scale-105 active:scale-95 shadow-2xl cursor-pointer"
+            aria-label="Previous Screenshot"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+        )}
+
+        {/* Display Current Image with 60fps Hardware-Accelerated Smooth Transition */}
+        <div
+          className="w-full h-full flex items-center justify-center pointer-events-none"
+          style={{
+            transform: `translate3d(${dragOffset}px, 0, 0)`,
+            transition: isDragging
+              ? 'none'
+              : 'transform 0.18s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.15s ease',
+            opacity: isTransitioning ? 0.85 : 1,
+            willChange: 'transform, opacity'
+          }}
+        >
+          <img
+            key={currentIndex}
+            src={images[currentIndex] || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80"}
+            alt={`Screenshot ${currentIndex + 1}`}
+            decoding="async"
+            loading="eager"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src =
+                'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80';
+            }}
+            className="max-w-full max-h-[68vh] sm:max-h-[75vh] object-contain rounded-2xl shadow-2xl border border-white/10"
+          />
+        </div>
+
+        {/* Next Arrow */}
+        {images.length > 1 && (
+          <button
+            onClick={goToNext}
+            className="absolute right-2 sm:right-6 z-30 p-3 rounded-full bg-black/60 hover:bg-purple-600 text-white border border-white/20 backdrop-blur-md transition hover:scale-105 active:scale-95 shadow-2xl cursor-pointer"
+            aria-label="Next Screenshot"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
+        )}
+      </div>
+
+      {/* Swipe Hint & Thumbnails */}
+      <div className="flex flex-col items-center gap-2">
+        {images.length > 1 && (
+          <div className="flex items-center gap-1.5 py-1 px-3.5 rounded-full bg-white/5 border border-white/10 text-[11px] font-medium text-slate-400">
+            <ChevronLeft className="w-3 h-3 text-purple-400" />
+            <span>Swipe or click arrows to browse</span>
+            <ChevronRight className="w-3 h-3 text-purple-400" />
+          </div>
+        )}
+
+        {/* Thumbnails */}
+        <div className="flex justify-center gap-2 overflow-x-auto py-1.5 max-w-full scrollbar-none">
+          {images.map((img, i) => (
+            <button
+              key={i}
+              onClick={() => goToIndex(i)}
+              className={`w-12 sm:w-14 h-16 sm:h-20 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 cursor-pointer ${
+                currentIndex === i
+                  ? 'border-purple-500 scale-105 shadow-lg shadow-purple-500/50 opacity-100 ring-2 ring-purple-400/40'
+                  : 'border-white/10 opacity-40 hover:opacity-90'
+              }`}
             >
               <img
-                src={images[currentIndex] || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80"}
-                alt={`Screenshot ${currentIndex + 1}`}
-                decoding="async"
+                src={img || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}
+                alt={`Thumb ${i + 1}`}
+                className="w-full h-full object-cover"
                 loading="eager"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src =
-                    'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80';
-                }}
-                className="max-w-full max-h-[68vh] sm:max-h-[75vh] object-contain rounded-2xl shadow-2xl border border-white/10 pointer-events-none"
               />
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Next Arrow Button */}
-          {images.length > 1 && (
-            <button
-              onClick={goToNext}
-              className="absolute right-2 sm:right-6 z-20 p-3 rounded-full bg-black/60 hover:bg-purple-600 text-white border border-white/20 backdrop-blur-md transition active:scale-90 shadow-2xl cursor-pointer"
-              aria-label="Next Screenshot"
-            >
-              <ChevronRight className="w-6 h-6" />
             </button>
-          )}
+          ))}
         </div>
-
-        {/* Swipe Hint & Thumbnails */}
-        <div className="flex flex-col items-center gap-2">
-          {images.length > 1 && (
-            <div className="flex items-center gap-1.5 py-1 px-3.5 rounded-full bg-white/5 border border-white/10 text-[11px] font-medium text-slate-400">
-              <ChevronLeft className="w-3 h-3 text-purple-400 animate-pulse" />
-              <span>Swipe left or right (1 by 1)</span>
-              <ChevronRight className="w-3 h-3 text-purple-400 animate-pulse" />
-            </div>
-          )}
-
-          {/* Thumbnail Strip */}
-          <div className="flex justify-center gap-2 overflow-x-auto py-1.5 max-w-full scrollbar-none">
-            {images.map((img, i) => (
-              <button
-                key={i}
-                onClick={() => goToIndex(i)}
-                className={`w-12 sm:w-14 h-16 sm:h-20 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 cursor-pointer ${
-                  currentIndex === i
-                    ? 'border-purple-500 scale-105 shadow-lg shadow-purple-500/50 opacity-100 ring-2 ring-purple-400/40'
-                    : 'border-white/10 opacity-40 hover:opacity-90'
-                }`}
-              >
-                <img
-                  src={img || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}
-                  alt="thumb"
-                  className="w-full h-full object-cover"
-                />
-              </button>
-            ))}
-          </div>
-        </div>
-      </motion.div>
-    </AnimatePresence>
+      </div>
+    </div>
   );
 };
-
