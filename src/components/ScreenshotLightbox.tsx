@@ -18,11 +18,19 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [panPosition, setPanPosition] = useState({ x: 0, y: 0 });
 
   const touchStartXRef = useRef(0);
   const touchStartYRef = useRef(0);
   const touchCurrentXRef = useRef(0);
   const touchStartTimeRef = useRef(0);
+
+  const touchStartDistRef = useRef<number>(0);
+  const touchStartZoomRef = useRef<number>(1);
+  const touchStartCenterRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const touchStartPanRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const lastTapTimeRef = useRef<number>(0);
 
   // Sync initial index and preload all screenshots immediately
   useEffect(() => {
@@ -31,6 +39,8 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
       setDragOffset(0);
       setIsDragging(false);
       setIsTransitioning(false);
+      setZoomLevel(1);
+      setPanPosition({ x: 0, y: 0 });
 
       // Preload images into browser memory cache for instantaneous switching
       images.forEach((src) => {
@@ -42,24 +52,33 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
     }
   }, [initialIndex, isOpen, images]);
 
+  const handleResetZoom = useCallback(() => {
+    setZoomLevel(1);
+    setPanPosition({ x: 0, y: 0 });
+    touchStartDistRef.current = 0;
+  }, []);
+
   const goToNext = useCallback(() => {
     if (images.length <= 1) return;
+    handleResetZoom();
     setIsTransitioning(true);
     setDragOffset(0);
     setCurrentIndex((prev) => (prev + 1) % images.length);
     setTimeout(() => setIsTransitioning(false), 200);
-  }, [images.length]);
+  }, [images.length, handleResetZoom]);
 
   const goToPrev = useCallback(() => {
     if (images.length <= 1) return;
+    handleResetZoom();
     setIsTransitioning(true);
     setDragOffset(0);
     setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
     setTimeout(() => setIsTransitioning(false), 200);
-  }, [images.length]);
+  }, [images.length, handleResetZoom]);
 
   const goToIndex = (targetIdx: number) => {
     if (targetIdx === currentIndex) return;
+    handleResetZoom();
     setIsTransitioning(true);
     setDragOffset(0);
     setCurrentIndex(targetIdx);
@@ -78,52 +97,123 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, goToNext, goToPrev, onClose]);
 
-  // Touch Swipe Handlers (Smooth native 60fps gesture without animation fighting)
+  // Touch & Pinch Handlers
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (images.length <= 1) return;
-    const touch = e.touches[0];
-    touchStartXRef.current = touch.clientX;
-    touchStartYRef.current = touch.clientY;
-    touchCurrentXRef.current = touch.clientX;
-    touchStartTimeRef.current = Date.now();
-    setIsDragging(true);
+    if (e.touches.length === 2) {
+      // 2-Finger Pinch start
+      setIsDragging(false);
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      touchStartDistRef.current = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+      touchStartZoomRef.current = zoomLevel;
+      touchStartPanRef.current = { ...panPosition };
+      touchStartCenterRef.current = {
+        x: (t1.clientX + t2.clientX) / 2,
+        y: (t1.clientY + t2.clientY) / 2
+      };
+    } else if (e.touches.length === 1) {
+      const now = Date.now();
+      if (now - lastTapTimeRef.current < 300) {
+        // Double tap zoom
+        if (zoomLevel > 1.05) {
+          handleResetZoom();
+        } else {
+          setZoomLevel(2.2);
+        }
+        lastTapTimeRef.current = 0;
+        return;
+      }
+      lastTapTimeRef.current = now;
+
+      if (zoomLevel > 1) {
+        // 1-finger pan when zoomed in
+        setIsDragging(true);
+        touchStartXRef.current = e.touches[0].clientX;
+        touchStartYRef.current = e.touches[0].clientY;
+        touchStartPanRef.current = { ...panPosition };
+      } else {
+        // 1-finger swipe to next/prev
+        if (images.length <= 1) return;
+        const touch = e.touches[0];
+        touchStartXRef.current = touch.clientX;
+        touchStartYRef.current = touch.clientY;
+        touchCurrentXRef.current = touch.clientX;
+        touchStartTimeRef.current = Date.now();
+        setIsDragging(true);
+      }
+    }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || images.length <= 1) return;
-    const touch = e.touches[0];
-    const diffX = touch.clientX - touchStartXRef.current;
-    const diffY = touch.clientY - touchStartYRef.current;
+    if (e.touches.length === 2) {
+      // 2-Finger Pinch scale & translation
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      const currentDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
 
-    // Prevent gesture conflict if vertical scroll intent
-    if (Math.abs(diffX) > Math.abs(diffY)) {
-      touchCurrentXRef.current = touch.clientX;
-      // Damped drag resistance
-      setDragOffset(diffX * 0.75);
+      if (touchStartDistRef.current > 0) {
+        const factor = currentDist / touchStartDistRef.current;
+        const newZoom = Math.min(Math.max(touchStartZoomRef.current * factor, 1), 4);
+        setZoomLevel(newZoom);
+
+        const currentCenter = {
+          x: (t1.clientX + t2.clientX) / 2,
+          y: (t1.clientY + t2.clientY) / 2
+        };
+        const dx = currentCenter.x - touchStartCenterRef.current.x;
+        const dy = currentCenter.y - touchStartCenterRef.current.y;
+        setPanPosition({
+          x: touchStartPanRef.current.x + dx,
+          y: touchStartPanRef.current.y + dy
+        });
+      }
+    } else if (e.touches.length === 1 && isDragging) {
+      if (zoomLevel > 1) {
+        const dx = e.touches[0].clientX - touchStartXRef.current;
+        const dy = e.touches[0].clientY - touchStartYRef.current;
+        setPanPosition({
+          x: touchStartPanRef.current.x + dx,
+          y: touchStartPanRef.current.y + dy
+        });
+      } else if (images.length > 1) {
+        const touch = e.touches[0];
+        const diffX = touch.clientX - touchStartXRef.current;
+        const diffY = touch.clientY - touchStartYRef.current;
+
+        if (Math.abs(diffX) > Math.abs(diffY)) {
+          touchCurrentXRef.current = touch.clientX;
+          setDragOffset(diffX * 0.75);
+        }
+      }
     }
   };
 
-  const handleTouchEnd = () => {
-    if (!isDragging || images.length <= 1) {
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (e.touches.length === 0) {
       setIsDragging(false);
-      setDragOffset(0);
-      return;
-    }
+      touchStartDistRef.current = 0;
 
-    const diffX = touchCurrentXRef.current - touchStartXRef.current;
-    const timeTaken = Date.now() - touchStartTimeRef.current;
-    const velocity = Math.abs(diffX) / Math.max(timeTaken, 1);
+      if (zoomLevel <= 1.05) {
+        handleResetZoom();
+        if (images.length > 1) {
+          const diffX = touchCurrentXRef.current - touchStartXRef.current;
+          const timeTaken = Date.now() - touchStartTimeRef.current;
+          const velocity = Math.abs(diffX) / Math.max(timeTaken, 1);
 
-    setIsDragging(false);
-
-    // Fast swipe velocity or distance threshold (> 40px)
-    if (diffX < -40 || (diffX < -15 && velocity > 0.3)) {
-      goToNext();
-    } else if (diffX > 40 || (diffX > 15 && velocity > 0.3)) {
-      goToPrev();
-    } else {
-      // Snap back smoothly
-      setDragOffset(0);
+          if (diffX < -40 || (diffX < -15 && velocity > 0.3)) {
+            goToNext();
+          } else if (diffX > 40 || (diffX > 15 && velocity > 0.3)) {
+            goToPrev();
+          } else {
+            setDragOffset(0);
+          }
+        }
+      }
+    } else if (e.touches.length === 1 && zoomLevel > 1) {
+      setIsDragging(true);
+      touchStartXRef.current = e.touches[0].clientX;
+      touchStartYRef.current = e.touches[0].clientY;
+      touchStartPanRef.current = { ...panPosition };
     }
   };
 
@@ -146,25 +236,36 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
           </span>
         </div>
 
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition active:scale-95 cursor-pointer"
-          aria-label="Close Preview"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        {/* Zoom Controls & Close Button */}
+        <div className="flex items-center gap-2">
+          {zoomLevel > 1 && (
+            <button
+              onClick={handleResetZoom}
+              className="px-2.5 py-1 rounded-xl bg-purple-900/60 hover:bg-purple-800 text-purple-200 text-xs font-bold transition cursor-pointer"
+            >
+              Reset ({Math.round(zoomLevel * 100)}%)
+            </button>
+          )}
+
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition active:scale-95 cursor-pointer"
+            aria-label="Close Preview"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* Main Image Stage */}
       <div
-        className="relative flex-1 flex items-center justify-center overflow-hidden py-3 touch-pan-y"
+        className="relative flex-1 flex items-center justify-center overflow-hidden py-3 touch-none select-none"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
         {/* Previous Arrow */}
-        {images.length > 1 && (
+        {images.length > 1 && zoomLevel <= 1 && (
           <button
             onClick={goToPrev}
             className="absolute left-2 sm:left-6 z-30 p-3 rounded-full bg-black/60 hover:bg-purple-600 text-white border border-white/20 backdrop-blur-md transition hover:scale-105 active:scale-95 shadow-2xl cursor-pointer"
@@ -174,14 +275,17 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
           </button>
         )}
 
-        {/* Display Current Image with 60fps Hardware-Accelerated Smooth Transition */}
+        {/* Display Current Image with 60fps Hardware-Accelerated Smooth Transition and Zoom/Pan */}
         <div
           className="w-full h-full flex items-center justify-center pointer-events-none"
           style={{
-            transform: `translate3d(${dragOffset}px, 0, 0)`,
+            transform: zoomLevel > 1
+              ? `translate3d(${panPosition.x}px, ${panPosition.y}px, 0) scale(${zoomLevel})`
+              : `translate3d(${dragOffset}px, 0, 0)`,
             transition: isDragging
               ? 'none'
               : 'transform 0.18s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.15s ease',
+            transformOrigin: 'center center',
             opacity: isTransitioning ? 0.85 : 1,
             willChange: 'transform, opacity'
           }}
@@ -196,12 +300,13 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
               (e.target as HTMLImageElement).src =
                 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80';
             }}
-            className="max-w-full max-h-[68vh] sm:max-h-[75vh] object-contain rounded-2xl shadow-2xl border border-white/10"
+            className="max-w-full max-h-[68vh] sm:max-h-[75vh] object-contain rounded-2xl shadow-2xl border border-white/10 select-none"
+            draggable={false}
           />
         </div>
 
         {/* Next Arrow */}
-        {images.length > 1 && (
+        {images.length > 1 && zoomLevel <= 1 && (
           <button
             onClick={goToNext}
             className="absolute right-2 sm:right-6 z-30 p-3 rounded-full bg-black/60 hover:bg-purple-600 text-white border border-white/20 backdrop-blur-md transition hover:scale-105 active:scale-95 shadow-2xl cursor-pointer"
@@ -212,12 +317,12 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
         )}
       </div>
 
-      {/* Swipe Hint & Thumbnails */}
+      {/* Swipe / Pinch Hint & Thumbnails */}
       <div className="flex flex-col items-center gap-2">
         {images.length > 1 && (
           <div className="flex items-center gap-1.5 py-1 px-3.5 rounded-full bg-white/5 border border-white/10 text-[11px] font-medium text-slate-400">
             <ChevronLeft className="w-3 h-3 text-purple-400" />
-            <span>Swipe or click arrows to browse</span>
+            <span>Pinch with 2 fingers to Zoom • Double tap • Swipe to browse</span>
             <ChevronRight className="w-3 h-3 text-purple-400" />
           </div>
         )}

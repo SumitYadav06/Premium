@@ -5,9 +5,7 @@ import {
   Sun,
   Moon,
   ShieldCheck,
-  MessageSquare,
-  Instagram,
-  Smartphone
+  Instagram
 } from 'lucide-react';
 import { STORE_CONFIG } from '../config';
 
@@ -18,7 +16,7 @@ interface NavbarProps {
   onOpenDownloads: () => void;
   onOpenBookmarks: () => void;
   onOpenInstallGuide?: () => void;
-  onOpenRequestApp: () => void;
+  onOpenRequestApp?: () => void;
   onOpenStoreApk?: () => void;
   bookmarksCount: number;
   downloadsCount: number;
@@ -33,8 +31,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenOwner,
   onOpenDownloads,
   onOpenBookmarks,
-  onOpenRequestApp,
-  onOpenStoreApk,
   bookmarksCount,
   downloadsCount,
   selectedApp,
@@ -88,20 +84,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right: Quick Action Buttons */}
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Request App Button */}
-          <button
-            onClick={onOpenRequestApp}
-            className={`flex items-center gap-1.5 h-9 sm:h-10 px-2.5 sm:px-3 rounded-xl border text-xs font-bold transition cursor-pointer ${
-              theme === 'dark'
-                ? 'bg-purple-950/40 border-purple-800/50 hover:bg-purple-900/50 text-purple-300'
-                : 'bg-purple-50 border-purple-200 hover:bg-purple-100 text-purple-700'
-            }`}
-            title="Request a new VIP APK or Mod"
-          >
-            <MessageSquare className="w-4 h-4 text-purple-400" />
-            <span className="hidden xs:inline sm:inline">Request App</span>
-          </button>
-
           {/* Bookmarks / Saved Button */}
           <button
             onClick={onOpenBookmarks}

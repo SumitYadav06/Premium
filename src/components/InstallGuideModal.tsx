@@ -97,6 +97,10 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
 
   const panStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const initialPanRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const touchStartDistRef = useRef<number>(0);
+  const touchStartZoomRef = useRef<number>(1);
+  const touchStartCenterRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const lastTapTimeRef = useRef<number>(0);
   const currentItem = GUIDE_ITEMS[activeTab];
 
   // Preload all guide images
@@ -113,6 +117,7 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
   const handleResetZoom = useCallback(() => {
     setZoomLevel(1);
     setPanPosition({ x: 0, y: 0 });
+    touchStartDistRef.current = 0;
   }, []);
 
   useEffect(() => {
@@ -137,7 +142,7 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
   // Zoom In / Out Controls
   const handleZoomIn = (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setZoomLevel((prev) => Math.min(prev + 0.5, 3.5));
+    setZoomLevel((prev) => Math.min(prev + 0.5, 4));
   };
 
   const handleZoomOut = (e?: React.MouseEvent) => {
@@ -154,11 +159,11 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
     if (zoomLevel > 1) {
       handleResetZoom();
     } else {
-      setZoomLevel(2);
+      setZoomLevel(2.2);
     }
   };
 
-  // Pan / Drag handlers when zoomed in
+  // Pan / Drag handlers when zoomed in (Mouse)
   const handleMouseDown = (e: React.MouseEvent) => {
     if (zoomLevel <= 1) return;
     e.preventDefault();
@@ -181,28 +186,96 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
     setIsPanning(false);
   };
 
-  // Touch Drag / Pan handlers for mobile devices
+  // Natural 2-Finger Pinch-to-Zoom & Pan handlers for Mobile Touch Screens (Gallery style)
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (zoomLevel <= 1 || e.touches.length !== 1) return;
-    const touch = e.touches[0];
-    setIsPanning(true);
-    panStartRef.current = { x: touch.clientX, y: touch.clientY };
-    initialPanRef.current = { ...panPosition };
+    if (e.touches.length === 2) {
+      // Two-Finger Pinch-to-Zoom gesture start
+      setIsPanning(false);
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+      touchStartDistRef.current = dist;
+      touchStartZoomRef.current = zoomLevel;
+      initialPanRef.current = { ...panPosition };
+      touchStartCenterRef.current = {
+        x: (t1.clientX + t2.clientX) / 2,
+        y: (t1.clientY + t2.clientY) / 2
+      };
+    } else if (e.touches.length === 1) {
+      const now = Date.now();
+      // Double Tap detection (within 300ms)
+      if (now - lastTapTimeRef.current < 300) {
+        if (zoomLevel > 1.05) {
+          handleResetZoom();
+        } else {
+          setZoomLevel(2.2);
+        }
+        lastTapTimeRef.current = 0;
+        return;
+      }
+      lastTapTimeRef.current = now;
+
+      // 1-Finger Pan when zoomed in
+      if (zoomLevel > 1) {
+        const touch = e.touches[0];
+        setIsPanning(true);
+        panStartRef.current = { x: touch.clientX, y: touch.clientY };
+        initialPanRef.current = { ...panPosition };
+      }
+    }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isPanning || zoomLevel <= 1 || e.touches.length !== 1) return;
-    const touch = e.touches[0];
-    const dx = touch.clientX - panStartRef.current.x;
-    const dy = touch.clientY - panStartRef.current.y;
-    setPanPosition({
-      x: initialPanRef.current.x + dx,
-      y: initialPanRef.current.y + dy
-    });
+    if (e.touches.length === 2) {
+      // Active Two-Finger Pinch-to-Zoom & Center Pan
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      const currentDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+
+      if (touchStartDistRef.current > 0) {
+        const scaleFactor = currentDist / touchStartDistRef.current;
+        const newZoom = Math.min(Math.max(touchStartZoomRef.current * scaleFactor, 1), 4);
+        setZoomLevel(newZoom);
+
+        // Center translation while pinching
+        const currentCenter = {
+          x: (t1.clientX + t2.clientX) / 2,
+          y: (t1.clientY + t2.clientY) / 2
+        };
+        const dx = currentCenter.x - touchStartCenterRef.current.x;
+        const dy = currentCenter.y - touchStartCenterRef.current.y;
+        setPanPosition({
+          x: initialPanRef.current.x + dx,
+          y: initialPanRef.current.y + dy
+        });
+      }
+    } else if (e.touches.length === 1 && isPanning && zoomLevel > 1) {
+      // 1-Finger Drag / Pan when zoomed in
+      const touch = e.touches[0];
+      const dx = touch.clientX - panStartRef.current.x;
+      const dy = touch.clientY - panStartRef.current.y;
+      setPanPosition({
+        x: initialPanRef.current.x + dx,
+        y: initialPanRef.current.y + dy
+      });
+    }
   };
 
-  const handleTouchEnd = () => {
-    setIsPanning(false);
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (e.touches.length === 0) {
+      setIsPanning(false);
+      touchStartDistRef.current = 0;
+      // Snap back if zoomed out to 1x
+      if (zoomLevel <= 1.05) {
+        handleResetZoom();
+      }
+    } else if (e.touches.length === 1 && zoomLevel > 1) {
+      // Seamlessly switch back to 1-finger pan
+      const touch = e.touches[0];
+      setIsPanning(true);
+      panStartRef.current = { x: touch.clientX, y: touch.clientY };
+      initialPanRef.current = { ...panPosition };
+    }
   };
 
   // Keyboard navigation when zoom lightbox is open
@@ -538,8 +611,8 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
               >
                 {/* Drag / Pan Hint */}
                 <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
-                  <Move className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Double tap to Zoom | Drag to pan when zoomed</span>
+                  <Move className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Pinch with 2 fingers to Zoom | Double tap | Drag to move</span>
                 </div>
 
                 {/* 4 Bottom Step Dots / Thumbnails */}
