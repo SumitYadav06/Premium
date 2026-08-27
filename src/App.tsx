@@ -18,18 +18,12 @@ import { DirectInstallerModal } from './components/DirectInstallerModal';
 import { DownloadManagerDrawer } from './components/DownloadManagerDrawer';
 import { BookmarksDrawer } from './components/BookmarksDrawer';
 import { InstallGuideModal } from './components/InstallGuideModal';
-import { RequestAppModal } from './components/RequestAppModal';
 import { OwnerModal } from './components/OwnerModal';
 import { SplashView } from './components/SplashView';
 import { PwaInstallBanner } from './components/PwaInstallBanner';
-import { StoreApkPopupModal } from './components/StoreApkPopupModal';
 import {
   Search,
   ArrowUpDown,
-  Smartphone,
-  ShieldCheck,
-  Sparkles,
-  Send,
   HelpCircle,
   Package,
   Mic,
@@ -38,15 +32,40 @@ import {
 } from 'lucide-react';
 
 export default function App() {
-  // Store Data & Realtime State
-  const [apps, setApps] = useState<AppItem[]>(INITIAL_APPS);
+  // Store Data & Realtime State - Instant load from cached real apps
+  const [apps, setApps] = useState<AppItem[]>(() => {
+    try {
+      const cached = localStorage.getItem('premium_store_cached_apps');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+      const custom = localStorage.getItem('premium_store_custom_apps');
+      if (custom) {
+        const parsedCustom = JSON.parse(custom);
+        if (Array.isArray(parsedCustom) && parsedCustom.length > 0) {
+          return parsedCustom;
+        }
+      }
+    } catch (e) {}
+    return [];
+  });
   const [stats, setStats] = useState<Record<string, AppStats>>({});
   const [storeStatus, setStoreStatus] = useState<StoreStatus>({
     active: true,
     msg: '',
     link: ''
   });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(() => {
+    try {
+      const cached = localStorage.getItem('premium_store_cached_apps');
+      return !cached || JSON.parse(cached).length === 0;
+    } catch {
+      return true;
+    }
+  });
   const [showSplash, setShowSplash] = useState(true);
 
   // UI Filters
@@ -164,66 +183,156 @@ export default function App() {
   const [isDownloadsOpen, setIsDownloadsOpen] = useState(false);
   const [isBookmarksOpen, setIsBookmarksOpen] = useState(false);
   const [isInstallGuideOpen, setIsInstallGuideOpen] = useState(false);
-  const [isRequestAppOpen, setIsRequestAppOpen] = useState(false);
   const [isOwnerModalOpen, setIsOwnerModalOpen] = useState(false);
-  const [isStoreApkModalOpen, setIsStoreApkModalOpen] = useState(false);
 
-  // Mobile Hardware / Browser Navigation Back Button Listener
-  // When user taps device back button, close topmost modal/detail screen first instead of exiting app
-  const isAnyModalOpen = Boolean(
-    selectedApp ||
-    directInstallApp ||
-    isDownloadsOpen ||
-    isBookmarksOpen ||
-    isInstallGuideOpen ||
-    isRequestAppOpen ||
-    isOwnerModalOpen ||
-    isStoreApkModalOpen
-  );
+  // Synchronized State References to avoid stale closures in event listeners
+  const selectedAppRef = React.useRef<AppItem | null>(null);
+  selectedAppRef.current = selectedApp;
 
-  const prevModalStateRef = React.useRef(false);
+  const directInstallAppRef = React.useRef<AppItem | null>(null);
+  directInstallAppRef.current = directInstallApp;
 
-  useEffect(() => {
-    if (isAnyModalOpen && !prevModalStateRef.current) {
-      window.history.pushState({ modalView: true }, '');
+  const isDownloadsOpenRef = React.useRef(isDownloadsOpen);
+  isDownloadsOpenRef.current = isDownloadsOpen;
+
+  const isBookmarksOpenRef = React.useRef(isBookmarksOpen);
+  isBookmarksOpenRef.current = isBookmarksOpen;
+
+  const isInstallGuideOpenRef = React.useRef(isInstallGuideOpen);
+  isInstallGuideOpenRef.current = isInstallGuideOpen;
+
+  const isOwnerModalOpenRef = React.useRef(isOwnerModalOpen);
+  isOwnerModalOpenRef.current = isOwnerModalOpen;
+
+  // View Openers & Closers with Automatic Browser / Android History Pushes
+  const openAppDetail = (app: AppItem) => {
+    incrementAppView(app.id || app.name);
+    setSelectedApp(app);
+    try {
+      window.history.pushState({ view: 'app_detail', id: app.id || app.name }, '');
+    } catch (e) {}
+  };
+
+  const closeAppDetail = () => {
+    if (selectedAppRef.current) {
+      setSelectedApp(null);
+      if (window.history.state?.view === 'app_detail') {
+        try {
+          window.history.back();
+        } catch (e) {}
+      }
     }
-    prevModalStateRef.current = isAnyModalOpen;
-  }, [isAnyModalOpen]);
+  };
 
+  const openInstallGuide = () => {
+    setIsInstallGuideOpen(true);
+    try {
+      window.history.pushState({ view: 'install_guide' }, '');
+    } catch (e) {}
+  };
+
+  const closeInstallGuide = () => {
+    setIsInstallGuideOpen(false);
+    if (window.history.state?.view === 'install_guide') {
+      try {
+        window.history.back();
+      } catch (e) {}
+    }
+  };
+
+  const openBookmarks = () => {
+    setIsBookmarksOpen(true);
+    try {
+      window.history.pushState({ view: 'bookmarks' }, '');
+    } catch (e) {}
+  };
+
+  const closeBookmarks = () => {
+    setIsBookmarksOpen(false);
+    if (window.history.state?.view === 'bookmarks') {
+      try {
+        window.history.back();
+      } catch (e) {}
+    }
+  };
+
+  const openDownloads = () => {
+    setIsDownloadsOpen(true);
+    try {
+      window.history.pushState({ view: 'downloads' }, '');
+    } catch (e) {}
+  };
+
+  const closeDownloads = () => {
+    setIsDownloadsOpen(false);
+    if (window.history.state?.view === 'downloads') {
+      try {
+        window.history.back();
+      } catch (e) {}
+    }
+  };
+
+  const openOwnerModal = () => {
+    setIsOwnerModalOpen(true);
+    try {
+      window.history.pushState({ view: 'owner' }, '');
+    } catch (e) {}
+  };
+
+  const closeOwnerModal = () => {
+    setIsOwnerModalOpen(false);
+    if (window.history.state?.view === 'owner') {
+      try {
+        window.history.back();
+      } catch (e) {}
+    }
+  };
+
+  const openDirectInstaller = (app: AppItem) => {
+    setDirectInstallApp(app);
+    try {
+      window.history.pushState({ view: 'installer' }, '');
+    } catch (e) {}
+  };
+
+  const closeDirectInstaller = () => {
+    setDirectInstallApp(null);
+    if (window.history.state?.view === 'installer') {
+      try {
+        window.history.back();
+      } catch (e) {}
+    }
+  };
+
+  // Android Hardware / Gesture Navigation popstate listener
   useEffect(() => {
+    // Ensure root entry has home state
+    if (!window.history.state) {
+      try {
+        window.history.replaceState({ view: 'home' }, '');
+      } catch (e) {}
+    }
+
     const handlePopState = () => {
-      // Step-by-step priority back navigation
-      if (isInstallGuideOpen) {
+      // Step-by-step priority back navigation for Android back button
+      if (isInstallGuideOpenRef.current) {
         setIsInstallGuideOpen(false);
-      } else if (isStoreApkModalOpen) {
-        setIsStoreApkModalOpen(false);
-      } else if (isRequestAppOpen) {
-        setIsRequestAppOpen(false);
-      } else if (isOwnerModalOpen) {
+      } else if (isOwnerModalOpenRef.current) {
         setIsOwnerModalOpen(false);
-      } else if (isBookmarksOpen) {
+      } else if (isBookmarksOpenRef.current) {
         setIsBookmarksOpen(false);
-      } else if (isDownloadsOpen) {
+      } else if (isDownloadsOpenRef.current) {
         setIsDownloadsOpen(false);
-      } else if (directInstallApp) {
+      } else if (directInstallAppRef.current) {
         setDirectInstallApp(null);
-      } else if (selectedApp) {
+      } else if (selectedAppRef.current) {
         setSelectedApp(null);
       }
     };
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [
-    isInstallGuideOpen,
-    isStoreApkModalOpen,
-    isRequestAppOpen,
-    isOwnerModalOpen,
-    isBookmarksOpen,
-    isDownloadsOpen,
-    directInstallApp,
-    selectedApp
-  ]);
+  }, []);
 
   // Bookmarks (Local storage)
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(() => {
@@ -271,9 +380,9 @@ export default function App() {
     localStorage.setItem('premium_store_download_tasks', JSON.stringify(downloadTasks));
   }, [downloadTasks]);
 
-  // Safe Apps Array Fallback
+  // Safe Apps Array Fallback (Never show fake dummy apps)
   const safeAppsList = useMemo(() => {
-    return Array.isArray(apps) && apps.length > 0 ? apps : INITIAL_APPS;
+    return Array.isArray(apps) ? apps : [];
   }, [apps]);
 
   // Categories list
@@ -383,14 +492,13 @@ export default function App() {
       <Navbar
         theme={theme}
         onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-        onOpenOwner={() => setIsOwnerModalOpen(true)}
-        onOpenDownloads={() => setIsDownloadsOpen(true)}
-        onOpenBookmarks={() => setIsBookmarksOpen(true)}
-        onOpenRequestApp={() => setIsRequestAppOpen(true)}
+        onOpenOwner={openOwnerModal}
+        onOpenDownloads={openDownloads}
+        onOpenBookmarks={openBookmarks}
         bookmarksCount={bookmarkedIds.length}
         downloadsCount={downloadTasks.length}
         selectedApp={!!selectedApp}
-        onBackToHome={() => setSelectedApp(null)}
+        onBackToHome={closeAppDetail}
       />
 
       {/* Main Content Area */}
@@ -402,11 +510,8 @@ export default function App() {
             isBookmarked={Array.isArray(bookmarkedIds) && bookmarkedIds.includes(selectedApp.id)}
             onToggleBookmark={() => handleToggleBookmark(selectedApp)}
             onQuickDownload={() => handleQuickDownload(selectedApp)}
-            onBack={() => setSelectedApp(null)}
-            onSelectRelatedApp={(related) => {
-              setSelectedApp(related);
-              incrementAppView(related.id || related.name);
-            }}
+            onBack={closeAppDetail}
+            onSelectRelatedApp={(related) => openAppDetail(related)}
             allApps={safeAppsList}
             onAddReview={(rev) => addAppReview(selectedApp.id || selectedApp.name, rev)}
             theme={theme}
@@ -474,7 +579,7 @@ export default function App() {
               <div className="flex items-center gap-2 sm:gap-2.5">
                 {/* Standout How to Install Guide Button */}
                 <button
-                  onClick={() => setIsInstallGuideOpen(true)}
+                  onClick={openInstallGuide}
                   className="relative group flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-rose-600 to-purple-600 hover:from-amber-400 hover:via-rose-500 hover:to-purple-500 text-white font-black text-xs sm:text-sm tracking-wide shadow-lg shadow-pink-600/30 hover:shadow-pink-500/50 active:scale-95 transition-all duration-200 cursor-pointer overflow-hidden border border-white/25 flex-1 sm:flex-none whitespace-nowrap"
                   title="How to Install Guide (Play Protect / Chrome Fix)"
                 >
@@ -537,10 +642,7 @@ export default function App() {
             {!searchQuery && selectedCategory === 'All' && (
               <BannerSlider
                 apps={safeAppsList}
-                onSelectApp={(app) => {
-                  incrementAppView(app.id);
-                  setSelectedApp(app);
-                }}
+                onSelectApp={(app) => openAppDetail(app)}
                 onQuickDownload={(app) => handleQuickDownload(app)}
                 theme={theme}
               />
@@ -569,21 +671,39 @@ export default function App() {
                 </span>
               </div>
 
-              {filteredApps.length === 0 ? (
+              {loading && safeAppsList.length === 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div
+                      key={i}
+                      className="p-4 rounded-3xl bg-slate-900/60 border border-slate-800 animate-pulse flex items-center gap-3.5"
+                    >
+                      <div className="w-16 h-16 rounded-2xl bg-slate-800 flex-shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-slate-800 rounded-md w-3/4" />
+                        <div className="h-3 bg-slate-800/60 rounded-md w-1/2" />
+                        <div className="h-3 bg-slate-800/40 rounded-md w-1/3" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : filteredApps.length === 0 ? (
                 <div className="py-16 text-center space-y-3 bg-slate-900/40 rounded-3xl border border-slate-800">
                   <div className="w-14 h-14 rounded-2xl bg-slate-800 mx-auto flex items-center justify-center text-slate-500">
                     <Package className="w-7 h-7" />
                   </div>
                   <h3 className="text-base font-bold text-white">No Apps Found</h3>
                   <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                    Try searching with another keyword or request this app directly!
+                    Try searching with another keyword or browse categories above.
                   </p>
                   <button
-                    onClick={() => setIsRequestAppOpen(true)}
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedCategory('All');
+                    }}
                     className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition shadow-lg shadow-purple-600/30 cursor-pointer inline-flex items-center gap-1.5"
                   >
-                    <Smartphone className="w-3.5 h-3.5" />
-                    <span>Request this App</span>
+                    <span>View All Apps</span>
                   </button>
                 </div>
               ) : (
@@ -594,10 +714,7 @@ export default function App() {
                       app={app}
                       views={stats[app.id]?.views ?? stats[getAppKey(app.id)]?.views ?? stats[getAppKey(app.name)]?.views ?? app.views ?? 0}
                       isBookmarked={bookmarkedIds.includes(app.id)}
-                      onSelect={(a) => {
-                        incrementAppView(a.id || a.name);
-                        setSelectedApp(a);
-                      }}
+                      onSelect={(a) => openAppDetail(a)}
                       onQuickDownload={(a) => handleQuickDownload(a)}
                       onToggleBookmark={(a) => handleToggleBookmark(a)}
                       theme={theme}
@@ -615,17 +732,17 @@ export default function App() {
       <DirectInstallerModal
         app={directInstallApp}
         isOpen={!!directInstallApp}
-        onClose={() => setDirectInstallApp(null)}
+        onClose={closeDirectInstaller}
       />
 
       {/* Bookmarks Drawer */}
       <BookmarksDrawer
         isOpen={isBookmarksOpen}
-        onClose={() => setIsBookmarksOpen(false)}
+        onClose={closeBookmarks}
         bookmarkedApps={bookmarkedApps}
         onSelectApp={(app) => {
-          setSelectedApp(app);
-          setIsBookmarksOpen(false);
+          closeBookmarks();
+          openAppDetail(app);
         }}
         onRemoveBookmark={(app) => handleToggleBookmark(app)}
         onClearAll={() => setBookmarkedIds([])}
@@ -635,13 +752,13 @@ export default function App() {
       {/* Download History Manager Drawer */}
       <DownloadManagerDrawer
         isOpen={isDownloadsOpen}
-        onClose={() => setIsDownloadsOpen(false)}
+        onClose={closeDownloads}
         tasks={downloadTasks}
         onClearHistory={() => setDownloadTasks([])}
         onInstallAgain={(task) => {
           const matchingApp = apps.find((a) => a.id === task.appId);
           if (matchingApp) {
-            setDirectInstallApp(matchingApp);
+            openDirectInstaller(matchingApp);
           } else {
             window.open(task.downloadUrl, '_blank');
           }
@@ -655,28 +772,14 @@ export default function App() {
       {/* Install Guide Modal (Visual Screenshots) */}
       <InstallGuideModal
         isOpen={isInstallGuideOpen}
-        onClose={() => setIsInstallGuideOpen(false)}
-        theme={theme}
-      />
-
-      {/* Super Compact & Fast Request App Modal */}
-      <RequestAppModal
-        isOpen={isRequestAppOpen}
-        onClose={() => setIsRequestAppOpen(false)}
+        onClose={closeInstallGuide}
         theme={theme}
       />
 
       {/* Creator Profile / Instagram Modal */}
       <OwnerModal
         isOpen={isOwnerModalOpen}
-        onClose={() => setIsOwnerModalOpen(false)}
-        theme={theme}
-      />
-
-      {/* Official Store APK Direct Install Popup Modal */}
-      <StoreApkPopupModal
-        isOpen={isStoreApkModalOpen}
-        onClose={() => setIsStoreApkModalOpen(false)}
+        onClose={closeOwnerModal}
         theme={theme}
       />
     </div>
