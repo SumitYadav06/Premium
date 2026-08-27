@@ -1,16 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
-  Download,
-  ShieldCheck,
-  Smartphone,
-  CheckCircle2,
-  AlertTriangle,
-  HelpCircle,
+  ChevronLeft,
+  ChevronRight,
   Sparkles,
-  ArrowRight,
-  Settings
+  Maximize2
 } from 'lucide-react';
 
 interface InstallGuideModalProps {
@@ -21,144 +16,207 @@ interface InstallGuideModalProps {
 
 export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
   isOpen,
-  onClose,
-  theme
+  onClose
 }) => {
+  const [activeTab, setActiveTab] = useState<number>(0);
+  const [previewImg, setPreviewImg] = useState<string | null>(null);
+
   if (!isOpen) return null;
+
+  const guideImages = [
+    {
+      title: "Play Protect 1",
+      subtitle: "Play Store Settings",
+      image: "/guide/Playstre setting.png",
+      fallback: "https://raw.githubusercontent.com/SumitYadav06/Premium/main/public/guide/Playstre%20setting.png"
+    },
+    {
+      title: "Play Protect 2",
+      subtitle: "Turn Off Scanning",
+      image: "/guide/Google-Play-Protect-Settings.png",
+      fallback: "https://raw.githubusercontent.com/SumitYadav06/Premium/main/public/guide/Google-Play-Protect-Settings.png"
+    },
+    {
+      title: "Chrome Fix 1",
+      subtitle: "Privacy & Security",
+      image: "/guide/Chromesetting.png",
+      fallback: "https://raw.githubusercontent.com/SumitYadav06/Premium/main/public/guide/Chromesetting.png"
+    },
+    {
+      title: "Chrome Fix 2",
+      subtitle: "Standard Protection",
+      image: "/guide/Chrome-Security-Protection-Settings.png",
+      fallback: "https://raw.githubusercontent.com/SumitYadav06/Premium/main/public/guide/Chrome-Security-Protection-Settings.png"
+    }
+  ];
+
+  const currentItem = guideImages[activeTab];
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4">
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="absolute inset-0 bg-black/80 backdrop-blur-md"
+          className="absolute inset-0 bg-black/90 backdrop-blur-md"
         />
 
         {/* Modal Window */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.92, y: 20 }}
+          initial={{ opacity: 0, scale: 0.94, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.92, y: 20 }}
-          className={`relative w-full max-w-lg rounded-[2.5rem] p-6 sm:p-7 border shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto ${
-            theme === 'dark'
-              ? 'bg-slate-900 border-slate-800 text-white'
-              : 'bg-white border-slate-200 text-slate-900'
-          }`}
+          exit={{ opacity: 0, scale: 0.94, y: 15 }}
+          className="relative w-full max-w-lg rounded-3xl p-4 sm:p-6 border border-purple-500/40 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 text-white shadow-2xl shadow-purple-950/70 overflow-hidden z-10 max-h-[94vh] flex flex-col"
         >
-          {/* Header Glow */}
-          <div className="absolute top-0 right-0 w-48 h-48 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
+          {/* Ambient Glow */}
+          <div className="absolute -top-12 -right-12 w-44 h-44 bg-purple-600/25 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-12 -left-12 w-44 h-44 bg-pink-600/20 rounded-full blur-3xl pointer-events-none" />
 
-          {/* Close Button */}
-          <button
-            onClick={onClose}
-            className={`absolute top-5 right-5 p-2 rounded-xl transition ${
-              theme === 'dark'
-                ? 'bg-slate-800/80 hover:bg-slate-800 text-slate-400 hover:text-white'
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
-            }`}
-          >
-            <X className="w-4 h-4" />
-          </button>
-
-          {/* Title */}
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-10 h-10 rounded-2xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
-              <Smartphone className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-lg font-black tracking-tight flex items-center gap-1.5">
-                How to Install APKs <Sparkles className="w-4 h-4 text-yellow-400" />
-              </h2>
-              <p className="text-xs text-slate-400 font-medium">
-                Simple 3-step beginner guide for Android phones
-              </p>
-            </div>
-          </div>
-
-          {/* 3 Step Visual Sequence - Play Protect & Mod APK Installation Guide */}
-          <div className="space-y-4 mb-6">
-            {/* Step 1 */}
-            <div className="p-4 rounded-2xl bg-purple-950/20 border border-purple-800/30 flex items-start gap-3.5">
-              <div className="w-8 h-8 rounded-xl bg-purple-600 text-white font-black text-sm flex items-center justify-center flex-shrink-0 mt-0.5 shadow-md">
-                1
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xs font-black uppercase tracking-wider text-purple-300 mb-1 flex items-center gap-1.5">
-                  <Settings className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Open Play Store & Go to Settings</span>
-                </h3>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Apne phone me <strong>Google Play Store</strong> open karein aur upar profile icon par tap karke <strong>Play Protect</strong> option me jayein.
+          {/* Top Header */}
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800 relative z-10 flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="w-8 h-8 rounded-xl bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-purple-400 flex-shrink-0">
+                <Sparkles className="w-4 h-4 text-amber-400" />
+              </span>
+              <div>
+                <h2 className="text-base font-black tracking-tight font-mono text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-pink-200 to-white">
+                  Installation Guide
+                </h2>
+                <p className="text-[11px] text-slate-400">
+                  Slide through all 4 settings screenshots
                 </p>
               </div>
             </div>
 
-            {/* Step 2 */}
-            <div className="p-4 rounded-2xl bg-amber-950/25 border border-amber-800/40 flex items-start gap-3.5">
-              <div className="w-8 h-8 rounded-xl bg-amber-600 text-white font-black text-sm flex items-center justify-center flex-shrink-0 mt-0.5 shadow-md">
-                2
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xs font-black uppercase tracking-wider text-amber-300 mb-1 flex items-center gap-1.5">
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Turn Off 2 Play Protect Settings</span>
-                </h3>
-                <p className="text-xs text-slate-300 leading-relaxed mb-2">
-                  Play Protect ke upar diye gaye <strong>Gear (Settings ⚙️)</strong> icon par tap karein aur yeh <strong>dono options OFF (Disable)</strong> kar dein:
-                </p>
-                <div className="bg-slate-950/60 rounded-xl p-2.5 border border-amber-500/20 space-y-1.5 text-[11px] font-mono text-amber-200">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-red-400"></span>
-                    <span>1. Scan apps with Play Protect ➔ <strong>OFF</strong></span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-red-400"></span>
-                    <span>2. Improve harmful app detection ➔ <strong>OFF</strong></span>
-                  </div>
-                </div>
-              </div>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition active:scale-95 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* 4 Tabs / Thumbnails */}
+          <div className="grid grid-cols-4 gap-1.5 py-3 border-b border-slate-800/80 flex-shrink-0">
+            {guideImages.map((item, idx) => {
+              const isActive = activeTab === idx;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => setActiveTab(idx)}
+                  className={`py-2 px-1 rounded-xl transition-all duration-200 cursor-pointer border text-center ${
+                    isActive
+                      ? 'bg-gradient-to-r from-purple-900/80 to-pink-900/80 border-purple-400 shadow-md shadow-purple-500/30'
+                      : 'bg-slate-900/50 border-slate-800 hover:bg-slate-800/60 opacity-60 hover:opacity-90'
+                  }`}
+                >
+                  <span className="block text-[11px] font-black text-white leading-tight">
+                    {idx + 1}
+                  </span>
+                  <span className="block text-[9px] font-medium text-slate-400 truncate">
+                    {item.title}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Main Visual Image View (Pure Screenshots) */}
+          <div className="flex-1 flex flex-col items-center justify-center py-2 overflow-hidden min-h-[300px]">
+            <div className="w-full flex items-center justify-between px-1 mb-1.5 text-xs text-slate-300">
+              <span className="font-bold flex items-center gap-1">
+                <span className="text-purple-400 font-mono">[{activeTab + 1}/4]</span> {currentItem.subtitle}
+              </span>
+              <span className="text-[10px] text-purple-400 flex items-center gap-1">
+                <Maximize2 className="w-3 h-3" /> Tap image to zoom
+              </span>
             </div>
 
-            {/* Step 3 */}
-            <div className="p-4 rounded-2xl bg-emerald-950/20 border border-emerald-800/30 flex items-start gap-3.5">
-              <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white font-black text-sm flex items-center justify-center flex-shrink-0 mt-0.5 shadow-md">
-                3
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xs font-black uppercase tracking-wider text-emerald-300 mb-1 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Direct Install & Enjoy VIP Mods</span>
-                </h3>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Ab download kiye gaye Mod APK file par tap karke <strong>Install</strong> karein. Bina kisi blockage ya error ke app 100% install ho jayegi!
-                </p>
+            <div
+              onClick={() => setPreviewImg(currentItem.image)}
+              className="relative w-full flex-1 max-h-[56vh] flex items-center justify-center rounded-2xl overflow-hidden bg-slate-950/80 border border-purple-500/30 p-1 cursor-pointer group shadow-xl hover:border-purple-500 transition"
+            >
+              <img
+                src={currentItem.image}
+                alt={currentItem.title}
+                onError={(e) => {
+                  if (currentItem.fallback) {
+                    (e.target as HTMLImageElement).src = currentItem.fallback;
+                  }
+                }}
+                className="max-h-[52vh] w-auto max-w-full object-contain rounded-xl group-hover:scale-[1.02] transition-transform duration-200"
+              />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-xs font-bold text-white backdrop-blur-[2px]">
+                <Maximize2 className="w-4 h-4" />
+                <span>Tap to Fullscreen</span>
               </div>
             </div>
           </div>
 
-          {/* Security Box */}
-          <div className="p-4 rounded-2xl bg-slate-800/50 border border-slate-700/60 mb-5">
-            <div className="flex items-center gap-2 mb-1.5 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-              <ShieldCheck className="w-4 h-4" /> 100% Virus-Free Guarantee
-            </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              Every single APK in this store is scanned through Google Play Protect and VirusTotal multi-engine definitions before being published. No root required.
-            </p>
-          </div>
+          {/* Bottom Action Footer */}
+          <div className="pt-3 border-t border-slate-800 flex items-center justify-between gap-2 flex-shrink-0">
+            <button
+              onClick={() => setActiveTab((p) => (p > 0 ? p - 1 : guideImages.length - 1))}
+              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span>Back</span>
+            </button>
 
-          {/* Done Button */}
-          <button
-            onClick={onClose}
-            className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-purple-600/30 active:scale-98 transition flex items-center justify-center gap-2"
-          >
-            <span>Got It, Start Downloading</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
+            <div className="flex items-center gap-1">
+              {guideImages.map((_, i) => (
+                <span
+                  key={i}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    activeTab === i ? 'bg-purple-400 w-4' : 'bg-slate-700'
+                  }`}
+                />
+              ))}
+            </div>
+
+            {activeTab < guideImages.length - 1 ? (
+              <button
+                onClick={() => setActiveTab((p) => p + 1)}
+                className="px-5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-purple-600/30 active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>Next</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                onClick={onClose}
+                className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-emerald-600/30 active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>Done</span>
+              </button>
+            )}
+          </div>
         </motion.div>
+
+        {/* Full Image Zoom Modal */}
+        {previewImg && (
+          <div
+            onClick={() => setPreviewImg(null)}
+            className="fixed inset-0 z-[10000] bg-black/95 backdrop-blur-md flex items-center justify-center p-3 cursor-zoom-out"
+          >
+            <div className="relative max-w-full max-h-[92vh]">
+              <img
+                src={previewImg}
+                alt="Guide Screenshot Full"
+                className="max-w-full max-h-[90vh] object-contain rounded-2xl border border-purple-500/40 shadow-2xl"
+              />
+              <button
+                onClick={() => setPreviewImg(null)}
+                className="absolute top-3 right-3 p-2 bg-black/70 hover:bg-slate-800 rounded-full text-white cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </AnimatePresence>
   );

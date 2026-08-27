@@ -25,13 +25,14 @@ interface DownloadManagerDrawerProps {
 export const DownloadManagerDrawer: React.FC<DownloadManagerDrawerProps> = ({
   isOpen,
   onClose,
-  tasks,
+  tasks = [],
   onClearHistory,
   onInstallAgain,
   onRemoveTask,
   theme
 }) => {
   if (!isOpen) return null;
+  const safeTasks = Array.isArray(tasks) ? tasks : [];
 
   return (
     <div className="fixed inset-0 z-[8500] flex justify-end bg-black/70 backdrop-blur-sm">
@@ -57,7 +58,7 @@ export const DownloadManagerDrawer: React.FC<DownloadManagerDrawerProps> = ({
                 Download Manager
               </h3>
               <p className="text-[11px] text-slate-400 mt-1">
-                {tasks.length} Saved Package{tasks.length === 1 ? '' : 's'}
+                {safeTasks.length} Saved Package{safeTasks.length === 1 ? '' : 's'}
               </p>
             </div>
           </div>
@@ -72,7 +73,7 @@ export const DownloadManagerDrawer: React.FC<DownloadManagerDrawerProps> = ({
 
         {/* Content List */}
         <div className="flex-1 overflow-y-auto py-4 space-y-3">
-          {tasks.length === 0 ? (
+          {safeTasks.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500">
               <HardDrive className="w-12 h-12 stroke-[1.5] mb-3 text-slate-600" />
               <p className="text-sm font-bold text-slate-400">No Saved Packages</p>
@@ -82,7 +83,7 @@ export const DownloadManagerDrawer: React.FC<DownloadManagerDrawerProps> = ({
             </div>
           ) : (
             <AnimatePresence initial={false}>
-              {tasks.map((t, idx) => (
+              {safeTasks.map((t, idx) => (
                 <motion.div
                   key={`${t.appId || t.appName}-${idx}`}
                   layout
@@ -139,7 +140,7 @@ export const DownloadManagerDrawer: React.FC<DownloadManagerDrawerProps> = ({
         </div>
 
         {/* Footer Actions */}
-        {tasks.length > 0 && (
+        {safeTasks.length > 0 && (
           <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
             <button
               onClick={onClearHistory}

@@ -17,13 +17,14 @@ interface BookmarksDrawerProps {
 export const BookmarksDrawer: React.FC<BookmarksDrawerProps> = ({
   isOpen,
   onClose,
-  bookmarkedApps,
+  bookmarkedApps = [],
   onSelectApp,
   onRemoveBookmark,
   onClearAll,
   theme
 }) => {
   if (!isOpen) return null;
+  const safeBookmarks = Array.isArray(bookmarkedApps) ? bookmarkedApps : [];
 
   return (
     <div className="fixed inset-0 z-[8500] flex justify-end bg-black/70 backdrop-blur-sm">
@@ -49,7 +50,7 @@ export const BookmarksDrawer: React.FC<BookmarksDrawerProps> = ({
                 Saved Favorites
               </h3>
               <p className="text-[11px] text-slate-400 mt-1">
-                {bookmarkedApps.length} App{bookmarkedApps.length === 1 ? '' : 's'} bookmarked
+                {safeBookmarks.length} App{safeBookmarks.length === 1 ? '' : 's'} bookmarked
               </p>
             </div>
           </div>
@@ -64,7 +65,7 @@ export const BookmarksDrawer: React.FC<BookmarksDrawerProps> = ({
 
         {/* List */}
         <div className="flex-1 overflow-y-auto py-4 space-y-3">
-          {bookmarkedApps.length === 0 ? (
+          {safeBookmarks.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500">
               <Bookmark className="w-12 h-12 stroke-[1.5] mb-3 text-slate-600" />
               <p className="text-sm font-bold text-slate-400">No Saved Apps</p>
@@ -73,7 +74,7 @@ export const BookmarksDrawer: React.FC<BookmarksDrawerProps> = ({
               </p>
             </div>
           ) : (
-            bookmarkedApps.map((app, idx) => (
+            safeBookmarks.map((app, idx) => (
               <div
                 key={idx}
                 className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center gap-3 shadow-md group cursor-pointer hover:border-purple-500/40 transition"
@@ -122,7 +123,7 @@ export const BookmarksDrawer: React.FC<BookmarksDrawerProps> = ({
         </div>
 
         {/* Footer */}
-        {bookmarkedApps.length > 0 && (
+        {safeBookmarks.length > 0 && (
           <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
             <button
               onClick={onClearAll}

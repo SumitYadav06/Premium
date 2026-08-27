@@ -103,10 +103,12 @@ interface AppDetailViewProps {
   stats?: AppStats;
   isBookmarked: boolean;
   onToggleBookmark: (app: AppItem) => void;
-  onDirectInstall: (app: AppItem) => void;
+  onQuickDownload?: (app: AppItem) => void;
+  onDirectInstall?: (app: AppItem) => void;
   onBack: () => void;
-  onSelectRelatedApp: (app: AppItem) => void;
-  allApps: AppItem[];
+  onSelectRelatedApp?: (app: AppItem) => void;
+  onAddReview?: (review: { user: string; text: string; rating: number }) => Promise<boolean>;
+  allApps?: AppItem[];
   theme: 'dark' | 'light';
 }
 
@@ -115,10 +117,12 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
   stats,
   isBookmarked,
   onToggleBookmark,
+  onQuickDownload,
   onDirectInstall,
   onBack,
-  onSelectRelatedApp,
-  allApps,
+  onSelectRelatedApp = (_app: AppItem) => {},
+  onAddReview,
+  allApps = [],
   theme
 }) => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -127,6 +131,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
   const [guideModalOpen, setGuideModalOpen] = useState(false);
 
   // Review Form
+  const [showReviewForm, setShowReviewForm] = useState(false);
   const [authorName, setAuthorName] = useState('');
   const [reviewContent, setReviewContent] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
@@ -475,7 +480,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
       {/* Primary Direct Download & Installation Action Button */}
       <div className="space-y-3">
         <button
-          onClick={() => onDirectInstall(app)}
+          onClick={() => (onDirectInstall ? onDirectInstall(app) : onQuickDownload ? onQuickDownload(app) : window.open(app.link, '_blank'))}
           className="w-full py-4 px-6 rounded-2xl font-black uppercase text-sm tracking-wider text-white bg-gradient-to-r from-amber-500 via-rose-600 to-purple-600 hover:from-amber-400 hover:via-rose-500 hover:to-purple-500 shadow-xl shadow-pink-600/25 active:scale-98 transition flex items-center justify-center gap-2.5 group cursor-pointer"
         >
           <Download className="w-5 h-5 group-hover:animate-bounce" />
@@ -633,66 +638,88 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
 
       {/* Community Ratings & Reviews Section */}
       <div
-        className={`p-6 rounded-3xl border space-y-6 ${
+        className={`p-6 rounded-3xl border space-y-4 ${
           theme === 'dark' ? 'bg-slate-900/60 border-slate-800/80' : 'bg-white border-slate-200'
         }`}
       >
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-            <MessageSquare className="w-4 h-4 text-purple-400" />
-            <span>Community Ratings & Reviews ({commentsList.length})</span>
-          </h3>
-          <span className="text-xs font-bold text-yellow-400 flex items-center gap-1">
-            <Star className="w-3.5 h-3.5 fill-yellow-400" /> {app.rating || 4.9} out of 5
-          </span>
-        </div>
-
-        {/* Post a Review Form */}
-        <form onSubmit={handleReviewSubmit} className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-300">Rate this application:</span>
-            <div className="flex gap-1.5">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => setReviewRating(star)}
-                  className="p-1 hover:scale-125 transition"
-                >
-                  <Star
-                    className={`w-5 h-5 ${
-                      reviewRating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-slate-600'
-                    }`}
-                  />
-                </button>
-              ))}
-            </div>
+          <div className="flex items-center gap-2">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <MessageSquare className="w-4 h-4 text-purple-400" />
+              <span>Reviews ({commentsList.length})</span>
+            </h3>
+            <span className="text-xs font-bold text-yellow-400 flex items-center gap-1">
+              <Star className="w-3 h-3 fill-yellow-400" /> {app.rating || 4.9}
+            </span>
           </div>
 
-          <input
-            type="text"
-            placeholder="Your Name (e.g. Rahul S.)"
-            value={authorName}
-            onChange={(e) => setAuthorName(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
-          />
-
-          <textarea
-            placeholder="Share your experience with this VIP Mod APK..."
-            value={reviewContent}
-            onChange={(e) => setReviewContent(e.target.value)}
-            rows={3}
-            className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 resize-none"
-          />
-
+          {/* Tiny subtle corner button to rate */}
           <button
-            type="submit"
-            disabled={isSubmitting}
-            className="py-2.5 px-5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold uppercase tracking-wider transition disabled:opacity-50"
+            onClick={() => setShowReviewForm((prev) => !prev)}
+            className="text-[11px] font-bold text-slate-400 hover:text-purple-400 px-2.5 py-1 rounded-lg border border-slate-700/60 hover:border-purple-500/50 bg-slate-800/50 transition cursor-pointer flex items-center gap-1"
           >
-            {isSubmitting ? 'Posting...' : 'Submit Review'}
+            <Star className="w-3 h-3 text-amber-400" />
+            <span>{showReviewForm ? 'Cancel' : 'Rate'}</span>
           </button>
-        </form>
+        </div>
+
+        {/* Compact Dropdown Review Form (shown only if user taps the corner rate button) */}
+        {showReviewForm && (
+          <form onSubmit={handleReviewSubmit} className="bg-slate-800/50 p-3.5 rounded-2xl border border-purple-500/30 space-y-2.5 animate-fadeIn">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-300">Stars:</span>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setReviewRating(star)}
+                    className="p-0.5 hover:scale-110 transition"
+                  >
+                    <Star
+                      className={`w-4 h-4 ${
+                        reviewRating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-slate-600'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <input
+              type="text"
+              placeholder="Your Name (Optional)"
+              value={authorName}
+              onChange={(e) => setAuthorName(e.target.value)}
+              className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
+            />
+
+            <textarea
+              placeholder="Quick feedback or thoughts..."
+              value={reviewContent}
+              onChange={(e) => setReviewContent(e.target.value)}
+              rows={2}
+              className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 resize-none"
+            />
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowReviewForm(false)}
+                className="px-3 py-1 text-slate-400 hover:text-slate-200 text-xs transition"
+              >
+                Close
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="py-1 px-4 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition disabled:opacity-50"
+              >
+                {isSubmitting ? '...' : 'Post'}
+              </button>
+            </div>
+          </form>
+        )}
 
         {/* Existing Reviews List */}
         <div className="space-y-3">
@@ -737,7 +764,11 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
             {relatedApps.map((rel) => (
               <div
                 key={rel.id || rel.name}
-                onClick={() => onSelectRelatedApp(rel)}
+                onClick={() => {
+                  if (onSelectRelatedApp) {
+                    onSelectRelatedApp(rel);
+                  }
+                }}
                 className="p-3.5 rounded-2xl bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800 hover:border-purple-500/40 transition cursor-pointer flex items-center gap-3 group"
               >
                 <img

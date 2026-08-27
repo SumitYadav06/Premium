@@ -12,12 +12,13 @@ interface BannerSliderProps {
 }
 
 export const BannerSlider: React.FC<BannerSliderProps> = ({
-  apps,
+  apps = [],
   onSelectApp,
   onQuickDownload,
   theme
 }) => {
-  const featuredApps = apps.filter((a) => a.isFeatured || a.isHot).slice(0, 4);
+  const safeApps = Array.isArray(apps) ? apps : [];
+  const featuredApps = safeApps.filter((a) => a && (a.isFeatured || a.isHot)).slice(0, 4);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
