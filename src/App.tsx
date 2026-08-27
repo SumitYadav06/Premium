@@ -5,7 +5,8 @@ import {
   subscribeToApps,
   addAppReview,
   incrementAppDownload,
-  incrementAppView
+  incrementAppView,
+  getAppKey
 } from './services/firebase';
 import { STORE_CONFIG } from './config';
 import { Navbar } from './components/Navbar';
@@ -20,6 +21,8 @@ import { InstallGuideModal } from './components/InstallGuideModal';
 import { RequestAppModal } from './components/RequestAppModal';
 import { OwnerModal } from './components/OwnerModal';
 import { SplashView } from './components/SplashView';
+import { PwaInstallBanner } from './components/PwaInstallBanner';
+import { StoreApkPopupModal } from './components/StoreApkPopupModal';
 import {
   Search,
   ArrowUpDown,
@@ -28,7 +31,10 @@ import {
   Sparkles,
   Send,
   HelpCircle,
-  Package
+  Package,
+  Mic,
+  MicOff,
+  X as XIcon
 } from 'lucide-react';
 
 export default function App() {
@@ -46,8 +52,103 @@ export default function App() {
   // UI Filters
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = React.useRef<any>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [sortBy, setSortBy] = useState<'trending' | 'downloads' | 'rating' | 'size' | 'name'>('trending');
+
+  // Voice Search Handler with Multi-language (Hindi + English) & Permission Handling
+  const [voiceStatus, setVoiceStatus] = useState<string | null>(null);
+
+  const toggleVoiceSearch = async () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      setVoiceStatus("Voice search is not supported in this browser. Please use Chrome/Edge or type to search.");
+      setTimeout(() => setVoiceStatus(null), 4000);
+      return;
+    }
+
+    if (isListening) {
+      try {
+        recognitionRef.current?.stop();
+      } catch (e) {}
+      setIsListening(false);
+      setVoiceStatus(null);
+      return;
+    }
+
+    try {
+      // First ask for explicit microphone permission if browser supports mediaDevices
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          // Stop immediately as recognition handles its own stream
+          stream.getTracks().forEach((track) => track.stop());
+        } catch (permErr: any) {
+          console.warn('Microphone permission warning:', permErr);
+          if (permErr.name === 'NotAllowedError' || permErr.name === 'PermissionDeniedError') {
+            setVoiceStatus("Microphone permission denied. Please allow mic access in your browser settings.");
+            setTimeout(() => setVoiceStatus(null), 4500);
+            return;
+          }
+        }
+      }
+
+      const recognition = new SpeechRecognition();
+      recognitionRef.current = recognition;
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+      
+      // Auto-detect browser language or default to Hindi/English bilingual mix
+      const userLang = navigator.language || 'hi-IN';
+      recognition.lang = userLang.startsWith('hi') ? 'hi-IN' : 'en-US';
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        setVoiceStatus("🎤 Listening... Speak now (English / Hindi)...");
+      };
+
+      recognition.onresult = (event: any) => {
+        let currentTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          currentTranscript += event.results[i][0].transcript;
+        }
+        if (currentTranscript) {
+          setSearchQuery(currentTranscript);
+          setVoiceStatus(`Recognized: "${currentTranscript}"`);
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        console.warn('Speech recognition error event:', event.error);
+        setIsListening(false);
+        if (event.error === 'not-allowed') {
+          setVoiceStatus("Microphone access denied. Please click lock icon in address bar to allow mic.");
+        } else if (event.error === 'no-speech') {
+          setVoiceStatus("No speech detected. Please tap mic and try speaking again.");
+        } else if (event.error === 'network') {
+          setVoiceStatus("Voice search network error. Please check your internet connection.");
+        } else {
+          setVoiceStatus(`Voice recognition stopped (${event.error || 'try again'}).`);
+        }
+        setTimeout(() => setVoiceStatus(null), 4000);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+        setTimeout(() => setVoiceStatus(null), 2500);
+      };
+
+      recognition.start();
+    } catch (e: any) {
+      console.error('Speech recognition start failed:', e);
+      setIsListening(false);
+      setVoiceStatus("Could not start microphone. Please check browser permissions.");
+      setTimeout(() => setVoiceStatus(null), 4000);
+    }
+  };
 
   // Auto-dismiss Splash screen failsafe timer
   useEffect(() => {
@@ -65,6 +166,76 @@ export default function App() {
   const [isInstallGuideOpen, setIsInstallGuideOpen] = useState(false);
   const [isRequestAppOpen, setIsRequestAppOpen] = useState(false);
   const [isOwnerModalOpen, setIsOwnerModalOpen] = useState(false);
+  const [isStoreApkModalOpen, setIsStoreApkModalOpen] = useState(false);
+
+  // Mobile Hardware / Browser Navigation Back Button Listener
+  // When user taps device back button, close topmost modal/detail screen first instead of exiting app
+  const isAnyModalOpen = Boolean(
+    selectedApp ||
+    directInstallApp ||
+    isDownloadsOpen ||
+    isBookmarksOpen ||
+    isInstallGuideOpen ||
+    isRequestAppOpen ||
+    isOwnerModalOpen ||
+    isStoreApkModalOpen
+  );
+
+  const prevModalStateRef = React.useRef(false);
+
+  useEffect(() => {
+    if (isAnyModalOpen && !prevModalStateRef.current) {
+      window.history.pushState({ modalView: true }, '');
+    }
+    prevModalStateRef.current = isAnyModalOpen;
+  }, [isAnyModalOpen]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      // Step-by-step priority back navigation
+      if (isInstallGuideOpen) {
+        setIsInstallGuideOpen(false);
+      } else if (isStoreApkModalOpen) {
+        setIsStoreApkModalOpen(false);
+      } else if (isRequestAppOpen) {
+        setIsRequestAppOpen(false);
+      } else if (isOwnerModalOpen) {
+        setIsOwnerModalOpen(false);
+      } else if (isBookmarksOpen) {
+        setIsBookmarksOpen(false);
+      } else if (isDownloadsOpen) {
+        setIsDownloadsOpen(false);
+      } else if (directInstallApp) {
+        setDirectInstallApp(null);
+      } else if (selectedApp) {
+        setSelectedApp(null);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [
+    isInstallGuideOpen,
+    isStoreApkModalOpen,
+    isRequestAppOpen,
+    isOwnerModalOpen,
+    isBookmarksOpen,
+    isDownloadsOpen,
+    directInstallApp,
+    selectedApp
+  ]);
+
+  // Auto-prompt APK Install popup on initial visit
+  useEffect(() => {
+    const hasSeenPopup = sessionStorage.getItem('store_apk_popup_prompted');
+    if (!hasSeenPopup) {
+      const promptTimer = setTimeout(() => {
+        setIsStoreApkModalOpen(true);
+        sessionStorage.setItem('store_apk_popup_prompted', 'true');
+      }, 2500);
+      return () => clearTimeout(promptTimer);
+    }
+  }, []);
 
   // Bookmarks (Local storage)
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(() => {
@@ -227,8 +398,8 @@ export default function App() {
         onOpenOwner={() => setIsOwnerModalOpen(true)}
         onOpenDownloads={() => setIsDownloadsOpen(true)}
         onOpenBookmarks={() => setIsBookmarksOpen(true)}
-        onOpenInstallGuide={() => setIsInstallGuideOpen(true)}
         onOpenRequestApp={() => setIsRequestAppOpen(true)}
+        onOpenStoreApk={() => setIsStoreApkModalOpen(true)}
         bookmarksCount={bookmarkedIds.length}
         downloadsCount={downloadTasks.length}
         selectedApp={!!selectedApp}
@@ -240,56 +411,111 @@ export default function App() {
         {selectedApp ? (
           <AppDetailView
             app={selectedApp}
-            stats={stats[selectedApp.id] || { views: 0 }}
+            stats={stats[selectedApp.id] || stats[getAppKey(selectedApp.id)] || stats[getAppKey(selectedApp.name)] || { views: 0 }}
             isBookmarked={Array.isArray(bookmarkedIds) && bookmarkedIds.includes(selectedApp.id)}
             onToggleBookmark={() => handleToggleBookmark(selectedApp)}
             onQuickDownload={() => handleQuickDownload(selectedApp)}
             onBack={() => setSelectedApp(null)}
             onSelectRelatedApp={(related) => {
               setSelectedApp(related);
-              incrementAppView(related.id);
+              incrementAppView(related.id || related.name);
             }}
             allApps={safeAppsList}
-            onAddReview={(rev) => addAppReview(selectedApp.name, rev)}
+            onAddReview={(rev) => addAppReview(selectedApp.id || selectedApp.name, rev)}
             theme={theme}
           />
         ) : (
           <div className="space-y-4 sm:space-y-6">
-            {/* Search Input & Sort Selector */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            {/* Top Official Store APK Direct Download Banner */}
+            <PwaInstallBanner theme={theme} />
+
+            {/* Search Input & Controls Bar */}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+              {/* Search Bar */}
               <div className="relative flex-1">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400" />
                 <input
                   type="text"
-                  placeholder="Search VIP Mods, games, premium tools..."
+                  placeholder={isListening ? "Listening... Speak now..." : "Search VIP Mods, games, premium tools..."}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`w-full pl-10 pr-4 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm font-medium transition focus:outline-none ${
+                  className={`w-full pl-10 pr-20 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm font-medium transition focus:outline-none ${
+                    isListening
+                      ? 'border-rose-500 ring-2 ring-rose-500/30 animate-pulse'
+                      : 'focus:border-purple-500'
+                  } ${
                     theme === 'dark'
-                      ? 'bg-slate-900/90 border border-slate-800 focus:border-purple-500 text-white placeholder:text-slate-500 shadow-inner'
-                      : 'bg-white border border-slate-200 focus:border-purple-500 text-slate-900 placeholder:text-slate-400 shadow-sm'
+                      ? 'bg-slate-900/90 border border-slate-800 text-white placeholder:text-slate-500 shadow-inner'
+                      : 'bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 shadow-sm'
                   }`}
                 />
-                {searchQuery && (
+                
+                {/* Search Right Controls (Clear & Voice Mic) */}
+                <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="p-1 rounded-full text-slate-400 hover:text-white hover:bg-slate-800/60 transition cursor-pointer"
+                      title="Clear Search"
+                    >
+                      <XIcon className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+
                   <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white"
+                    type="button"
+                    onClick={toggleVoiceSearch}
+                    className={`p-1.5 sm:p-2 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center ${
+                      isListening
+                        ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/50 animate-bounce'
+                        : theme === 'dark'
+                        ? 'bg-purple-950/60 hover:bg-purple-900/80 border border-purple-800/50 text-purple-300 hover:text-white'
+                        : 'bg-purple-100 hover:bg-purple-200 border border-purple-200 text-purple-700'
+                    }`}
+                    title={isListening ? "Listening... Tap to stop" : "Voice Search (Speak to Search)"}
                   >
-                    Clear
+                    {isListening ? (
+                      <MicOff className="w-4 h-4 text-white animate-pulse" />
+                    ) : (
+                      <Mic className="w-4 h-4 text-purple-400" />
+                    )}
                   </button>
-                )}
+                </div>
               </div>
 
-              {/* Sorting Filter */}
-              <div className="flex items-center gap-2">
-                <div className={`flex items-center gap-2 px-3 py-2.5 rounded-2xl border text-xs font-semibold ${
+              {/* High-Visibility Eye-Catching Guide Button & Sort Selector */}
+              <div className="flex items-center gap-2 sm:gap-2.5">
+                {/* Standout How to Install Guide Button */}
+                <button
+                  onClick={() => setIsInstallGuideOpen(true)}
+                  className="relative group flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-rose-600 to-purple-600 hover:from-amber-400 hover:via-rose-500 hover:to-purple-500 text-white font-black text-xs sm:text-sm tracking-wide shadow-lg shadow-pink-600/30 hover:shadow-pink-500/50 active:scale-95 transition-all duration-200 cursor-pointer overflow-hidden border border-white/25 flex-1 sm:flex-none whitespace-nowrap"
+                  title="How to Install Guide (Play Protect / Chrome Fix)"
+                >
+                  {/* Subtle Light Shimmer Sweep */}
+                  <div className="absolute inset-0 w-1/3 h-full bg-white/25 skew-x-12 -translate-x-full group-hover:translate-x-[400%] transition-transform duration-1000 ease-out pointer-events-none" />
+
+                  {/* Pulsing Alert/Notice Dot */}
+                  <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-300 opacity-80" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-400 shadow-sm" />
+                  </span>
+
+                  <HelpCircle className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-yellow-300 flex-shrink-0" />
+                  <span>Installation Guide</span>
+                  <span className="hidden xs:inline-block text-[9px] px-1.5 py-0.5 rounded bg-black/35 font-extrabold uppercase tracking-wider text-amber-200 ml-0.5">
+                    Fix Errors
+                  </span>
+                </button>
+
+                {/* Sort Selector Dropdown */}
+                <div className={`flex items-center gap-2 px-3 sm:px-3.5 py-2.5 sm:py-3 rounded-2xl border text-xs sm:text-sm font-semibold ${
                   theme === 'dark' ? 'bg-slate-900/90 border-slate-800 text-slate-300' : 'bg-white border-slate-200 text-slate-700 shadow-sm'
                 }`}>
-                  <ArrowUpDown className="w-3.5 h-3.5 text-purple-400" />
+                  <ArrowUpDown className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as any)}
-                    className="bg-transparent text-xs font-bold focus:outline-none cursor-pointer"
+                    className="bg-transparent text-xs sm:text-sm font-bold focus:outline-none cursor-pointer"
                   >
                     <option value="trending" className="bg-slate-900 text-white">Trending 🔥</option>
                     <option value="downloads" className="bg-slate-900 text-white">Most Downloaded</option>
@@ -300,6 +526,25 @@ export default function App() {
                 </div>
               </div>
             </div>
+
+            {/* Voice Search Live Status & Audio Feedback Indicator */}
+            {voiceStatus && (
+              <div className="flex items-center justify-between gap-2 px-4 py-2.5 rounded-2xl bg-purple-950/80 border border-purple-500/50 text-xs text-purple-200 shadow-lg animate-in fade-in slide-in-from-top-1">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+                  </span>
+                  <span className="font-semibold text-white">{voiceStatus}</span>
+                </div>
+                <button
+                  onClick={() => setVoiceStatus(null)}
+                  className="text-slate-400 hover:text-white p-0.5"
+                >
+                  <XIcon className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
 
             {/* Featured Slider Banner */}
             {!searchQuery && selectedCategory === 'All' && (
@@ -360,10 +605,10 @@ export default function App() {
                     <AppCard
                       key={app.id}
                       app={app}
-                      views={stats[app.id]?.views || 0}
+                      views={stats[app.id]?.views ?? stats[getAppKey(app.id)]?.views ?? stats[getAppKey(app.name)]?.views ?? app.views ?? 0}
                       isBookmarked={bookmarkedIds.includes(app.id)}
                       onSelect={(a) => {
-                        incrementAppView(a.id);
+                        incrementAppView(a.id || a.name);
                         setSelectedApp(a);
                       }}
                       onQuickDownload={(a) => handleQuickDownload(a)}
@@ -438,6 +683,13 @@ export default function App() {
       <OwnerModal
         isOpen={isOwnerModalOpen}
         onClose={() => setIsOwnerModalOpen(false)}
+        theme={theme}
+      />
+
+      {/* Official Store APK Direct Install Popup Modal */}
+      <StoreApkPopupModal
+        isOpen={isStoreApkModalOpen}
+        onClose={() => setIsStoreApkModalOpen(false)}
         theme={theme}
       />
     </div>
