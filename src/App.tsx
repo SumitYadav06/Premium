@@ -20,7 +20,6 @@ import { InstallGuideModal } from './components/InstallGuideModal';
 import { RequestAppModal } from './components/RequestAppModal';
 import { OwnerModal } from './components/OwnerModal';
 import { SplashView } from './components/SplashView';
-import { KillSwitchScreen } from './components/KillSwitchScreen';
 import {
   Search,
   ArrowUpDown,
@@ -215,10 +214,6 @@ export default function App() {
   const bookmarkedApps = useMemo(() => {
     return safeAppsList.filter((a) => a && Array.isArray(bookmarkedIds) && bookmarkedIds.includes(a.id));
   }, [safeAppsList, bookmarkedIds]);
-
-  if (!storeStatus.active) {
-    return <KillSwitchScreen />;
-  }
 
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-[#030712] text-white' : 'bg-slate-50 text-slate-900'} antialiased transition-colors duration-200`}>
