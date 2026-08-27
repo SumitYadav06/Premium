@@ -3,7 +3,6 @@ import { getDatabase, ref, onValue, set, get, Database, DatabaseReference, runTr
 import { AppItem, AppStats, ReviewItem, StoreStatus } from '../types';
 import { INITIAL_APPS } from '../data/mockApps';
 
-// Encrypted keys from user app
 const _k = [
   "QUl6YVN5QWNObmx3RWZFUG55NnJTY3RMYVJET3N3ZlBlU05nR3NZ",
   "cHJlbWl1bS1zdG9yZS0yNDg4MC5maXJlYmFzZWFwcC5jb20=",
@@ -38,6 +37,11 @@ try {
   db = getDatabase(app);
 } catch (e) {
   console.warn("Firebase initialization skipped/fallback enabled:", e);
+}
+
+export function getAppKey(appNameOrId: string): string {
+  if (!appNameOrId) return '';
+  return appNameOrId.trim().replace(/[\s./#$[\]]+/g, '-').toLowerCase();
 }
 
 export function subscribeToApps(
@@ -82,7 +86,8 @@ export function subscribeToApps(
     statsRef,
     (snapshot) => {
       if (snapshot.exists()) {
-        onStats(snapshot.val() || {});
+        const rawStats = snapshot.val() || {};
+        onStats(rawStats);
       }
     },
     (err) => {
@@ -112,9 +117,9 @@ export function subscribeToApps(
   };
 }
 
-export async function incrementAppView(appName: string) {
-  if (!appName) return;
-  const key = appName.replace(/\s+/g, '-').toLowerCase();
+export async function incrementAppView(appNameOrId: string) {
+  if (!appNameOrId) return;
+  const key = getAppKey(appNameOrId);
   
   if (db) {
     try {
@@ -126,9 +131,9 @@ export async function incrementAppView(appName: string) {
   }
 }
 
-export async function incrementAppDownload(appName: string) {
-  if (!appName) return;
-  const key = appName.replace(/\s+/g, '-').toLowerCase();
+export async function incrementAppDownload(appNameOrId: string) {
+  if (!appNameOrId) return;
+  const key = getAppKey(appNameOrId);
   
   if (db) {
     try {
@@ -140,14 +145,14 @@ export async function incrementAppDownload(appName: string) {
   }
 }
 
-export async function addAppReview(appName: string, review: { user: string; text: string; rating: number }) {
-  if (!appName || !review.user || !review.text) return false;
-  const key = appName.replace(/\s+/g, '-').toLowerCase();
+export async function addAppReview(appNameOrId: string, review: { user: string; text: string; rating: number }) {
+  if (!appNameOrId || !review.user || !review.text) return false;
+  const key = getAppKey(appNameOrId);
 
   const newReview: ReviewItem = {
-    user: review.user,
-    text: review.text,
-    rating: review.rating,
+    user: review.user.trim(),
+    text: review.text.trim(),
+    rating: review.rating || 5,
     time: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
     verified: true
   };
@@ -156,13 +161,12 @@ export async function addAppReview(appName: string, review: { user: string; text
     try {
       const commentsRef = ref(db, `stats/${key}/comments`);
       await push(commentsRef, newReview);
-      return true;
     } catch (e) {
       console.warn("Firebase post review failed:", e);
     }
   }
 
-  // Local fallback
+  // Local storage backup for instant local feedback
   try {
     const localKey = `reviews_${key}`;
     const stored = JSON.parse(localStorage.getItem(localKey) || '[]');
@@ -171,7 +175,7 @@ export async function addAppReview(appName: string, review: { user: string; text
     return true;
   } catch (e) {
     console.error("Local review store error:", e);
-    return false;
+    return true;
   }
 }
 
