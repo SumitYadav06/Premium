@@ -24,6 +24,7 @@ export interface AppItem {
   architecture?: string;
   isHot?: boolean;
   isFeatured?: boolean;
+  [key: string]: any;
 }
 
 export interface ReviewItem {
