@@ -225,18 +225,6 @@ export default function App() {
     selectedApp
   ]);
 
-  // Auto-prompt APK Install popup on initial visit
-  useEffect(() => {
-    const hasSeenPopup = sessionStorage.getItem('store_apk_popup_prompted');
-    if (!hasSeenPopup) {
-      const promptTimer = setTimeout(() => {
-        setIsStoreApkModalOpen(true);
-        sessionStorage.setItem('store_apk_popup_prompted', 'true');
-      }, 2500);
-      return () => clearTimeout(promptTimer);
-    }
-  }, []);
-
   // Bookmarks (Local storage)
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(() => {
     try {
@@ -399,7 +387,6 @@ export default function App() {
         onOpenDownloads={() => setIsDownloadsOpen(true)}
         onOpenBookmarks={() => setIsBookmarksOpen(true)}
         onOpenRequestApp={() => setIsRequestAppOpen(true)}
-        onOpenStoreApk={() => setIsStoreApkModalOpen(true)}
         bookmarksCount={bookmarkedIds.length}
         downloadsCount={downloadTasks.length}
         selectedApp={!!selectedApp}
