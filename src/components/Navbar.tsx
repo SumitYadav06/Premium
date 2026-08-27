@@ -88,22 +88,10 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right: Quick Action Buttons */}
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Direct Store APK Install Button */}
-          {onOpenStoreApk && (
-            <button
-              onClick={onOpenStoreApk}
-              className="flex items-center gap-1.5 h-9 sm:h-10 px-2.5 sm:px-3.5 rounded-xl bg-gradient-to-r from-amber-500 via-rose-600 to-purple-600 hover:from-amber-400 hover:via-rose-500 hover:to-purple-500 text-white text-xs font-black uppercase tracking-wider shadow-md shadow-pink-600/25 active:scale-95 transition cursor-pointer"
-              title="Download Official Store Android APK"
-            >
-              <Smartphone className="w-4 h-4" />
-              <span className="hidden xs:inline sm:inline">Install APK</span>
-            </button>
-          )}
-
           {/* Request App Button */}
           <button
             onClick={onOpenRequestApp}
-            className={`hidden sm:flex items-center gap-1.5 h-9 sm:h-10 px-3 rounded-xl border text-xs font-bold transition cursor-pointer ${
+            className={`flex items-center gap-1.5 h-9 sm:h-10 px-2.5 sm:px-3 rounded-xl border text-xs font-bold transition cursor-pointer ${
               theme === 'dark'
                 ? 'bg-purple-950/40 border-purple-800/50 hover:bg-purple-900/50 text-purple-300'
                 : 'bg-purple-50 border-purple-200 hover:bg-purple-100 text-purple-700'
@@ -111,7 +99,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             title="Request a new VIP APK or Mod"
           >
             <MessageSquare className="w-4 h-4 text-purple-400" />
-            <span>Request App</span>
+            <span className="hidden xs:inline sm:inline">Request App</span>
           </button>
 
           {/* Bookmarks / Saved Button */}
