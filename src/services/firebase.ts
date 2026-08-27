@@ -3,6 +3,7 @@ import { getDatabase, ref, onValue, set, get, Database, DatabaseReference, runTr
 import { AppItem, AppStats, ReviewItem, StoreStatus } from '../types';
 import { INITIAL_APPS } from '../data/mockApps';
 
+// Encrypted keys from user app
 const _k = [
   "QUl6YVN5QWNObmx3RWZFUG55NnJTY3RMYVJET3N3ZlBlU05nR3NZ",
   "cHJlbWl1bS1zdG9yZS0yNDg4MC5maXJlYmFzZWFwcC5jb20=",
