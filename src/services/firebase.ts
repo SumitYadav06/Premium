@@ -50,8 +50,29 @@ export function subscribeToApps(
   onStats: (stats: Record<string, AppStats>) => void,
   onStatus: (status: StoreStatus) => void
 ) {
+  // 1. Immediately emit cached real apps to eliminate flash of dummy/empty apps
+  try {
+    const cached = localStorage.getItem('premium_store_cached_apps');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        onApps(parsed);
+      }
+    }
+  } catch (e) {}
+
   if (!db) {
-    onApps(INITIAL_APPS);
+    try {
+      const custom = localStorage.getItem('premium_store_custom_apps');
+      if (custom) {
+        const parsed = JSON.parse(custom);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          onApps(parsed);
+          onStatus({ active: true, msg: "Store is Active", link: "#" });
+          return () => {};
+        }
+      }
+    } catch (e) {}
     onStatus({ active: true, msg: "Store is Active", link: "#" });
     return () => {};
   }
@@ -70,16 +91,14 @@ export function subscribeToApps(
           : Object.keys(val).map((k) => ({ ...val[k], id: val[k].id || k }));
         if (list.length > 0) {
           onApps(list);
-        } else {
-          onApps(INITIAL_APPS);
+          try {
+            localStorage.setItem('premium_store_cached_apps', JSON.stringify(list));
+          } catch (e) {}
         }
-      } else {
-        onApps(INITIAL_APPS);
       }
     },
     (err) => {
       console.warn("Apps read fallback:", err);
-      onApps(INITIAL_APPS);
     }
   );
 
