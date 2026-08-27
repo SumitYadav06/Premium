@@ -137,84 +137,135 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
   const [reviewRating, setReviewRating] = useState(5);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Extract screenshots dynamically supporting all schemas and formats (p1-p5, screenshots array, images, base64 data URLs)
+  // Extract unlimited screenshots dynamically supporting all schemas, formats, and keys (p1...p100, screenshots array/objects/strings, gallery, images, pics, previews, etc.)
   const rawScreenshots: string[] = [];
 
-  // 1. Check array fields
-  if (Array.isArray(app.screenshots)) {
-    rawScreenshots.push(...app.screenshots);
-  } else if (typeof app.screenshots === 'string' && app.screenshots.trim()) {
-    rawScreenshots.push(...app.screenshots.split(/[\n,]+/).map((s) => s.trim()));
-  }
-
-  if (Array.isArray(app.images)) {
-    rawScreenshots.push(...app.images);
-  }
-  if (Array.isArray(app.pics)) {
-    rawScreenshots.push(...app.pics);
-  }
-
-  // 2. Check p1 to p5 fields
-  [app.p1, app.p2, app.p3, app.p4, app.p5].forEach((p) => {
-    if (p && typeof p === 'string' && p.trim()) {
-      rawScreenshots.push(p.trim());
+  const addValidScreenshot = (val: any) => {
+    if (!val) return;
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (!trimmed) return;
+      // Handle comma, newline, pipe, semicolon separated lists
+      if (trimmed.includes('\n') || trimmed.includes(',') || trimmed.includes('|') || trimmed.includes(';')) {
+        trimmed.split(/[\n,|;]+/).forEach((item) => {
+          const s = item.trim();
+          if (s) rawScreenshots.push(s);
+        });
+      } else {
+        rawScreenshots.push(trimmed);
+      }
+    } else if (Array.isArray(val)) {
+      val.forEach((item) => addValidScreenshot(item));
+    } else if (typeof val === 'object') {
+      Object.values(val).forEach((item) => addValidScreenshot(item));
     }
+  };
+
+  // 1. Gather all numerical indexed 'pN' keys in proper order (p1, p2, p3 ... p100)
+  const pKeys = Object.keys(app)
+    .filter((k) => /^p\d+$/i.test(k))
+    .sort((a, b) => {
+      const numA = parseInt(a.replace(/\D/g, ''), 10) || 0;
+      const numB = parseInt(b.replace(/\D/g, ''), 10) || 0;
+      return numA - numB;
+    });
+
+  pKeys.forEach((key) => {
+    addValidScreenshot((app as any)[key]);
   });
 
-  // Filter valid image strings (http, https, data:image, blob, relative path)
+  // 2. Gather other indexed screenshot keys (e.g. screenshot1, screen1, img1, pic1, image1, photo1, preview1)
+  const otherIndexedKeys = Object.keys(app)
+    .filter((k) => /^(screenshot|screen|image|img|pic|photo|preview)\d+$/i.test(k))
+    .sort((a, b) => {
+      const numA = parseInt(a.replace(/\D/g, ''), 10) || 0;
+      const numB = parseInt(b.replace(/\D/g, ''), 10) || 0;
+      return numA - numB;
+    });
+
+  otherIndexedKeys.forEach((key) => {
+    addValidScreenshot((app as any)[key]);
+  });
+
+  // 3. Gather collection/array/object/string fields
+  addValidScreenshot(app.screenshots);
+  addValidScreenshot((app as any).screenShots);
+  addValidScreenshot(app.images);
+  addValidScreenshot(app.pics);
+  addValidScreenshot((app as any).previews);
+  addValidScreenshot((app as any).photos);
+  addValidScreenshot((app as any).gallery);
+  addValidScreenshot((app as any).previewImages);
+
+  // Filter valid image URLs
   const validScreenshots = rawScreenshots.filter((url) => {
     if (!url || typeof url !== 'string') return false;
     const clean = url.trim();
-    return (
-      clean.startsWith('http://') ||
-      clean.startsWith('https://') ||
-      clean.startsWith('data:image') ||
-      clean.startsWith('blob:') ||
-      clean.startsWith('/') ||
-      clean.startsWith('./')
-    );
+    return clean.length > 5;
   });
 
-  // Remove duplicates
-  const uniqueScreenshots = Array.from(new Set(validScreenshots));
+  // Deduplicate while preserving order
+  const uniqueScreenshots: string[] = [];
+  const seenUrls = new Set<string>();
+  for (const url of validScreenshots) {
+    if (!seenUrls.has(url)) {
+      seenUrls.add(url);
+      uniqueScreenshots.push(url);
+    }
+  }
 
   // If no screenshots provided, use app icon as fallback preview
   const screenshots = uniqueScreenshots.length > 0 
     ? uniqueScreenshots 
     : (app.icon ? [app.icon] : []);
 
-  const viewsCount = stats?.views || (app.downloads ? app.downloads * 2 : 5420);
-  const commentsObj = stats?.comments;
+  // Real views count directly from Firebase stats or app data (NO fake numbers)
+  const viewsCount = stats?.views ?? app.views ?? 0;
   
-  let commentsList: ReviewItem[] = [];
+  // Real user reviews only (from Firebase realtime DB + local submissions)
+  const [localReviews, setLocalReviews] = useState<ReviewItem[]>(() => {
+    try {
+      const key1 = `reviews_${(app.id || '').replace(/[\s./#$[\]]+/g, '-').toLowerCase()}`;
+      const key2 = `reviews_${(app.name || '').replace(/[\s./#$[\]]+/g, '-').toLowerCase()}`;
+      const list1 = JSON.parse(localStorage.getItem(key1) || '[]');
+      const list2 = key1 !== key2 ? JSON.parse(localStorage.getItem(key2) || '[]') : [];
+      return [...list1, ...list2];
+    } catch {
+      return [];
+    }
+  });
+
+  const commentsObj = stats?.comments;
+  let remoteCommentsList: ReviewItem[] = [];
   if (commentsObj) {
     if (Array.isArray(commentsObj)) {
-      commentsList = [...commentsObj].reverse();
-    } else {
-      commentsList = Object.keys(commentsObj)
+      remoteCommentsList = [...commentsObj].filter(Boolean);
+    } else if (typeof commentsObj === 'object') {
+      remoteCommentsList = Object.keys(commentsObj)
         .map((k) => (commentsObj as Record<string, ReviewItem>)[k])
-        .reverse();
+        .filter(Boolean);
     }
   }
 
-  // Fallback initial sample reviews if none exist
-  if (commentsList.length === 0) {
-    commentsList = [
-      {
-        user: 'Rohit Kumar',
-        text: 'Bhai bilkul smooth chal raha hai! Unlocked VIP feature 100% working fine.',
-        rating: 5,
-        time: '2 hours ago',
-        verified: true
-      },
-      {
-        user: 'Alex M.',
-        text: 'Clean install, zero ads, no malware warning on Play Protect. Best source for premium APKs!',
-        rating: 5,
-        time: 'Yesterday',
-        verified: true
-      }
-    ];
+  // Check if app item has reviews embedded
+  const embeddedReviews: ReviewItem[] = Array.isArray((app as any).reviews)
+    ? (app as any).reviews
+    : Array.isArray((app as any).comments)
+    ? (app as any).comments
+    : [];
+
+  // Merge and deduplicate real reviews only (NO fake mock reviews!)
+  const allRealReviews: ReviewItem[] = [...localReviews, ...remoteCommentsList, ...embeddedReviews];
+  const commentsList: ReviewItem[] = [];
+  const seenComments = new Set<string>();
+
+  for (const r of allRealReviews) {
+    if (!r || !r.user || !r.text) continue;
+    const identifier = `${r.user.trim()}_${r.text.trim()}`;
+    if (!seenComments.has(identifier)) {
+      seenComments.add(identifier);
+      commentsList.push(r);
+    }
   }
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
@@ -225,19 +276,41 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
     }
 
     setIsSubmitting(true);
-    const success = await addAppReview(app.name, {
+    const newRevItem: ReviewItem = {
+      user: authorName.trim(),
+      text: reviewContent.trim(),
+      rating: reviewRating,
+      time: 'Just now',
+      verified: true
+    };
+
+    // Immediately update local state so user sees it right away
+    setLocalReviews((prev) => [newRevItem, ...prev]);
+
+    const appIdOrName = app.id || app.name;
+    const success = await addAppReview(appIdOrName, {
       user: authorName.trim(),
       text: reviewContent.trim(),
       rating: reviewRating
     });
 
-    setIsSubmitting(false);
-    if (success) {
-      setAuthorName('');
-      setReviewContent('');
-      setReviewRating(5);
-      alert('Review posted successfully!');
+    if (onAddReview) {
+      try {
+        await onAddReview({
+          user: authorName.trim(),
+          text: reviewContent.trim(),
+          rating: reviewRating
+        });
+      } catch (err) {
+        console.warn("Parent review notify error:", err);
+      }
     }
+
+    setIsSubmitting(false);
+    setAuthorName('');
+    setReviewContent('');
+    setReviewRating(5);
+    setShowReviewForm(false);
   };
 
   const [copyToast, setCopyToast] = useState<string | null>(null);
@@ -721,35 +794,48 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
           </form>
         )}
 
-        {/* Existing Reviews List */}
-        <div className="space-y-3">
-          {commentsList.map((item, idx) => (
-            <div
-              key={idx}
-              className="p-4 rounded-2xl bg-slate-800/30 border border-slate-700/30 space-y-1.5"
+        {/* Real Reviews List or Clean Empty State */}
+        {commentsList.length === 0 ? (
+          <div className="text-center py-6 px-4 rounded-2xl bg-slate-800/20 border border-dashed border-slate-700/60 space-y-2">
+            <MessageSquare className="w-6 h-6 text-slate-500 mx-auto" />
+            <p className="text-xs text-slate-400 font-medium">No reviews yet for this app.</p>
+            <button
+              onClick={() => setShowReviewForm(true)}
+              className="text-xs text-purple-400 hover:text-purple-300 font-bold underline cursor-pointer"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-black text-white">{item.user}</span>
-                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-extrabold uppercase">
-                    VIP User
-                  </span>
+              Be the first to rate & review!
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {commentsList.map((item, idx) => (
+              <div
+                key={idx}
+                className="p-4 rounded-2xl bg-slate-800/30 border border-slate-700/30 space-y-1.5"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black text-white">{item.user}</span>
+                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-extrabold uppercase">
+                      VIP User
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-slate-500">{item.time || 'Recently'}</span>
                 </div>
-                <span className="text-[10px] text-slate-500">{item.time || 'Recently'}</span>
-              </div>
 
-              <div className="flex gap-0.5">
-                {[...Array(item.rating || 5)].map((_, i) => (
-                  <Star key={i} className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                ))}
-              </div>
+                <div className="flex gap-0.5">
+                  {[...Array(item.rating || 5)].map((_, i) => (
+                    <Star key={i} className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                  ))}
+                </div>
 
-              <p className="text-xs text-slate-300 leading-relaxed font-normal">
-                "{item.text}"
-              </p>
-            </div>
-          ))}
-        </div>
+                <p className="text-xs text-slate-300 leading-relaxed font-normal">
+                  "{item.text}"
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Related VIP Apps Carousel */}

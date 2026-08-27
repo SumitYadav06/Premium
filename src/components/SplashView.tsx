@@ -67,11 +67,14 @@ export const SplashView: React.FC<SplashViewProps> = ({
               <div className="absolute -inset-2.5 bg-gradient-to-r from-purple-600 via-pink-500 via-amber-400 to-cyan-400 rounded-[2.8rem] blur-lg opacity-85 animate-pulse"></div>
               <div className="relative w-44 h-44 sm:w-52 sm:h-52 rounded-[2.4rem] overflow-hidden bg-slate-950 border-2 border-purple-400/60 shadow-2xl p-1.5 flex items-center justify-center">
                 <img
-                  src={logoUrl || STORE_CONFIG.STORE_SPLASH_LOGO || "https://i.ibb.co/HffVtwhY/image.jpg"}
+                  src={logoUrl || STORE_CONFIG.STORE_SPLASH_LOGO || STORE_CONFIG.STORE_APP_ICON}
                   alt={STORE_CONFIG.STORE_NAME}
                   className="w-full h-full object-cover rounded-[2rem]"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = "https://i.ibb.co/HffVtwhY/image.jpg";
+                    const target = e.target as HTMLImageElement;
+                    if (!target.src.includes('raw.githubusercontent.com')) {
+                      target.src = "https://raw.githubusercontent.com/SumitYadav06/Premium/main/app-icon.png";
+                    }
                   }}
                 />
               </div>

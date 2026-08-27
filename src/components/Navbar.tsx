@@ -6,7 +6,8 @@ import {
   Moon,
   ShieldCheck,
   MessageSquare,
-  Instagram
+  Instagram,
+  Smartphone
 } from 'lucide-react';
 import { STORE_CONFIG } from '../config';
 
@@ -16,8 +17,9 @@ interface NavbarProps {
   onOpenOwner: () => void;
   onOpenDownloads: () => void;
   onOpenBookmarks: () => void;
-  onOpenInstallGuide: () => void;
+  onOpenInstallGuide?: () => void;
   onOpenRequestApp: () => void;
+  onOpenStoreApk?: () => void;
   bookmarksCount: number;
   downloadsCount: number;
   selectedApp: boolean;
@@ -31,8 +33,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenOwner,
   onOpenDownloads,
   onOpenBookmarks,
-  onOpenInstallGuide,
   onOpenRequestApp,
+  onOpenStoreApk,
   bookmarksCount,
   downloadsCount,
   selectedApp,
@@ -53,43 +55,20 @@ export const Navbar: React.FC<NavbarProps> = ({
           onClick={onBackToHome}
           className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group select-none flex-shrink-0"
         >
-          {/* Store Brand: 7-Color Live Continuous Flowing Rainbow Android Mascot Icon */}
+          {/* Store Brand: Official App Icon */}
           <div className="relative w-11 h-11 rounded-2xl p-0.5 rainbow-bg shadow-lg shadow-pink-500/25 flex items-center justify-center group-hover:scale-105 transition duration-300">
             <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center p-0.5 overflow-hidden">
-              <svg
-                viewBox="0 0 24 24"
-                className="w-8 h-8"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                {/* Antennas */}
-                <line x1="7.2" y1="7.2" x2="4.8" y2="3.2" stroke="url(#chroma-live-flow)" strokeWidth="2.2" strokeLinecap="round" />
-                <line x1="16.8" y1="7.2" x2="19.2" y2="3.2" stroke="url(#chroma-live-flow)" strokeWidth="2.2" strokeLinecap="round" />
-                
-                {/* Mascot Dome */}
-                <path d="M4 17.5 C4 9.5 7.5 6.5 12 6.5 C16.5 6.5 20 9.5 20 17.5 Z" fill="url(#chroma-live-flow)" />
-                
-                {/* Eyes */}
-                <circle cx="8.5" cy="11.8" r="1.2" fill="#020617" />
-                <circle cx="15.5" cy="11.8" r="1.2" fill="#020617" />
-
-                {/* Animated Rainbow Gradient Definition */}
-                <defs>
-                  <linearGradient id="chroma-live-flow" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#ff2d55">
-                      <animate attributeName="stop-color" values="#ff2d55;#ff9500;#ffcc00;#34c759;#00c7be;#32ade6;#5856d6;#af52de;#ff2d55" dur="4s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="30%" stopColor="#ff9500">
-                      <animate attributeName="stop-color" values="#ff9500;#ffcc00;#34c759;#00c7be;#32ade6;#5856d6;#af52de;#ff2d55;#ff9500" dur="4s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="60%" stopColor="#34c759">
-                      <animate attributeName="stop-color" values="#34c759;#00c7be;#32ade6;#5856d6;#af52de;#ff2d55;#ff9500;#ffcc00;#34c759" dur="4s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="100%" stopColor="#32ade6">
-                      <animate attributeName="stop-color" values="#32ade6;#5856d6;#af52de;#ff2d55;#ff9500;#ffcc00;#34c759;#00c7be;#32ade6" dur="4s" repeatCount="indefinite" />
-                    </stop>
-                  </linearGradient>
-                </defs>
-              </svg>
+              <img
+                src={STORE_CONFIG.STORE_APP_ICON}
+                alt={STORE_CONFIG.STORE_NAME}
+                className="w-full h-full object-cover rounded-[12px]"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  if (!target.src.includes('raw.githubusercontent.com')) {
+                    target.src = "https://raw.githubusercontent.com/SumitYadav06/Premium/main/app-icon.png";
+                  }
+                }}
+              />
             </div>
           </div>
 
@@ -109,24 +88,36 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right: Quick Action Buttons */}
         <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Direct Store APK Install Button */}
+          {onOpenStoreApk && (
+            <button
+              onClick={onOpenStoreApk}
+              className="flex items-center gap-1.5 h-9 sm:h-10 px-2.5 sm:px-3.5 rounded-xl bg-gradient-to-r from-amber-500 via-rose-600 to-purple-600 hover:from-amber-400 hover:via-rose-500 hover:to-purple-500 text-white text-xs font-black uppercase tracking-wider shadow-md shadow-pink-600/25 active:scale-95 transition cursor-pointer"
+              title="Download Official Store Android APK"
+            >
+              <Smartphone className="w-4 h-4" />
+              <span className="hidden xs:inline sm:inline">Install APK</span>
+            </button>
+          )}
+
           {/* Request App Button */}
           <button
             onClick={onOpenRequestApp}
-            className={`hidden sm:flex items-center gap-1.5 py-1.5 px-3 rounded-xl border text-xs font-bold transition cursor-pointer ${
+            className={`hidden sm:flex items-center gap-1.5 h-9 sm:h-10 px-3 rounded-xl border text-xs font-bold transition cursor-pointer ${
               theme === 'dark'
                 ? 'bg-purple-950/40 border-purple-800/50 hover:bg-purple-900/50 text-purple-300'
                 : 'bg-purple-50 border-purple-200 hover:bg-purple-100 text-purple-700'
             }`}
             title="Request a new VIP APK or Mod"
           >
-            <MessageSquare className="w-3.5 h-3.5 text-purple-400" />
+            <MessageSquare className="w-4 h-4 text-purple-400" />
             <span>Request App</span>
           </button>
 
           {/* Bookmarks / Saved Button */}
           <button
             onClick={onOpenBookmarks}
-            className={`relative p-2.5 rounded-xl border transition cursor-pointer ${
+            className={`relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl border transition cursor-pointer ${
               theme === 'dark'
                 ? 'bg-slate-900/80 border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-white'
                 : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-slate-700'
@@ -145,7 +136,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Downloads Manager Button */}
           <button
             onClick={onOpenDownloads}
-            className={`relative p-2.5 rounded-xl border transition cursor-pointer ${
+            className={`relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl border transition cursor-pointer ${
               theme === 'dark'
                 ? 'bg-slate-900/80 border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-white'
                 : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-slate-700'
@@ -164,7 +155,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Theme Toggle Button */}
           <button
             onClick={onToggleTheme}
-            className={`p-2.5 rounded-xl border transition cursor-pointer ${
+            className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl border transition cursor-pointer ${
               theme === 'dark'
                 ? 'bg-slate-900/80 border-slate-800 hover:bg-slate-800 text-amber-400'
                 : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-slate-700'

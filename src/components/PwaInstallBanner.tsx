@@ -30,7 +30,9 @@ export const PwaInstallBanner: React.FC<PwaInstallBannerProps> = ({ theme }) => 
 
   const handleInstallClick = () => {
     // Direct APK Download using STORE_CONFIG.STORE_APP_APK_URL
-    const apkUrl = STORE_CONFIG.STORE_APP_APK_URL || "https://archive.org/download/sample-apk-files/sample-app.apk";
+    const apkUrl =
+      STORE_CONFIG.STORE_APP_APK_URL ||
+      'https://github.com/SumitYadav06/Premium/releases/download/1.0.3/Premium.App.Store_1.0.apk';
     const link = document.createElement('a');
     link.href = apkUrl;
     link.download = 'PremiumStore.apk';
@@ -74,21 +76,31 @@ export const PwaInstallBanner: React.FC<PwaInstallBannerProps> = ({ theme }) => 
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-600 via-pink-600 to-blue-600 p-0.5 shadow-lg shadow-purple-600/30 flex-shrink-0 flex items-center justify-center">
-              <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center text-purple-400">
-                <Smartphone className="w-6 h-6" />
+            <div className="w-12 h-12 rounded-2xl p-0.5 rainbow-bg shadow-lg shadow-pink-500/25 flex-shrink-0 flex items-center justify-center">
+              <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center p-1 overflow-hidden">
+                <img
+                  src={STORE_CONFIG.STORE_APP_ICON}
+                  alt={STORE_CONFIG.STORE_NAME}
+                  className="w-full h-full object-cover rounded-[10px]"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    if (!target.src.includes('raw.githubusercontent.com')) {
+                      target.src = "https://raw.githubusercontent.com/SumitYadav06/Premium/main/app-icon.png";
+                    }
+                  }}
+                />
               </div>
             </div>
 
             <div>
               <div className="flex items-center gap-2 mb-0.5">
                 <h3 className="text-sm font-black tracking-tight">Download Premium Store App</h3>
-                <span className="text-[9px] font-black uppercase tracking-wider bg-purple-500 text-white px-2 py-0.5 rounded-full">
-                  Direct APK
+                <span className="text-[9px] font-black uppercase tracking-wider bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 px-2 py-0.5 rounded-full">
+                  4.8 MB APK
                 </span>
               </div>
               <p className="text-xs text-slate-400 font-medium max-w-md">
-                Get the official 1-Tap VIP Store APK on your Android device for instant app installs and updates.
+                Official high-speed Android installer with 1-tap instant installs & VIP daily updates.
               </p>
             </div>
           </div>

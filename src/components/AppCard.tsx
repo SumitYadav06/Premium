@@ -101,10 +101,10 @@ export const AppCard: React.FC<AppCardProps> = ({
 
             <span>•</span>
 
-            {/* Views / Downloads */}
+            {/* Views */}
             <div className="flex items-center gap-1">
               <Eye className="w-3 h-3 text-slate-500" />
-              <span>{views > 0 ? views.toLocaleString() : (app.downloads ? `${(app.downloads / 1000).toFixed(0)}k` : '1.2k')}</span>
+              <span>{views.toLocaleString()}</span>
             </div>
 
             <span>•</span>
