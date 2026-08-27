@@ -1,35 +1,14 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState, useEffect, useMemo } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
-import {
-  Search,
-  Filter,
-  ArrowUpDown,
-  Sparkles,
-  ShieldCheck,
-  WifiOff,
-  Flame,
-  X,
-  Smartphone,
-  Info,
-  CheckCircle2,
-  Mic,
-  MicOff,
-  HelpCircle,
-  MessageSquare
-} from 'lucide-react';
-
 import { AppItem, AppStats, StoreStatus, DownloadTask } from './types';
-import { INITIAL_APPS, APP_CATEGORIES } from './data/mockApps';
-import { subscribeToApps, incrementAppView } from './services/firebase';
-
+import { INITIAL_APPS } from './data/mockApps';
+import {
+  subscribeToApps,
+  addAppReview,
+  incrementAppDownload,
+  incrementAppView
+} from './services/firebase';
+import { STORE_CONFIG } from './config';
 import { Navbar } from './components/Navbar';
-import { SplashView } from './components/SplashView';
-import { KillSwitchScreen } from './components/KillSwitchScreen';
 import { BannerSlider } from './components/BannerSlider';
 import { CategoryPills } from './components/CategoryPills';
 import { AppCard } from './components/AppCard';
@@ -37,48 +16,58 @@ import { AppDetailView } from './components/AppDetailView';
 import { DirectInstallerModal } from './components/DirectInstallerModal';
 import { DownloadManagerDrawer } from './components/DownloadManagerDrawer';
 import { BookmarksDrawer } from './components/BookmarksDrawer';
-import { OwnerModal } from './components/OwnerModal';
-import { HeartGlowOverlay } from './components/HeartGlowOverlay';
 import { InstallGuideModal } from './components/InstallGuideModal';
 import { RequestAppModal } from './components/RequestAppModal';
-import { PwaInstallBanner } from './components/PwaInstallBanner';
+import { OwnerModal } from './components/OwnerModal';
+import { SplashView } from './components/SplashView';
+import { KillSwitchScreen } from './components/KillSwitchScreen';
+import {
+  Search,
+  ArrowUpDown,
+  Smartphone,
+  ShieldCheck,
+  Sparkles,
+  Send,
+  HelpCircle,
+  Package
+} from 'lucide-react';
 
 export default function App() {
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-  const [apps, setApps] = useState<AppItem[]>(() => {
-    try {
-      const localCustom = JSON.parse(localStorage.getItem('premium_store_custom_apps') || '[]');
-      if (Array.isArray(localCustom) && localCustom.length > 0) {
-        return [...localCustom, ...INITIAL_APPS];
-      }
-    } catch {}
-    return INITIAL_APPS;
-  });
+  // Store Data & Realtime State
+  const [apps, setApps] = useState<AppItem[]>(INITIAL_APPS);
   const [stats, setStats] = useState<Record<string, AppStats>>({});
   const [storeStatus, setStoreStatus] = useState<StoreStatus>({
     active: true,
-    msg: "Welcome to Premium Store",
-    link: "#"
+    msg: '',
+    link: ''
   });
+  const [loading, setLoading] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
 
-  const [selectedApp, setSelectedApp] = useState<AppItem | null>(null);
+  // UI Filters
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [sortBy, setSortBy] = useState<'popular' | 'rating' | 'size-asc' | 'size-desc' | 'name'>('popular');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [sortBy, setSortBy] = useState<'trending' | 'downloads' | 'rating' | 'size' | 'name'>('trending');
 
-  // Modals & Drawers
-  const [isSplash, setIsSplash] = useState(true);
+  // Auto-dismiss Splash screen failsafe timer
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Navigation & Modals
+  const [selectedApp, setSelectedApp] = useState<AppItem | null>(null);
   const [directInstallApp, setDirectInstallApp] = useState<AppItem | null>(null);
   const [isDownloadsOpen, setIsDownloadsOpen] = useState(false);
   const [isBookmarksOpen, setIsBookmarksOpen] = useState(false);
-  const [isOwnerOpen, setIsOwnerOpen] = useState(false);
   const [isInstallGuideOpen, setIsInstallGuideOpen] = useState(false);
   const [isRequestAppOpen, setIsRequestAppOpen] = useState(false);
+  const [isOwnerModalOpen, setIsOwnerModalOpen] = useState(false);
 
-  // Voice Search
-  const [isListening, setIsListening] = useState(false);
-
-  // Persistence: Bookmarks & Downloads
+  // Bookmarks (Local storage)
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(() => {
     try {
       return JSON.parse(localStorage.getItem('premium_store_bookmarks') || '[]');
@@ -87,520 +76,373 @@ export default function App() {
     }
   });
 
+  // Downloads History Task list
   const [downloadTasks, setDownloadTasks] = useState<DownloadTask[]>(() => {
     try {
-      return JSON.parse(localStorage.getItem('premium_store_downloads') || '[]');
+      return JSON.parse(localStorage.getItem('premium_store_download_tasks') || '[]');
     } catch {
       return [];
     }
   });
 
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-
-  // Save Bookmarks & Downloads to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem('premium_store_bookmarks', JSON.stringify(bookmarkedIds));
-    } catch (e) {
-      console.warn("Storage write error", e);
-    }
-  }, [bookmarkedIds]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('premium_store_downloads', JSON.stringify(downloadTasks));
-    } catch (e) {
-      console.warn("Storage write error", e);
-    }
-  }, [downloadTasks]);
-
-  // Subscribe to Firebase Live RTDB
+  // Realtime Firebase Listener
   useEffect(() => {
     const unsub = subscribeToApps(
-      (newApps) => {
-        if (newApps && newApps.length > 0) {
-          try {
-            const localCustom = JSON.parse(localStorage.getItem('premium_store_custom_apps') || '[]');
-            if (Array.isArray(localCustom) && localCustom.length > 0) {
-              const combined = [...localCustom, ...newApps];
-              const unique = Array.from(new Map(combined.map((item) => [item.name, item])).values());
-              setApps(unique);
-              return;
-            }
-          } catch {}
-          setApps(newApps);
-        }
+      (loadedApps) => {
+        setApps(loadedApps);
+        setLoading(false);
       },
-      (newStats) => setStats(newStats),
-      (newStatus) => setStoreStatus(newStatus)
-    );
-
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    // Splash timeout
-    const splashTimer = setTimeout(() => {
-      setIsSplash(false);
-    }, 2400);
-
-    // Push history state to handle hardware/browser back button nicely
-    window.history.pushState({ page: 'home' }, '');
-    const handlePopState = () => {
-      if (directInstallApp) {
-        setDirectInstallApp(null);
-        window.history.pushState({ page: 'home' }, '');
-      } else if (isDownloadsOpen || isBookmarksOpen || isOwnerOpen || isInstallGuideOpen || isRequestAppOpen) {
-        setIsDownloadsOpen(false);
-        setIsBookmarksOpen(false);
-        setIsOwnerOpen(false);
-        setIsInstallGuideOpen(false);
-        setIsRequestAppOpen(false);
-        window.history.pushState({ page: 'home' }, '');
-      } else if (selectedApp) {
-        setSelectedApp(null);
-        window.history.pushState({ page: 'home' }, '');
+      (loadedStats) => {
+        setStats(loadedStats);
+      },
+      (loadedStatus) => {
+        setStoreStatus(loadedStatus);
       }
-    };
-    window.addEventListener('popstate', handlePopState);
+    );
 
-    return () => {
-      unsub();
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-      clearTimeout(splashTimer);
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [selectedApp, directInstallApp, isDownloadsOpen, isBookmarksOpen, isOwnerOpen, isInstallGuideOpen, isRequestAppOpen]);
+    return () => unsub();
+  }, []);
 
-  // Apply theme to document body
+  // Save Bookmarks
   useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-      document.body.className = 'bg-slate-950 text-white antialiased';
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.body.className = 'bg-slate-100 text-slate-900 antialiased';
-    }
-  }, [theme]);
+    localStorage.setItem('premium_store_bookmarks', JSON.stringify(bookmarkedIds));
+  }, [bookmarkedIds]);
 
-  // Helpers
-  const getViews = (name: string) => {
-    if (!name) return 0;
-    const key = name.replace(/\s+/g, '-').toLowerCase();
-    return stats[key]?.views || 0;
-  };
+  // Save Tasks
+  useEffect(() => {
+    localStorage.setItem('premium_store_download_tasks', JSON.stringify(downloadTasks));
+  }, [downloadTasks]);
 
-  const toggleBookmark = (app: AppItem) => {
-    const id = app.id || app.name;
+  // Safe Apps Array Fallback
+  const safeAppsList = useMemo(() => {
+    return Array.isArray(apps) && apps.length > 0 ? apps : INITIAL_APPS;
+  }, [apps]);
+
+  // Categories list
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    set.add('All');
+    safeAppsList.forEach((a) => {
+      if (a && a.cat) set.add(a.cat);
+    });
+    return Array.from(set);
+  }, [safeAppsList]);
+
+  // Count apps per category
+  const appsCountByCategory = useMemo(() => {
+    const counts: Record<string, number> = { All: safeAppsList.length };
+    safeAppsList.forEach((a) => {
+      if (a && a.cat) {
+        counts[a.cat] = (counts[a.cat] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [safeAppsList]);
+
+  // Toggle Bookmark
+  const handleToggleBookmark = (app: AppItem) => {
     setBookmarkedIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+      Array.isArray(prev)
+        ? (prev.includes(app.id) ? prev.filter((id) => id !== app.id) : [...prev, app.id])
+        : [app.id]
     );
   };
 
-  const handleSelectApp = (app: AppItem) => {
-    setSelectedApp(app);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    incrementAppView(app.name);
-  };
-
-  const handleDirectInstall = (app: AppItem) => {
+  // Start Download / Direct Installer
+  const handleQuickDownload = (app: AppItem) => {
+    incrementAppDownload(app.id);
+    const newTask: DownloadTask = {
+      appId: app.id,
+      appName: app.name,
+      appIcon: app.icon,
+      version: app.ver,
+      sizeMb: app.mb,
+      progress: 100,
+      status: 'ready',
+      downloadUrl: app.link,
+      startedAt: Date.now(),
+      completedAt: Date.now()
+    };
+    setDownloadTasks((prev) => [newTask, ...(Array.isArray(prev) ? prev.filter((t) => t.appId !== app.id) : [])]);
     setDirectInstallApp(app);
   };
 
-  const handleDownloadTaskStarted = (task: DownloadTask) => {
-    setDownloadTasks((prev) => {
-      const filtered = prev.filter((t) => t.appName !== task.appName);
-      return [task, ...filtered];
-    });
-  };
-
-  // Voice Search Handler with Full Browser & Permission Support
-  const handleToggleVoiceSearch = () => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition ||
-      (window as any).mozSpeechRecognition ||
-      (window as any).msSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      alert('Voice Search is not supported by your current browser. Please type to search!');
-      return;
-    }
-
-    if (isListening) {
-      setIsListening(false);
-      return;
-    }
-
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'en-US';
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
-
-      setIsListening(true);
-
-      recognition.onstart = () => {
-        setIsListening(true);
-      };
-
-      recognition.onresult = (event: any) => {
-        if (event.results && event.results[0] && event.results[0][0]) {
-          const transcript = event.results[0][0].transcript;
-          if (transcript) {
-            setSearchQuery(transcript.trim());
-          }
-        }
-        setIsListening(false);
-      };
-
-      recognition.onerror = (event: any) => {
-        console.warn("Speech recognition error:", event?.error);
-        setIsListening(false);
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
-      recognition.start();
-    } catch (err) {
-      console.warn("Speech recognition failed to start:", err);
-      setIsListening(false);
-    }
-  };
-
-  // Category counts
-  const appsCountByCategory = useMemo(() => {
-    const counts: Record<string, number> = { All: apps.length };
-    apps.forEach((a) => {
-      counts[a.cat] = (counts[a.cat] || 0) + 1;
-    });
-    return counts;
-  }, [apps]);
-
-  // Filtered & Sorted Apps
+  // Filter and Sort Apps
   const filteredApps = useMemo(() => {
-    return apps
-      .filter((app) => {
-        const matchesCategory = selectedCategory === 'All' || app.cat.toLowerCase() === selectedCategory.toLowerCase();
-        const matchesSearch =
-          !searchQuery.trim() ||
-          app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          app.desc.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          app.cat.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesCategory && matchesSearch;
-      })
-      .sort((a, b) => {
-        if (sortBy === 'popular') {
-          return (getViews(b.name) || (b.downloads || 0)) - (getViews(a.name) || (a.downloads || 0));
-        }
-        if (sortBy === 'rating') {
-          return (b.rating || 4.5) - (a.rating || 4.5);
-        }
-        if (sortBy === 'size-asc') {
-          const mbA = typeof a.mb === 'string' ? parseFloat(a.mb) || 0 : a.mb;
-          const mbB = typeof b.mb === 'string' ? parseFloat(b.mb) || 0 : b.mb;
-          return mbA - mbB;
-        }
-        if (sortBy === 'size-desc') {
-          const mbA = typeof a.mb === 'string' ? parseFloat(a.mb) || 0 : a.mb;
-          const mbB = typeof b.mb === 'string' ? parseFloat(b.mb) || 0 : b.mb;
-          return mbB - mbA;
-        }
-        if (sortBy === 'name') {
-          return a.name.localeCompare(b.name);
-        }
-        return 0;
-      });
-  }, [apps, selectedCategory, searchQuery, sortBy, stats]);
+    let list = [...safeAppsList];
 
-  const bookmarkedAppsList = useMemo(() => {
-    return apps.filter((a) => bookmarkedIds.includes(a.id || a.name));
-  }, [apps, bookmarkedIds]);
+    if (selectedCategory !== 'All') {
+      list = list.filter((a) => a && a.cat && a.cat.toLowerCase() === selectedCategory.toLowerCase());
+    }
 
-  // Kill switch view if store inactive
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter(
+        (a) =>
+          a &&
+          ((a.name && a.name.toLowerCase().includes(q)) ||
+           (a.desc && a.desc.toLowerCase().includes(q)) ||
+           (a.cat && a.cat.toLowerCase().includes(q)))
+      );
+    }
+
+    list.sort((a, b) => {
+      if (sortBy === 'trending') {
+        const viewsA = stats[a.id]?.views || 0;
+        const viewsB = stats[b.id]?.views || 0;
+        return viewsB - viewsA;
+      }
+      if (sortBy === 'downloads') {
+        const dA = (stats[a.id]?.downloads ?? a.downloads) || 0;
+        const dB = (stats[b.id]?.downloads ?? b.downloads) || 0;
+        return dB - dA;
+      }
+      if (sortBy === 'rating') {
+        return (b.rating || 4.8) - (a.rating || 4.8);
+      }
+      if (sortBy === 'size') {
+        return parseFloat(String(a.mb || '0')) - parseFloat(String(b.mb || '0'));
+      }
+      if (sortBy === 'name') {
+        return (a.name || '').localeCompare(b.name || '');
+      }
+      return 0;
+    });
+
+    return list;
+  }, [safeAppsList, selectedCategory, searchQuery, sortBy, stats]);
+
+  const bookmarkedApps = useMemo(() => {
+    return safeAppsList.filter((a) => a && Array.isArray(bookmarkedIds) && bookmarkedIds.includes(a.id));
+  }, [safeAppsList, bookmarkedIds]);
+
   if (!storeStatus.active) {
-    return <KillSwitchScreen status={storeStatus} />;
-  }
-
-  // Offline view
-  if (!isOnline) {
-    return (
-      <div className="fixed inset-0 z-[10000] bg-slate-950 text-white flex flex-col items-center justify-center p-6 text-center">
-        <div className="p-6 rounded-full bg-slate-900 border border-slate-800 mb-6">
-          <WifiOff className="w-16 h-16 text-slate-500 animate-pulse" />
-        </div>
-        <h2 className="text-2xl font-black mb-2">No Internet Connection</h2>
-        <p className="text-xs text-slate-400 max-w-xs uppercase tracking-widest font-bold">
-          Please reconnect to the internet to download packages and access live store data.
-        </p>
-      </div>
-    );
+    return <KillSwitchScreen />;
   }
 
   return (
-    <div className={`min-h-screen relative transition-colors duration-200 ${theme === 'dark' ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
-      {/* Interactive Rainbow Floating Heart Glow Effect on Click/Tap */}
-      <HeartGlowOverlay enabled={true} />
+    <div className={`min-h-screen ${theme === 'dark' ? 'bg-[#030712] text-white' : 'bg-slate-50 text-slate-900'} antialiased transition-colors duration-200`}>
+      {/* Intro Splash Screen */}
+      {showSplash && <SplashView onFinish={() => setShowSplash(false)} />}
 
-      {/* Splash Screen */}
-      <AnimatePresence>
-        {isSplash && <SplashView onFinish={() => setIsSplash(false)} />}
-      </AnimatePresence>
-
-      {/* Navigation Bar */}
+      {/* Top Navbar */}
       <Navbar
         theme={theme}
         onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-        onOpenOwner={() => setIsOwnerOpen(true)}
+        onOpenOwner={() => setIsOwnerModalOpen(true)}
         onOpenDownloads={() => setIsDownloadsOpen(true)}
         onOpenBookmarks={() => setIsBookmarksOpen(true)}
         onOpenInstallGuide={() => setIsInstallGuideOpen(true)}
         onOpenRequestApp={() => setIsRequestAppOpen(true)}
         bookmarksCount={bookmarkedIds.length}
         downloadsCount={downloadTasks.length}
-        selectedApp={Boolean(selectedApp)}
+        selectedApp={!!selectedApp}
         onBackToHome={() => setSelectedApp(null)}
       />
 
       {/* Main Content Area */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+      <main className="max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
         {selectedApp ? (
-          /* Detailed App View */
           <AppDetailView
             app={selectedApp}
-            stats={stats[selectedApp.name.replace(/\s+/g, '-').toLowerCase()]}
-            isBookmarked={bookmarkedIds.includes(selectedApp.id || selectedApp.name)}
-            onToggleBookmark={toggleBookmark}
-            onDirectInstall={handleDirectInstall}
+            stats={stats[selectedApp.id] || { views: 0 }}
+            isBookmarked={Array.isArray(bookmarkedIds) && bookmarkedIds.includes(selectedApp.id)}
+            onToggleBookmark={() => handleToggleBookmark(selectedApp)}
+            onQuickDownload={() => handleQuickDownload(selectedApp)}
             onBack={() => setSelectedApp(null)}
-            onSelectRelatedApp={handleSelectApp}
-            allApps={apps}
+            onSelectRelatedApp={(related) => {
+              setSelectedApp(related);
+              incrementAppView(related.id);
+            }}
+            allApps={safeAppsList}
+            onAddReview={(rev) => addAppReview(selectedApp.name, rev)}
             theme={theme}
           />
         ) : (
-          /* Store Front Dashboard */
-          <div className="space-y-6">
-            {/* PWA Add to Home Screen Banner */}
-            <PwaInstallBanner theme={theme} />
-
-            {/* Search & Filter Bar */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div
-                className={`flex-1 relative flex items-center rounded-2xl border transition-all shadow-sm ${
-                  theme === 'dark'
-                    ? 'bg-slate-900/80 border-slate-800 focus-within:border-purple-500'
-                    : 'bg-white border-slate-200 focus-within:border-purple-500'
-                }`}
-              >
-                <Search className="w-5 h-5 text-slate-400 ml-4 flex-shrink-0" />
+          <div className="space-y-4 sm:space-y-6">
+            {/* Search Input & Sort Selector */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400" />
                 <input
                   type="text"
-                  placeholder="Search VIP APKs, Mods, Tools, Games..."
+                  placeholder="Search VIP Mods, games, premium tools..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-transparent p-3.5 pl-3 text-sm focus:outline-none placeholder:text-slate-500 font-medium"
-                />
-
-                {/* Voice Search Microphone Button */}
-                <button
-                  type="button"
-                  onClick={handleToggleVoiceSearch}
-                  className={`p-2 mr-1 rounded-xl transition ${
-                    isListening
-                      ? 'bg-red-500 text-white animate-pulse'
-                      : 'text-slate-400 hover:text-purple-400'
+                  className={`w-full pl-10 pr-4 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm font-medium transition focus:outline-none ${
+                    theme === 'dark'
+                      ? 'bg-slate-900/90 border border-slate-800 focus:border-purple-500 text-white placeholder:text-slate-500 shadow-inner'
+                      : 'bg-white border border-slate-200 focus:border-purple-500 text-slate-900 placeholder:text-slate-400 shadow-sm'
                   }`}
-                  title={isListening ? 'Listening... Speak now' : 'Voice Search'}
-                >
-                  {isListening ? <Mic className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                </button>
-
+                />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="p-2 mr-2 text-slate-400 hover:text-white rounded-lg"
-                    title="Clear Search"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white"
                   >
-                    <X className="w-4 h-4" />
+                    Clear
                   </button>
                 )}
               </div>
 
-              {/* Sort Selector */}
-              <div
-                className={`flex items-center gap-2 px-4 py-3 rounded-2xl border ${
-                  theme === 'dark' ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'
-                }`}
-              >
-                <ArrowUpDown className="w-4 h-4 text-purple-400 flex-shrink-0" />
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
-                  className="bg-transparent text-xs font-bold uppercase tracking-wider focus:outline-none cursor-pointer"
-                >
-                  <option value="popular" className="bg-slate-900 text-white">Most Popular</option>
-                  <option value="rating" className="bg-slate-900 text-white">Highest Rated (★)</option>
-                  <option value="size-asc" className="bg-slate-900 text-white">Smallest Size (MB)</option>
-                  <option value="size-desc" className="bg-slate-900 text-white">Largest Size (MB)</option>
-                  <option value="name" className="bg-slate-900 text-white">Alphabetical (A-Z)</option>
-                </select>
+              {/* Sorting Filter */}
+              <div className="flex items-center gap-2">
+                <div className={`flex items-center gap-2 px-3 py-2.5 rounded-2xl border text-xs font-semibold ${
+                  theme === 'dark' ? 'bg-slate-900/90 border-slate-800 text-slate-300' : 'bg-white border-slate-200 text-slate-700 shadow-sm'
+                }`}>
+                  <ArrowUpDown className="w-3.5 h-3.5 text-purple-400" />
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as any)}
+                    className="bg-transparent text-xs font-bold focus:outline-none cursor-pointer"
+                  >
+                    <option value="trending" className="bg-slate-900 text-white">Trending 🔥</option>
+                    <option value="downloads" className="bg-slate-900 text-white">Most Downloaded</option>
+                    <option value="rating" className="bg-slate-900 text-white">Highest Rated (★)</option>
+                    <option value="size" className="bg-slate-900 text-white">Smallest Size (MB)</option>
+                    <option value="name" className="bg-slate-900 text-white">Alphabetical (A-Z)</option>
+                  </select>
+                </div>
               </div>
             </div>
 
-            {/* Quick Community Action Bar (Mobile Responsive) */}
-            <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 sm:hidden">
-              <button
-                onClick={() => setIsInstallGuideOpen(true)}
-                className="flex items-center gap-1.5 py-2 px-3 rounded-xl bg-purple-950/40 border border-purple-800/40 text-purple-300 text-xs font-bold whitespace-nowrap"
-              >
-                <HelpCircle className="w-3.5 h-3.5 text-purple-400" />
-                <span>How to Install</span>
-              </button>
-
-              <button
-                onClick={() => setIsRequestAppOpen(true)}
-                className="flex items-center gap-1.5 py-2 px-3 rounded-xl bg-blue-950/40 border border-blue-800/40 text-blue-300 text-xs font-bold whitespace-nowrap"
-              >
-                <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
-                <span>Request App</span>
-              </button>
-            </div>
-
-            {/* Featured Hero Banner */}
+            {/* Featured Slider Banner */}
             {!searchQuery && selectedCategory === 'All' && (
               <BannerSlider
-                apps={apps}
-                onSelectApp={handleSelectApp}
-                onQuickDownload={handleDirectInstall}
+                apps={safeAppsList}
+                onSelectApp={(app) => {
+                  incrementAppView(app.id);
+                  setSelectedApp(app);
+                }}
+                onQuickDownload={(app) => handleQuickDownload(app)}
                 theme={theme}
               />
             )}
 
-            {/* Category Selector Pills */}
+            {/* Category Pills */}
             <CategoryPills
-              categories={APP_CATEGORIES}
+              categories={categories}
               selectedCategory={selectedCategory}
-              onSelectCategory={setSelectedCategory}
+              onSelectCategory={(cat) => setSelectedCategory(cat)}
               appsCountByCategory={appsCountByCategory}
               theme={theme}
             />
 
-            {/* Section Header */}
-            <div className="flex items-center justify-between pt-2 px-1">
-              <div className="flex items-center gap-2">
-                <Flame className="w-4 h-4 text-orange-500" />
-                <h2 className="text-xs font-black uppercase tracking-widest text-slate-400">
-                  {selectedCategory === 'All' ? 'Trending & Verified Applications' : `${selectedCategory} Applications`} ({filteredApps.length})
-                </h2>
-              </div>
-              <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5" /> 100% Virus Free
-              </span>
-            </div>
-
             {/* Apps Grid */}
-            {filteredApps.length === 0 ? (
-              <div className="py-16 text-center text-slate-500 space-y-2">
-                <p className="text-base font-bold text-slate-400">No Applications Found</p>
-                <p className="text-xs max-w-xs mx-auto">
-                  Try searching for another keyword or change your category filter.
-                </p>
-                <button
-                  onClick={() => {
-                    setSearchQuery('');
-                    setSelectedCategory('All');
-                  }}
-                  className="mt-4 px-4 py-2 bg-purple-600/20 text-purple-400 text-xs font-bold rounded-xl border border-purple-500/30"
-                >
-                  Reset Filters
-                </button>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-purple-500 animate-ping" />
+                  <h2 className="text-sm sm:text-base font-black tracking-tight font-mono text-white">
+                    {searchQuery ? `Search Results (${filteredApps.length})` : `${selectedCategory} Collection (${filteredApps.length})`}
+                  </h2>
+                </div>
+                <span className="text-[11px] font-bold text-slate-400">
+                  100% Tested VIP APKs
+                </span>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredApps.map((app, index) => (
-                  <AppCard
-                    key={app.id || app.name}
-                    app={app}
-                    views={getViews(app.name)}
-                    isBookmarked={bookmarkedIds.includes(app.id || app.name)}
-                    onSelect={handleSelectApp}
-                    onQuickDownload={handleDirectInstall}
-                    onToggleBookmark={toggleBookmark}
-                    theme={theme}
-                    index={index}
-                  />
-                ))}
-              </div>
-            )}
+
+              {filteredApps.length === 0 ? (
+                <div className="py-16 text-center space-y-3 bg-slate-900/40 rounded-3xl border border-slate-800">
+                  <div className="w-14 h-14 rounded-2xl bg-slate-800 mx-auto flex items-center justify-center text-slate-500">
+                    <Package className="w-7 h-7" />
+                  </div>
+                  <h3 className="text-base font-bold text-white">No Apps Found</h3>
+                  <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                    Try searching with another keyword or request this app directly!
+                  </p>
+                  <button
+                    onClick={() => setIsRequestAppOpen(true)}
+                    className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition shadow-lg shadow-purple-600/30 cursor-pointer inline-flex items-center gap-1.5"
+                  >
+                    <Smartphone className="w-3.5 h-3.5" />
+                    <span>Request this App</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+                  {filteredApps.map((app, idx) => (
+                    <AppCard
+                      key={app.id}
+                      app={app}
+                      views={stats[app.id]?.views || 0}
+                      isBookmarked={bookmarkedIds.includes(app.id)}
+                      onSelect={(a) => {
+                        incrementAppView(a.id);
+                        setSelectedApp(a);
+                      }}
+                      onQuickDownload={(a) => handleQuickDownload(a)}
+                      onToggleBookmark={(a) => handleToggleBookmark(a)}
+                      theme={theme}
+                      index={idx}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </main>
 
-      {/* Direct In-App Package Download & Installer Modal */}
+      {/* Direct One-Click Fast Installer Modal */}
       <DirectInstallerModal
         app={directInstallApp}
-        isOpen={Boolean(directInstallApp)}
+        isOpen={!!directInstallApp}
         onClose={() => setDirectInstallApp(null)}
-        onDownloadStarted={handleDownloadTaskStarted}
       />
 
-      {/* Downloads Manager Drawer */}
+      {/* Bookmarks Drawer */}
+      <BookmarksDrawer
+        isOpen={isBookmarksOpen}
+        onClose={() => setIsBookmarksOpen(false)}
+        bookmarkedApps={bookmarkedApps}
+        onSelectApp={(app) => {
+          setSelectedApp(app);
+          setIsBookmarksOpen(false);
+        }}
+        onRemoveBookmark={(app) => handleToggleBookmark(app)}
+        onClearAll={() => setBookmarkedIds([])}
+        theme={theme}
+      />
+
+      {/* Download History Manager Drawer */}
       <DownloadManagerDrawer
         isOpen={isDownloadsOpen}
         onClose={() => setIsDownloadsOpen(false)}
         tasks={downloadTasks}
         onClearHistory={() => setDownloadTasks([])}
         onInstallAgain={(task) => {
-          const matchedApp = apps.find((a) => a.name === task.appName) || {
-            id: task.appId,
-            name: task.appName,
-            cat: 'Tools',
-            ver: task.version,
-            mb: task.sizeMb,
-            icon: task.appIcon,
-            link: task.downloadUrl,
-            desc: 'Application ready for direct installation.'
-          };
-          setIsDownloadsOpen(false);
-          setDirectInstallApp(matchedApp);
+          const matchingApp = apps.find((a) => a.id === task.appId);
+          if (matchingApp) {
+            setDirectInstallApp(matchingApp);
+          } else {
+            window.open(task.downloadUrl, '_blank');
+          }
+        }}
+        onRemoveTask={(_task, index) => {
+          setDownloadTasks((prev) => prev.filter((_, i) => i !== index));
         }}
         theme={theme}
       />
 
-      {/* Saved Favorites Drawer */}
-      <BookmarksDrawer
-        isOpen={isBookmarksOpen}
-        onClose={() => setIsBookmarksOpen(false)}
-        bookmarkedApps={bookmarkedAppsList}
-        onSelectApp={handleSelectApp}
-        onRemoveBookmark={toggleBookmark}
-        onClearAll={() => setBookmarkedIds([])}
-        theme={theme}
-      />
-
-      {/* Owner & Channel Profile Sheet */}
-      <OwnerModal
-        isOpen={isOwnerOpen}
-        onClose={() => setIsOwnerOpen(false)}
-        theme={theme}
-      />
-
-      {/* How to Install APK Guide Modal */}
+      {/* Install Guide Modal (Visual Screenshots) */}
       <InstallGuideModal
         isOpen={isInstallGuideOpen}
         onClose={() => setIsInstallGuideOpen(false)}
         theme={theme}
       />
 
-      {/* Request App Community Modal */}
+      {/* Super Compact & Fast Request App Modal */}
       <RequestAppModal
         isOpen={isRequestAppOpen}
         onClose={() => setIsRequestAppOpen(false)}
+        theme={theme}
+      />
+
+      {/* Creator Profile / Instagram Modal */}
+      <OwnerModal
+        isOpen={isOwnerModalOpen}
+        onClose={() => setIsOwnerModalOpen(false)}
         theme={theme}
       />
     </div>
