@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Download,
@@ -73,21 +73,36 @@ const ScreenshotThumbnail: React.FC<{
   idx: number;
   onSelect: (index: number) => void;
 }> = ({ pic, idx, onSelect }) => {
+  const [imgSrc, setImgSrc] = useState(pic);
+  const [hasError, setHasError] = useState(false);
+
+  // Sync if pic prop updates
+  useEffect(() => {
+    setImgSrc(pic);
+    setHasError(false);
+  }, [pic]);
+
+  const handleError = () => {
+    if (!hasError) {
+      setHasError(true);
+      // Fallback try without crossOrigin or with direct placeholder
+      setImgSrc('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80');
+    }
+  };
+
   return (
     <div
       onClick={() => onSelect(idx)}
       className="relative group flex-shrink-0 cursor-pointer select-none active:scale-[0.98] transition-transform duration-100"
     >
       <img
-        src={pic || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80"}
+        src={imgSrc}
         alt={`Preview ${idx + 1}`}
         loading="eager"
         decoding="async"
-        onError={(e) => {
-          (e.target as HTMLImageElement).src =
-            'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80';
-        }}
-        className="w-36 sm:w-48 h-60 sm:h-72 object-cover rounded-2xl sm:rounded-3xl border-2 border-purple-500/20 group-hover:border-purple-500 shadow-lg transition duration-150 pointer-events-none"
+        referrerPolicy="no-referrer"
+        onError={handleError}
+        className="w-36 sm:w-48 h-60 sm:h-72 object-cover rounded-2xl sm:rounded-3xl border-2 border-purple-500/20 group-hover:border-purple-500 shadow-lg transition duration-150 pointer-events-none bg-slate-900"
       />
       <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition rounded-2xl sm:rounded-3xl flex items-center justify-center pointer-events-none">
         <span className="text-[11px] font-bold text-white bg-black/70 px-3 py-1 rounded-full border border-white/20 backdrop-blur-md">
@@ -140,30 +155,106 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
   // Extract unlimited screenshots dynamically supporting all schemas, formats, and keys (p1...p100, screenshots array/objects/strings, gallery, images, pics, previews, etc.)
   const rawScreenshots: string[] = [];
 
+  const cleanImageUrl = (raw: string): string => {
+    if (!raw || typeof raw !== 'string') return '';
+    let url = raw.trim();
+
+    // If it's already a Data URL (base64 from canvas/uploader), keep it intact
+    if (url.startsWith('data:image/')) {
+      return url;
+    }
+
+    // Strip leading/trailing quotes, apostrophes, backticks, brackets
+    url = url.replace(/^["'`[\s]+|["'`\]\s]+$/g, '').trim();
+
+    // Extract from HTML <img src="..."> or Markdown ![alt](url) or BBCode [img]...[/img]
+    const htmlMatch = url.match(/src=["']([^"']+)["']/i);
+    if (htmlMatch && htmlMatch[1]) url = htmlMatch[1].trim();
+
+    const mdMatch = url.match(/!\[.*?\]\((https?:\/\/[^\s)]+)\)/i);
+    if (mdMatch && mdMatch[1]) url = mdMatch[1].trim();
+
+    const bbMatch = url.match(/\[img\](https?:\/\/[^\]]+)\[\/img\]/i);
+    if (bbMatch && bbMatch[1]) url = bbMatch[1].trim();
+
+    // Convert Google Drive view URLs to direct image URLs
+    const gDriveMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/i);
+    if (gDriveMatch && gDriveMatch[1]) {
+      return `https://drive.google.com/uc?export=view&id=${gDriveMatch[1]}`;
+    }
+    const gDriveOpenMatch = url.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/i);
+    if (gDriveOpenMatch && gDriveOpenMatch[1]) {
+      return `https://drive.google.com/uc?export=view&id=${gDriveOpenMatch[1]}`;
+    }
+
+    // Convert Dropbox share links to direct links
+    if (url.includes('dropbox.com')) {
+      url = url.replace('dl=0', 'raw=1');
+    }
+
+    // Convert Imgur page URLs to direct image URLs if missing extension
+    if (/imgur\.com\/([a-zA-Z0-9]{5,})/i.test(url) && !/\.(jpg|jpeg|png|webp|gif)$/i.test(url) && !url.includes('/a/') && !url.includes('/gallery/')) {
+      const idMatch = url.match(/imgur\.com\/([a-zA-Z0-9]+)/i);
+      if (idMatch && idMatch[1]) {
+        return `https://i.imgur.com/${idMatch[1]}.jpg`;
+      }
+    }
+
+    return url;
+  };
+
   const addValidScreenshot = (val: any) => {
     if (!val) return;
     if (typeof val === 'string') {
       const trimmed = val.trim();
       if (!trimmed) return;
-      // Handle comma, newline, pipe, semicolon separated lists
-      if (trimmed.includes('\n') || trimmed.includes(',') || trimmed.includes('|') || trimmed.includes(';')) {
-        trimmed.split(/[\n,|;]+/).forEach((item) => {
-          const s = item.trim();
-          if (s) rawScreenshots.push(s);
+
+      // 1. Direct Base64 data URL support (from canvas or mobile gallery compression)
+      if (trimmed.startsWith('data:image/')) {
+        rawScreenshots.push(trimmed);
+        return;
+      }
+
+      // 2. Handle JSON stringified arrays or objects
+      if ((trimmed.startsWith('[') && trimmed.endsWith(']')) || (trimmed.startsWith('{') && trimmed.endsWith('}'))) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          addValidScreenshot(parsed);
+          return;
+        } catch {
+          // not valid JSON, proceed to standard parsing
+        }
+      }
+
+      // 3. Handle multi-line, pipe, or comma-separated lists (only for regular URLs, NOT data URLs)
+      if (trimmed.includes('\n') || trimmed.includes('|') || (trimmed.includes(',') && !trimmed.startsWith('data:')) || (trimmed.includes(';') && !trimmed.startsWith('data:'))) {
+        trimmed.split(/[\n|]+/).forEach((item) => {
+          const s = cleanImageUrl(item);
+          if (s && s.length > 5) rawScreenshots.push(s);
         });
       } else {
-        rawScreenshots.push(trimmed);
+        const s = cleanImageUrl(trimmed);
+        if (s && s.length > 5) rawScreenshots.push(s);
       }
     } else if (Array.isArray(val)) {
       val.forEach((item) => addValidScreenshot(item));
-    } else if (typeof val === 'object') {
-      Object.values(val).forEach((item) => addValidScreenshot(item));
+    } else if (typeof val === 'object' && val !== null) {
+      if (val.url) addValidScreenshot(val.url);
+      else if (val.link) addValidScreenshot(val.link);
+      else if (val.src) addValidScreenshot(val.src);
+      else if (val.image) addValidScreenshot(val.image);
+      else if (val.img) addValidScreenshot(val.img);
+      else if (val.photo) addValidScreenshot(val.photo);
+      else if (val.uri) addValidScreenshot(val.uri);
+      else {
+        Object.values(val).forEach((item) => addValidScreenshot(item));
+      }
     }
   };
 
-  // 1. Gather all numerical indexed 'pN' keys in proper order (p1, p2, p3 ... p100)
+  // 1. Gather all numerical indexed 'pN' / 'p_N' keys in proper order (p1, p2, p3 ... p100)
   const pKeys = Object.keys(app)
-    .filter((k) => /^p\d+$/i.test(k))
+    .filter((k) => /^p_?\d+$/i.test(k))
     .sort((a, b) => {
       const numA = parseInt(a.replace(/\D/g, ''), 10) || 0;
       const numB = parseInt(b.replace(/\D/g, ''), 10) || 0;
@@ -174,9 +265,9 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
     addValidScreenshot((app as any)[key]);
   });
 
-  // 2. Gather other indexed screenshot keys (e.g. screenshot1, screen1, img1, pic1, image1, photo1, preview1)
+  // 2. Gather other indexed screenshot keys (e.g. screenshot1, screen1, img1, pic1, image1, photo1, preview1, ss1)
   const otherIndexedKeys = Object.keys(app)
-    .filter((k) => /^(screenshot|screen|image|img|pic|photo|preview)\d+$/i.test(k))
+    .filter((k) => /^(screenshot|screen|image|img|pic|photo|preview|ss)_?\d+$/i.test(k))
     .sort((a, b) => {
       const numA = parseInt(a.replace(/\D/g, ''), 10) || 0;
       const numB = parseInt(b.replace(/\D/g, ''), 10) || 0;
@@ -189,13 +280,41 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
 
   // 3. Gather collection/array/object/string fields
   addValidScreenshot(app.screenshots);
+  addValidScreenshot((app as any).screenshot);
   addValidScreenshot((app as any).screenShots);
+  addValidScreenshot((app as any).screen_shots);
+  addValidScreenshot((app as any).screens);
+  addValidScreenshot((app as any).screen);
   addValidScreenshot(app.images);
+  addValidScreenshot((app as any).image);
+  addValidScreenshot((app as any).img);
+  addValidScreenshot((app as any).imgs);
   addValidScreenshot(app.pics);
+  addValidScreenshot((app as any).pic);
   addValidScreenshot((app as any).previews);
+  addValidScreenshot((app as any).preview);
   addValidScreenshot((app as any).photos);
+  addValidScreenshot((app as any).photo);
   addValidScreenshot((app as any).gallery);
   addValidScreenshot((app as any).previewImages);
+  addValidScreenshot((app as any).preview_images);
+  addValidScreenshot((app as any).banners);
+  addValidScreenshot((app as any).banner);
+  addValidScreenshot((app as any).media);
+  addValidScreenshot((app as any).screenshotUrls);
+  addValidScreenshot((app as any).screenshot_urls);
+  addValidScreenshot((app as any).screenshot_url);
+
+  // 4. Scan any remaining unknown keys that look like images or screenshots
+  Object.keys(app).forEach((key) => {
+    const k = key.toLowerCase();
+    if (
+      (k.includes('screen') || k.includes('shot') || k.includes('pic') || k.includes('photo') || k.includes('image') || k.includes('img') || k.includes('preview') || k.includes('gallery')) &&
+      !['name', 'desc', 'icon', 'link', 'mb', 'cat', 'ver', 'downloads', 'rating', 'views'].includes(k)
+    ) {
+      addValidScreenshot((app as any)[key]);
+    }
+  });
 
   // Filter valid image URLs
   const validScreenshots = rawScreenshots.filter((url) => {

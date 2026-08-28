@@ -85,16 +85,32 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
     setTimeout(() => setIsTransitioning(false), 200);
   };
 
-  // Keyboard navigation
+  // Keyboard & Android gesture back navigation for lightbox
   useEffect(() => {
+    if (!isOpen) return;
+
+    // Push state for lightbox when opened
+    try {
+      window.history.pushState({ lightbox: true }, '');
+    } catch (e) {}
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isOpen) return;
       if (e.key === 'Escape') onClose();
       if (e.key === 'ArrowRight') goToNext();
       if (e.key === 'ArrowLeft') goToPrev();
     };
+
+    const handlePopState = () => {
+      onClose();
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, [isOpen, goToNext, goToPrev, onClose]);
 
   // Touch & Pinch Handlers
@@ -296,11 +312,12 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
             alt={`Screenshot ${currentIndex + 1}`}
             decoding="async"
             loading="eager"
+            referrerPolicy="no-referrer"
             onError={(e) => {
               (e.target as HTMLImageElement).src =
                 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80';
             }}
-            className="max-w-full max-h-[68vh] sm:max-h-[75vh] object-contain rounded-2xl shadow-2xl border border-white/10 select-none"
+            className="max-w-full max-h-[68vh] sm:max-h-[75vh] object-contain rounded-2xl shadow-2xl border border-white/10 select-none bg-slate-950"
             draggable={false}
           />
         </div>
@@ -344,6 +361,7 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
                 alt={`Thumb ${i + 1}`}
                 className="w-full h-full object-cover"
                 loading="eager"
+                referrerPolicy="no-referrer"
               />
             </button>
           ))}
