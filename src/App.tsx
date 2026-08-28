@@ -304,29 +304,46 @@ export default function App() {
     }
   };
 
-  // Android Hardware / Gesture Navigation popstate listener
+  // Android Hardware / Gesture Navigation popstate listener with bulletproof history management
   useEffect(() => {
-    // Ensure root entry has home state
-    if (!window.history.state) {
+    // Initialize base history state
+    if (!window.history.state || !window.history.state.premium_app) {
       try {
-        window.history.replaceState({ view: 'home' }, '');
+        window.history.replaceState({ premium_app: true, view: 'home' }, '');
       } catch (e) {}
     }
 
-    const handlePopState = () => {
-      // Step-by-step priority back navigation for Android back button
-      if (isInstallGuideOpenRef.current) {
-        setIsInstallGuideOpen(false);
-      } else if (isOwnerModalOpenRef.current) {
-        setIsOwnerModalOpen(false);
-      } else if (isBookmarksOpenRef.current) {
-        setIsBookmarksOpen(false);
-      } else if (isDownloadsOpenRef.current) {
-        setIsDownloadsOpen(false);
-      } else if (directInstallAppRef.current) {
-        setDirectInstallApp(null);
-      } else if (selectedAppRef.current) {
-        setSelectedApp(null);
+    const handlePopState = (event: PopStateEvent) => {
+      // Check if any sub-modal or detail view is currently open
+      const hasOpenViews = 
+        isInstallGuideOpenRef.current ||
+        isOwnerModalOpenRef.current ||
+        isBookmarksOpenRef.current ||
+        isDownloadsOpenRef.current ||
+        directInstallAppRef.current ||
+        selectedAppRef.current;
+
+      if (hasOpenViews) {
+        // Step 1: Close top-most modals first
+        if (isInstallGuideOpenRef.current) {
+          setIsInstallGuideOpen(false);
+        } else if (isOwnerModalOpenRef.current) {
+          setIsOwnerModalOpen(false);
+        } else if (isBookmarksOpenRef.current) {
+          setIsBookmarksOpen(false);
+        } else if (isDownloadsOpenRef.current) {
+          setIsDownloadsOpen(false);
+        } else if (directInstallAppRef.current) {
+          setDirectInstallApp(null);
+        } else if (selectedAppRef.current) {
+          // Close app detail view and return to main home screen
+          setSelectedApp(null);
+        }
+
+        // Push a fresh state back to history to prevent accidental browser tab closure on subsequent back swipes
+        try {
+          window.history.pushState({ premium_app: true, view: 'home' }, '');
+        } catch (e) {}
       }
     };
 
@@ -483,6 +500,15 @@ export default function App() {
     return safeAppsList.filter((a) => a && Array.isArray(bookmarkedIds) && bookmarkedIds.includes(a.id));
   }, [safeAppsList, bookmarkedIds]);
 
+  // Synchronize open detail view with latest real-time data from store
+  const currentSelectedApp = useMemo(() => {
+    if (!selectedApp) return null;
+    const found = safeAppsList.find(
+      (a) => (a.id && a.id === selectedApp.id) || (a.name && a.name === selectedApp.name)
+    );
+    return found ? { ...selectedApp, ...found } : selectedApp;
+  }, [selectedApp, safeAppsList]);
+
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-[#030712] text-white' : 'bg-slate-50 text-slate-900'} antialiased transition-colors duration-200`}>
       {/* Intro Splash Screen */}
@@ -497,23 +523,23 @@ export default function App() {
         onOpenBookmarks={openBookmarks}
         bookmarksCount={bookmarkedIds.length}
         downloadsCount={downloadTasks.length}
-        selectedApp={!!selectedApp}
+        selectedApp={!!currentSelectedApp}
         onBackToHome={closeAppDetail}
       />
 
       {/* Main Content Area */}
       <main className="max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
-        {selectedApp ? (
+        {currentSelectedApp ? (
           <AppDetailView
-            app={selectedApp}
-            stats={stats[selectedApp.id] || stats[getAppKey(selectedApp.id)] || stats[getAppKey(selectedApp.name)] || { views: 0 }}
-            isBookmarked={Array.isArray(bookmarkedIds) && bookmarkedIds.includes(selectedApp.id)}
-            onToggleBookmark={() => handleToggleBookmark(selectedApp)}
-            onQuickDownload={() => handleQuickDownload(selectedApp)}
+            app={currentSelectedApp}
+            stats={stats[currentSelectedApp.id] || stats[getAppKey(currentSelectedApp.id)] || stats[getAppKey(currentSelectedApp.name)] || { views: 0 }}
+            isBookmarked={Array.isArray(bookmarkedIds) && bookmarkedIds.includes(currentSelectedApp.id)}
+            onToggleBookmark={() => handleToggleBookmark(currentSelectedApp)}
+            onQuickDownload={() => handleQuickDownload(currentSelectedApp)}
             onBack={closeAppDetail}
             onSelectRelatedApp={(related) => openAppDetail(related)}
             allApps={safeAppsList}
-            onAddReview={(rev) => addAppReview(selectedApp.id || selectedApp.name, rev)}
+            onAddReview={(rev) => addAppReview(currentSelectedApp.id || currentSelectedApp.name, rev)}
             theme={theme}
           />
         ) : (
