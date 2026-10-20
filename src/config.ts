@@ -11,7 +11,7 @@ export const STORE_CONFIG = {
   STORE_APP_APK_URL: "https://github.com/SumitYadav06/Premium/releases/download/1.0.3/Premium.App.Store_1.0.apk",
   
   // Store Branding & App Icon (Direct repo root icon URL)
-  STORE_NAME: "PREMIUM STORE",
+  STORE_NAME: "Apna Jugaad",
   STORE_TAGLINE: "VIP Verified Mod & APK Hub",
   STORE_APP_ICON: "https://raw.githubusercontent.com/SumitYadav06/Premium/main/app-icon.png",
   STORE_SPLASH_LOGO: "https://raw.githubusercontent.com/SumitYadav06/Premium/main/app-icon.png",
