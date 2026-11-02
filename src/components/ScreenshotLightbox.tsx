@@ -246,7 +246,7 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
           <span className="text-xs uppercase font-black text-slate-300 tracking-wider">
             Screenshot {currentIndex + 1} / {images.length}
           </span>
-          <span className="text-[10px] bg-gradient-to-r from-purple-600/40 to-pink-600/40 text-purple-200 border border-purple-500/40 px-2.5 py-0.5 rounded-full font-black flex items-center gap-1">
+          <span className="text-[10px] bg-gradient-to-r from-amber-600/40 to-amber-600/40 text-amber-200 border border-amber-500/40 px-2.5 py-0.5 rounded-full font-black flex items-center gap-1">
             <Sparkles className="w-2.5 h-2.5 text-amber-300" />
             <span>HD Preview</span>
           </span>
@@ -257,7 +257,7 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
           {zoomLevel > 1 && (
             <button
               onClick={handleResetZoom}
-              className="px-2.5 py-1 rounded-xl bg-purple-900/60 hover:bg-purple-800 text-purple-200 text-xs font-bold transition cursor-pointer"
+              className="px-2.5 py-1 rounded-xl bg-amber-900/60 hover:bg-amber-800 text-amber-200 text-xs font-bold transition cursor-pointer"
             >
               Reset ({Math.round(zoomLevel * 100)}%)
             </button>
@@ -284,7 +284,7 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
         {images.length > 1 && zoomLevel <= 1 && (
           <button
             onClick={goToPrev}
-            className="absolute left-2 sm:left-6 z-30 p-3 rounded-full bg-black/60 hover:bg-purple-600 text-white border border-white/20 backdrop-blur-md transition hover:scale-105 active:scale-95 shadow-2xl cursor-pointer"
+            className="absolute left-2 sm:left-6 z-30 p-3 rounded-full bg-black/60 hover:bg-amber-600 text-white border border-white/20 backdrop-blur-md transition hover:scale-105 active:scale-95 shadow-2xl cursor-pointer"
             aria-label="Previous Screenshot"
           >
             <ChevronLeft className="w-6 h-6" />
@@ -326,7 +326,7 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
         {images.length > 1 && zoomLevel <= 1 && (
           <button
             onClick={goToNext}
-            className="absolute right-2 sm:right-6 z-30 p-3 rounded-full bg-black/60 hover:bg-purple-600 text-white border border-white/20 backdrop-blur-md transition hover:scale-105 active:scale-95 shadow-2xl cursor-pointer"
+            className="absolute right-2 sm:right-6 z-30 p-3 rounded-full bg-black/60 hover:bg-amber-600 text-white border border-white/20 backdrop-blur-md transition hover:scale-105 active:scale-95 shadow-2xl cursor-pointer"
             aria-label="Next Screenshot"
           >
             <ChevronRight className="w-6 h-6" />
@@ -338,9 +338,9 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
       <div className="flex flex-col items-center gap-2">
         {images.length > 1 && (
           <div className="flex items-center gap-1.5 py-1 px-3.5 rounded-full bg-white/5 border border-white/10 text-[11px] font-medium text-slate-400">
-            <ChevronLeft className="w-3 h-3 text-purple-400" />
+            <ChevronLeft className="w-3 h-3 text-amber-400" />
             <span>Pinch with 2 fingers to Zoom • Double tap • Swipe to browse</span>
-            <ChevronRight className="w-3 h-3 text-purple-400" />
+            <ChevronRight className="w-3 h-3 text-amber-400" />
           </div>
         )}
 
@@ -352,7 +352,7 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
               onClick={() => goToIndex(i)}
               className={`w-12 sm:w-14 h-16 sm:h-20 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 cursor-pointer ${
                 currentIndex === i
-                  ? 'border-purple-500 scale-105 shadow-lg shadow-purple-500/50 opacity-100 ring-2 ring-purple-400/40'
+                  ? 'border-amber-500 scale-105 shadow-lg shadow-amber-500/50 opacity-100 ring-2 ring-amber-400/40'
                   : 'border-white/10 opacity-40 hover:opacity-90'
               }`}
             >

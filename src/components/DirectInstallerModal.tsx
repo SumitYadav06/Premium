@@ -151,7 +151,7 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
         className="relative w-full max-w-md bg-slate-900 border border-slate-700/60 text-white rounded-3xl p-6 shadow-2xl overflow-hidden"
       >
         {/* Ambient Top Glow */}
-        <div className="absolute -top-16 -left-16 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-16 -left-16 w-48 h-48 bg-amber-500/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -top-16 -right-16 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
 
         {/* Close Button */}
@@ -167,7 +167,7 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
           <img
             src={app.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}
             alt={app.name}
-            className="w-14 h-14 rounded-2xl object-cover border border-purple-500/30 shadow-lg"
+            className="w-14 h-14 rounded-2xl object-cover border border-amber-500/30 shadow-lg"
           />
           <div>
             <h3 className="font-bold text-lg text-white leading-tight flex items-center gap-1.5">
@@ -185,7 +185,7 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
           <div className="space-y-4">
             <div className="bg-slate-800/70 border border-slate-700/80 rounded-2xl p-4 space-y-3">
               <div className="flex items-start gap-3">
-                <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400 flex-shrink-0">
+                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex-shrink-0">
                   <Smartphone className="w-5 h-5" />
                 </div>
                 <div>
@@ -207,9 +207,9 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
             </div>
 
             {/* Android Permission Switcher Simulation */}
-            <div className="p-3 bg-purple-950/30 border border-purple-800/30 rounded-xl flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-medium text-purple-200">
-                <Sparkles className="w-4 h-4 text-purple-400" />
+            <div className="p-3 bg-amber-950/30 border border-amber-800/30 rounded-xl flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-medium text-amber-200">
+                <Sparkles className="w-4 h-4 text-amber-400" />
                 <span>One-Click Auto Install Mode</span>
               </div>
               <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">
@@ -226,7 +226,7 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
               </button>
               <button
                 onClick={startDownloadFlow}
-                className="flex-2 py-3 px-6 rounded-xl font-bold text-sm uppercase tracking-wider text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 shadow-lg shadow-purple-600/30 active:scale-95 transition flex items-center justify-center gap-2"
+                className="flex-2 py-3 px-6 rounded-xl font-bold text-sm uppercase tracking-wider text-white bg-gradient-to-r from-amber-600 via-yellow-600 to-blue-600 hover:from-amber-500 hover:to-blue-500 shadow-lg shadow-amber-600/30 active:scale-95 transition flex items-center justify-center gap-2"
               >
                 <Download className="w-4 h-4" />
                 <span>Grant & Download</span>
@@ -240,7 +240,7 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
                 download={`${app.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_v${app.ver}.apk`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-purple-400 hover:text-purple-300 font-bold flex items-center gap-1 transition"
+                className="text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 transition"
               >
                 <ExternalLink className="w-3 h-3" />
                 <span>Direct Raw APK Link</span>
@@ -264,7 +264,7 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
         {step === 'downloading' && (
           <div className="space-y-4 py-2">
             <div className="flex justify-between items-center text-xs font-semibold">
-              <span className="text-purple-400 uppercase tracking-widest flex items-center gap-2">
+              <span className="text-amber-400 uppercase tracking-widest flex items-center gap-2">
                 <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                 Downloading Package...
               </span>
@@ -274,7 +274,7 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
             {/* Progress Bar */}
             <div className="w-full bg-slate-800 rounded-full h-3 overflow-hidden p-0.5 border border-slate-700/80">
               <motion.div
-                className="h-full bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-400 rounded-full transition-all duration-150"
+                className="h-full bg-gradient-to-r from-amber-500 via-yellow-500 to-blue-400 rounded-full transition-all duration-150"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -303,7 +303,7 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
         {/* STEP 3: INTEGRITY VERIFICATION */}
         {step === 'verifying' && (
           <div className="space-y-4 py-4 text-center">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center text-yellow-400">
               <Cpu className="w-8 h-8 animate-pulse" />
             </div>
             <div>
@@ -317,7 +317,7 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
                 initial={{ width: '0%' }}
                 animate={{ width: '100%' }}
                 transition={{ duration: 0.8 }}
-                className="h-full bg-indigo-500"
+                className="h-full bg-yellow-500"
               />
             </div>
           </div>
@@ -344,15 +344,15 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
                 How to Install (Android / PWA):
               </span>
               <div className="flex items-center gap-3 text-xs text-slate-200">
-                <span className="w-5 h-5 rounded-full bg-purple-600 text-white font-bold flex items-center justify-center text-[10px] flex-shrink-0">1</span>
+                <span className="w-5 h-5 rounded-full bg-amber-600 text-white font-bold flex items-center justify-center text-[10px] flex-shrink-0">1</span>
                 <span>Tap notification or tap <strong>"Open Package"</strong> below.</span>
               </div>
               <div className="flex items-center gap-3 text-xs text-slate-200">
-                <span className="w-5 h-5 rounded-full bg-purple-600 text-white font-bold flex items-center justify-center text-[10px] flex-shrink-0">2</span>
+                <span className="w-5 h-5 rounded-full bg-amber-600 text-white font-bold flex items-center justify-center text-[10px] flex-shrink-0">2</span>
                 <span>If prompted, choose <strong>"Install Unknown Apps - Allow"</strong>.</span>
               </div>
               <div className="flex items-center gap-3 text-xs text-slate-200">
-                <span className="w-5 h-5 rounded-full bg-purple-600 text-white font-bold flex items-center justify-center text-[10px] flex-shrink-0">3</span>
+                <span className="w-5 h-5 rounded-full bg-amber-600 text-white font-bold flex items-center justify-center text-[10px] flex-shrink-0">3</span>
                 <span>Click <strong>"Install"</strong> to start using {app.name}.</span>
               </div>
             </div>

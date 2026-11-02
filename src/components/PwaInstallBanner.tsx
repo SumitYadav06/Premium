@@ -62,8 +62,8 @@ export const PwaInstallBanner: React.FC<PwaInstallBannerProps> = ({ theme }) => 
         exit={{ opacity: 0, y: 15 }}
         className={`relative rounded-3xl p-4 sm:p-5 border shadow-xl overflow-hidden mb-6 ${
           theme === 'dark'
-            ? 'bg-gradient-to-r from-purple-950/80 via-slate-900/90 to-indigo-950/80 border-purple-800/40 text-white'
-            : 'bg-gradient-to-r from-purple-50 via-white to-blue-50 border-purple-200 text-slate-900 shadow-purple-500/5'
+            ? 'bg-gradient-to-r from-amber-950/80 via-slate-900/90 to-yellow-950/80 border-amber-800/40 text-white'
+            : 'bg-gradient-to-r from-amber-50 via-white to-blue-50 border-amber-200 text-slate-900 shadow-amber-500/5'
         }`}
       >
         <button
@@ -76,7 +76,7 @@ export const PwaInstallBanner: React.FC<PwaInstallBannerProps> = ({ theme }) => 
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl p-0.5 rainbow-bg shadow-lg shadow-pink-500/25 flex-shrink-0 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl p-0.5 rainbow-bg shadow-lg shadow-amber-500/25 flex-shrink-0 flex items-center justify-center">
               <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center p-1 overflow-hidden">
                 <img
                   src={STORE_CONFIG.STORE_APP_ICON}
@@ -113,7 +113,7 @@ export const PwaInstallBanner: React.FC<PwaInstallBannerProps> = ({ theme }) => 
             ) : (
               <button
                 onClick={handleInstallClick}
-                className="w-full sm:w-auto py-2.5 px-5 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white text-xs font-black uppercase tracking-wider shadow-md shadow-purple-600/25 active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full sm:w-auto py-2.5 px-5 rounded-xl bg-gradient-to-r from-amber-600 to-blue-600 hover:from-amber-500 hover:to-blue-500 text-white text-xs font-black uppercase tracking-wider shadow-md shadow-amber-600/25 active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Download className="w-4 h-4" />
                 <span>Download Store APK</span>

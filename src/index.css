@@ -4,37 +4,23 @@
   .rainbow-text {
     background: linear-gradient(
       to right,
-      #ff2d55,
-      #ff9500,
-      #ffcc00,
-      #34c759,
-      #00c7be,
-      #32ade6,
-      #5856d6,
-      #af52de,
-      #ff2d55
+      #bf953f,
+      #fcf6ba,
+      #b38728,
+      #fbf5b7,
+      #aa771c,
+      #bf953f
     );
     background-size: 200% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    animation: rainbow_anim 4s linear infinite;
+    animation: goldShine 4s linear infinite;
   }
 
   .rainbow-bg {
-    background: linear-gradient(
-      135deg,
-      #ff2d55,
-      #ff9500,
-      #ffcc00,
-      #34c759,
-      #00c7be,
-      #32ade6,
-      #5856d6,
-      #af52de,
-      #ff2d55
-    );
-    background-size: 300% 300%;
-    animation: rainbow_flow 4s ease infinite;
+    background: linear-gradient(135deg, #f9ec9e, #d4af37 45%, #9a7b24 72%, #f3d27a);
+    background-size: 200% auto;
+    animation: goldShine 5s linear infinite;
   }
 
   .rainbow-mask-fill {
@@ -160,4 +146,107 @@ html, body {
 
 .tg-glow {
   animation: glowPulse 2.4s ease-in-out infinite;
+}
+
+/* ===== NOIR GOLD — Million Dollar Pack ===== */
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.font-display {
+  font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+::selection {
+  background: #d4af37;
+  color: #050505;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0c;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #d4af37, #7a5f16);
+  border-radius: 99px;
+  border: 2px solid #0a0a0c;
+}
+
+@keyframes auroraDrift {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(46px, -34px) scale(1.16); }
+  66% { transform: translate(-34px, 24px) scale(0.94); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+.aurora-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.aurora-layer::before,
+.aurora-layer::after {
+  content: "";
+  position: absolute;
+  width: 55vmax;
+  height: 55vmax;
+  border-radius: 9999px;
+  filter: blur(100px);
+  opacity: 0.13;
+  animation: auroraDrift 20s ease-in-out infinite;
+}
+.aurora-layer::before {
+  background: radial-gradient(circle at 30% 30%, #d4af37, transparent 65%);
+  top: -16vmax;
+  left: -10vmax;
+}
+.aurora-layer::after {
+  background: radial-gradient(circle at 70% 70%, #f59e0b, transparent 65%);
+  bottom: -18vmax;
+  right: -12vmax;
+  animation-delay: -10s;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(212, 175, 55, 0.16);
+}
+
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 32%, rgba(255, 255, 255, 0.35) 50%, transparent 66%);
+  transform: translateX(-130%);
+  transition: transform 0.9s ease;
+  pointer-events: none;
+}
+.btn-shine:hover::after {
+  transform: translateX(130%);
+}
+
+.premium-card:hover {
+  box-shadow: 0 22px 44px -14px rgba(212, 175, 55, 0.35), 0 0 0 1px rgba(212, 175, 55, 0.35), 0 8px 18px -8px rgba(0, 0, 0, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-float, .anim-fade-up, .aurora-layer::before, .aurora-layer::after, .rainbow-text, .rainbow-bg {
+    animation: none !important;
+  }
 }

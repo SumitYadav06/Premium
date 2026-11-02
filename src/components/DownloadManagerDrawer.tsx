@@ -50,7 +50,7 @@ export const DownloadManagerDrawer: React.FC<DownloadManagerDrawerProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-800">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-purple-600/20 text-purple-400 border border-purple-500/30">
+            <div className="p-2 rounded-xl bg-amber-600/20 text-amber-400 border border-amber-500/30">
               <Download className="w-5 h-5" />
             </div>
             <div>
@@ -97,11 +97,11 @@ export const DownloadManagerDrawer: React.FC<DownloadManagerDrawerProps> = ({
                     <img
                       src={t.appIcon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}
                       alt={t.appName}
-                      className="w-12 h-12 rounded-xl object-cover border border-purple-500/30 flex-shrink-0"
+                      className="w-12 h-12 rounded-xl object-cover border border-amber-500/30 flex-shrink-0"
                     />
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-xs text-white truncate">{t.appName}</h4>
-                      <p className="text-[10px] text-purple-400 font-mono">
+                      <p className="text-[10px] text-amber-400 font-mono">
                         v{t.version} • {t.sizeMb} MB
                       </p>
                       <span className="text-[9px] text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
@@ -113,7 +113,7 @@ export const DownloadManagerDrawer: React.FC<DownloadManagerDrawerProps> = ({
                       {/* Install / Re-install Button */}
                       <button
                         onClick={() => onInstallAgain(t)}
-                        className="py-1.5 px-3 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white text-xs font-bold uppercase tracking-wider shadow active:scale-95 transition flex items-center gap-1 cursor-pointer"
+                        className="py-1.5 px-3 rounded-xl bg-gradient-to-r from-amber-600 to-blue-600 hover:from-amber-500 hover:to-blue-500 text-white text-xs font-bold uppercase tracking-wider shadow active:scale-95 transition flex items-center gap-1 cursor-pointer"
                         title="Install / Re-install APK"
                       >
                         <Smartphone className="w-3.5 h-3.5" />

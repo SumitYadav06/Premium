@@ -523,9 +523,12 @@ export default function App() {
   }, [selectedApp, safeAppsList]);
 
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'bg-[#030712] text-white' : 'bg-slate-50 text-slate-900'} antialiased transition-colors duration-200`}>
+    <div className={`relative min-h-screen ${theme === 'dark' ? 'bg-[#050505] text-white' : 'bg-slate-50 text-slate-900'} antialiased transition-colors duration-200`}>
       {/* Intro Splash Screen */}
       {showSplash && <SplashView onFinish={() => setShowSplash(false)} />}
+
+      {/* Ambient Gold Aurora Background */}
+      <div className="aurora-layer" aria-hidden="true" />
 
       {/* Top Navbar */}
       <Navbar
@@ -541,7 +544,7 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <main className="max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
+      <main className="relative max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
         {currentSelectedApp ? (
           <AppDetailView
             app={currentSelectedApp}
@@ -564,7 +567,7 @@ export default function App() {
             <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
               {/* Search Bar */}
               <div className="relative flex-1">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-400" />
                 <input
                   type="text"
                   placeholder={isListening ? "Listening... Speak now..." : "Search VIP Mods, games, premium tools..."}
@@ -572,8 +575,8 @@ export default function App() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className={`w-full pl-10 pr-20 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm font-medium transition focus:outline-none ${
                     isListening
-                      ? 'border-rose-500 ring-2 ring-rose-500/30 animate-pulse'
-                      : 'focus:border-purple-500'
+                      ? 'border-amber-500 ring-2 ring-amber-500/30 animate-pulse'
+                      : 'focus:border-amber-500'
                   } ${
                     theme === 'dark'
                       ? 'bg-slate-900/90 border border-slate-800 text-white placeholder:text-slate-500 shadow-inner'
@@ -598,17 +601,17 @@ export default function App() {
                     onClick={toggleVoiceSearch}
                     className={`p-1.5 sm:p-2 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center ${
                       isListening
-                        ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/50 animate-bounce'
+                        ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/50 animate-bounce'
                         : theme === 'dark'
-                        ? 'bg-purple-950/60 hover:bg-purple-900/80 border border-purple-800/50 text-purple-300 hover:text-white'
-                        : 'bg-purple-100 hover:bg-purple-200 border border-purple-200 text-purple-700'
+                        ? 'bg-amber-950/60 hover:bg-amber-900/80 border border-amber-800/50 text-amber-300 hover:text-white'
+                        : 'bg-amber-100 hover:bg-amber-200 border border-amber-200 text-amber-700'
                     }`}
                     title={isListening ? "Listening... Tap to stop" : "Voice Search (Speak to Search)"}
                   >
                     {isListening ? (
                       <MicOff className="w-4 h-4 text-white animate-pulse" />
                     ) : (
-                      <Mic className="w-4 h-4 text-purple-400" />
+                      <Mic className="w-4 h-4 text-amber-400" />
                     )}
                   </button>
                 </div>
@@ -619,7 +622,7 @@ export default function App() {
                 {/* Standout How to Install Guide Button */}
                 <button
                   onClick={openInstallGuide}
-                  className="relative group flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-rose-600 to-purple-600 hover:from-amber-400 hover:via-rose-500 hover:to-purple-500 text-white font-black text-xs sm:text-sm tracking-wide shadow-lg shadow-pink-600/30 hover:shadow-pink-500/50 active:scale-95 transition-all duration-200 cursor-pointer overflow-hidden border border-white/25 flex-1 sm:flex-none whitespace-nowrap"
+                  className="relative group flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-600 to-amber-600 hover:from-amber-400 hover:via-amber-500 hover:to-amber-500 text-white font-black text-xs sm:text-sm tracking-wide shadow-lg shadow-amber-600/30 hover:shadow-amber-500/50 active:scale-95 transition-all duration-200 cursor-pointer overflow-hidden border border-white/25 flex-1 sm:flex-none whitespace-nowrap"
                   title="How to Install Guide (Play Protect / Chrome Fix)"
                 >
                   {/* Subtle Light Shimmer Sweep */}
@@ -642,7 +645,7 @@ export default function App() {
                 <div className={`flex items-center gap-2 px-3 sm:px-3.5 py-2.5 sm:py-3 rounded-2xl border text-xs sm:text-sm font-semibold ${
                   theme === 'dark' ? 'bg-slate-900/90 border-slate-800 text-slate-300' : 'bg-white border-slate-200 text-slate-700 shadow-sm'
                 }`}>
-                  <ArrowUpDown className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
+                  <ArrowUpDown className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as any)}
@@ -660,11 +663,11 @@ export default function App() {
 
             {/* Voice Search Live Status & Audio Feedback Indicator */}
             {voiceStatus && (
-              <div className="flex items-center justify-between gap-2 px-4 py-2.5 rounded-2xl bg-purple-950/80 border border-purple-500/50 text-xs text-purple-200 shadow-lg animate-in fade-in slide-in-from-top-1">
+              <div className="flex items-center justify-between gap-2 px-4 py-2.5 rounded-2xl bg-amber-950/80 border border-amber-500/50 text-xs text-amber-200 shadow-lg animate-in fade-in slide-in-from-top-1">
                 <div className="flex items-center gap-2">
                   <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
                   </span>
                   <span className="font-semibold text-white">{voiceStatus}</span>
                 </div>
@@ -687,7 +690,7 @@ export default function App() {
                   <button
                     key={term}
                     onClick={() => setSearchQuery(term)}
-                    className="px-3 py-1.5 rounded-full text-[11px] font-bold bg-slate-900/70 hover:bg-purple-600/30 border border-slate-800 hover:border-purple-500/50 text-slate-300 hover:text-white transition active:scale-95 cursor-pointer"
+                    className="px-3 py-1.5 rounded-full text-[11px] font-bold bg-slate-900/70 hover:bg-amber-600/30 border border-slate-800 hover:border-amber-500/50 text-slate-300 hover:text-white transition active:scale-95 cursor-pointer"
                   >
                     {term}
                   </button>
@@ -718,8 +721,8 @@ export default function App() {
             <div className="space-y-3">
               <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-purple-500 animate-ping" />
-                  <h2 className="text-sm sm:text-base font-black tracking-tight font-mono text-white">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                  <h2 className="font-display text-sm sm:text-base font-black tracking-tight text-white">
                     {searchQuery ? `Search Results (${filteredApps.length})` : `${selectedCategory} Collection (${filteredApps.length})`}
                   </h2>
                 </div>
@@ -758,7 +761,7 @@ export default function App() {
                       setSearchQuery('');
                       setSelectedCategory('All');
                     }}
-                    className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition shadow-lg shadow-purple-600/30 cursor-pointer inline-flex items-center gap-1.5"
+                    className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition shadow-lg shadow-amber-600/30 cursor-pointer inline-flex items-center gap-1.5"
                   >
                     <span>View All Apps</span>
                   </button>

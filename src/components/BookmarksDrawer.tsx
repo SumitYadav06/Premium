@@ -42,8 +42,8 @@ export const BookmarksDrawer: React.FC<BookmarksDrawerProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-800">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-purple-600/20 text-purple-400 border border-purple-500/30">
-              <Bookmark className="w-5 h-5 fill-purple-400" />
+            <div className="p-2 rounded-xl bg-amber-600/20 text-amber-400 border border-amber-500/30">
+              <Bookmark className="w-5 h-5 fill-amber-400" />
             </div>
             <div>
               <h3 className="font-black text-base text-white leading-none">
@@ -77,7 +77,7 @@ export const BookmarksDrawer: React.FC<BookmarksDrawerProps> = ({
             safeBookmarks.map((app, idx) => (
               <div
                 key={idx}
-                className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center gap-3 shadow-md group cursor-pointer hover:border-purple-500/40 transition"
+                className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center gap-3 shadow-md group cursor-pointer hover:border-amber-500/40 transition"
                 onClick={() => {
                   onSelectApp(app);
                   onClose();
@@ -86,16 +86,16 @@ export const BookmarksDrawer: React.FC<BookmarksDrawerProps> = ({
                 <img
                   src={app.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}
                   alt={app.name}
-                  className="w-12 h-12 rounded-xl object-cover border border-purple-500/30"
+                  className="w-12 h-12 rounded-xl object-cover border border-amber-500/30"
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1">
-                    <h4 className="font-bold text-xs text-white truncate group-hover:text-purple-300">
+                    <h4 className="font-bold text-xs text-white truncate group-hover:text-amber-300">
                       {app.name}
                     </h4>
                     <VerifiedBadge size={14} />
                   </div>
-                  <p className="text-[10px] text-purple-400 font-mono">
+                  <p className="text-[10px] text-amber-400 font-mono">
                     v{app.ver} • {app.mb} MB
                   </p>
                   <div className="flex items-center gap-1 text-yellow-400 text-[10px] mt-0.5">

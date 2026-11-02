@@ -142,14 +142,14 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
       >
         {/* Toast Notification */}
         {copyToast && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 py-1.5 px-4 rounded-full bg-purple-600 text-white text-xs font-bold shadow-xl animate-fade-in flex items-center gap-1.5 whitespace-nowrap">
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 py-1.5 px-4 rounded-full bg-amber-600 text-white text-xs font-bold shadow-xl animate-fade-in flex items-center gap-1.5 whitespace-nowrap">
             <Check className="w-3.5 h-3.5" />
             <span>{copyToast}</span>
           </div>
         )}
 
         {/* Glow behind modal */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-purple-600/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-amber-600/20 rounded-full blur-3xl pointer-events-none" />
 
         <button
           onClick={onClose}
@@ -160,7 +160,7 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
 
         {/* Avatar with Animated Circle Ring */}
         <div className="relative mx-auto w-24 h-24 mb-3">
-          <div className="absolute -inset-1 bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 rounded-full blur-md opacity-80 animate-pulse" />
+          <div className="absolute -inset-1 bg-gradient-to-tr from-amber-500 via-amber-500 to-amber-600 rounded-full blur-md opacity-80 animate-pulse" />
           <img
             src={ownerImg || STORE_CONFIG.OWNER_IMAGE || "https://i.ibb.co/HffVtwhY/image.jpg"}
             alt="Sumit Yadav"
@@ -183,15 +183,15 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
           <VerifiedBadge size={20} />
         </div>
 
-        <p className="text-xs text-pink-400 font-bold uppercase tracking-widest mb-3">
+        <p className="text-xs text-amber-400 font-bold uppercase tracking-widest mb-3">
           Official Content Creator & Store Owner
         </p>
 
         {/* Visit Site Button & Store Hub Card */}
         <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-2xl my-3 text-left space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase tracking-wider text-purple-300 flex items-center gap-1">
-              <Globe className="w-3.5 h-3.5 text-purple-400" /> Official Website URL
+            <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
+              <Globe className="w-3.5 h-3.5 text-amber-400" /> Official Website URL
             </span>
             <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800/50 px-2 py-0.5 rounded-full">
               Live Link
@@ -214,7 +214,7 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
           <div className="grid grid-cols-2 gap-2 pt-1">
             <button
               onClick={handleOpenWebsite}
-              className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer shadow-md shadow-purple-600/25"
+              className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer shadow-md shadow-amber-600/25"
             >
               <ExternalLink className="w-3.5 h-3.5" />
               <span>Visit Site</span>
@@ -225,7 +225,7 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
               className="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
               title="Direct Download Store APK"
             >
-              <Download className="w-3.5 h-3.5 text-purple-400" />
+              <Download className="w-3.5 h-3.5 text-amber-400" />
               <span>Store APK</span>
             </button>
           </div>

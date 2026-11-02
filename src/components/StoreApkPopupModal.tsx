@@ -58,13 +58,13 @@ export const StoreApkPopupModal: React.FC<StoreApkPopupModalProps> = ({
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           className={`relative w-full max-w-md rounded-3xl p-5 sm:p-6 border shadow-2xl overflow-hidden ${
             theme === 'dark'
-              ? 'bg-slate-950/95 border-purple-800/50 text-white'
-              : 'bg-white border-purple-200 text-slate-900'
+              ? 'bg-slate-950/95 border-amber-800/50 text-white'
+              : 'bg-white border-amber-200 text-slate-900'
           }`}
         >
           {/* Ambient Corner Glow */}
-          <div className="absolute -top-16 -right-16 w-36 h-36 bg-purple-600/30 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-16 -left-16 w-36 h-36 bg-pink-600/25 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -top-16 -right-16 w-36 h-36 bg-amber-600/30 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-16 -left-16 w-36 h-36 bg-amber-600/25 rounded-full blur-3xl pointer-events-none" />
 
           {/* Close Button */}
           <button
@@ -77,7 +77,7 @@ export const StoreApkPopupModal: React.FC<StoreApkPopupModalProps> = ({
 
           {/* Header with App Mascot Logo (Official App Icon) */}
           <div className="flex items-center gap-3.5 mb-4">
-            <div className="relative w-14 h-14 rounded-2xl p-0.5 rainbow-bg shadow-xl shadow-pink-500/25 flex-shrink-0 flex items-center justify-center">
+            <div className="relative w-14 h-14 rounded-2xl p-0.5 rainbow-bg shadow-xl shadow-amber-500/25 flex-shrink-0 flex items-center justify-center">
               <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center p-1 overflow-hidden">
                 <img
                   src={STORE_CONFIG.STORE_APP_ICON}
@@ -112,11 +112,11 @@ export const StoreApkPopupModal: React.FC<StoreApkPopupModalProps> = ({
           <div className="grid grid-cols-3 gap-2 p-2.5 rounded-2xl bg-slate-900/80 border border-slate-800/80 mb-4 text-center">
             <div>
               <p className="text-[10px] text-slate-400 font-bold uppercase">Version</p>
-              <p className="text-xs font-black text-purple-300">v1.0.3</p>
+              <p className="text-xs font-black text-amber-300">v1.0.3</p>
             </div>
             <div className="border-x border-slate-800">
               <p className="text-[10px] text-slate-400 font-bold uppercase">Size</p>
-              <p className="text-xs font-black text-pink-400">4.8 MB</p>
+              <p className="text-xs font-black text-amber-400">4.8 MB</p>
             </div>
             <div>
               <p className="text-[10px] text-slate-400 font-bold uppercase">Security</p>
@@ -129,7 +129,7 @@ export const StoreApkPopupModal: React.FC<StoreApkPopupModalProps> = ({
           {/* Benefits Bullet Points */}
           <div className="space-y-2.5 mb-5 text-xs text-slate-300">
             <div className="flex items-center gap-2.5">
-              <div className="w-5 h-5 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center flex-shrink-0">
+              <div className="w-5 h-5 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center flex-shrink-0">
                 <Zap className="w-3 h-3" />
               </div>
               <p className="leading-tight">
@@ -138,7 +138,7 @@ export const StoreApkPopupModal: React.FC<StoreApkPopupModalProps> = ({
             </div>
 
             <div className="flex items-center gap-2.5">
-              <div className="w-5 h-5 rounded-lg bg-pink-500/20 text-pink-400 flex items-center justify-center flex-shrink-0">
+              <div className="w-5 h-5 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center flex-shrink-0">
                 <Sparkles className="w-3 h-3" />
               </div>
               <p className="leading-tight">
@@ -166,7 +166,7 @@ export const StoreApkPopupModal: React.FC<StoreApkPopupModalProps> = ({
             ) : (
               <button
                 onClick={handleDownloadApk}
-                className="w-full py-3.5 px-5 rounded-2xl font-black uppercase text-xs sm:text-sm tracking-wider text-white bg-gradient-to-r from-amber-500 via-rose-600 to-purple-600 hover:from-amber-400 hover:via-rose-500 hover:to-purple-500 shadow-xl shadow-pink-600/30 active:scale-98 transition flex items-center justify-center gap-2 group cursor-pointer"
+                className="w-full py-3.5 px-5 rounded-2xl font-black uppercase text-xs sm:text-sm tracking-wider text-white bg-gradient-to-r from-amber-500 via-amber-600 to-amber-600 hover:from-amber-400 hover:via-amber-500 hover:to-amber-500 shadow-xl shadow-amber-600/30 active:scale-98 transition flex items-center justify-center gap-2 group cursor-pointer"
               >
                 <Download className="w-4 h-4 group-hover:animate-bounce" />
                 <span>Download Store APK Now</span>

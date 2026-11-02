@@ -60,12 +60,12 @@ export const QrShareModal: React.FC<QrShareModalProps> = ({
         </button>
 
         <div className="flex items-center justify-center gap-2 mb-3">
-          <div className="p-2 rounded-xl bg-purple-600/20 text-purple-400 border border-purple-500/30">
+          <div className="p-2 rounded-xl bg-amber-600/20 text-amber-400 border border-amber-500/30">
             <QrCode className="w-5 h-5" />
           </div>
           <h3 className="font-black text-base leading-tight text-left">
             <span>Scan to Download</span>
-            <span className="block text-[11px] text-purple-400 font-bold">Direct Mobile Transfer</span>
+            <span className="block text-[11px] text-amber-400 font-bold">Direct Mobile Transfer</span>
           </h3>
         </div>
 
@@ -74,7 +74,7 @@ export const QrShareModal: React.FC<QrShareModalProps> = ({
         </p>
 
         {/* QR Code Container */}
-        <div className="p-4 rounded-2xl bg-slate-900 border-2 border-purple-500/30 inline-block mx-auto mb-4 shadow-xl">
+        <div className="p-4 rounded-2xl bg-slate-900 border-2 border-amber-500/30 inline-block mx-auto mb-4 shadow-xl">
           <img
             src={qrCodeApiUrl}
             alt="QR Code"
@@ -95,7 +95,7 @@ export const QrShareModal: React.FC<QrShareModalProps> = ({
               </>
             ) : (
               <>
-                <Copy className="w-4 h-4 text-purple-400" />
+                <Copy className="w-4 h-4 text-amber-400" />
                 <span>Copy Direct APK Link</span>
               </>
             )}

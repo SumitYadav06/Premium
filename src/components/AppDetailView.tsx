@@ -102,7 +102,7 @@ const ScreenshotThumbnail: React.FC<{
         decoding="async"
         referrerPolicy="no-referrer"
         onError={handleError}
-        className="w-36 sm:w-48 h-60 sm:h-72 object-cover rounded-2xl sm:rounded-3xl border-2 border-purple-500/20 group-hover:border-purple-500 shadow-lg transition duration-150 pointer-events-none bg-slate-900"
+        className="w-36 sm:w-48 h-60 sm:h-72 object-cover rounded-2xl sm:rounded-3xl border-2 border-amber-500/20 group-hover:border-amber-500 shadow-lg transition duration-150 pointer-events-none bg-slate-900"
       />
       <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition rounded-2xl sm:rounded-3xl flex items-center justify-center pointer-events-none">
         <span className="text-[11px] font-bold text-white bg-black/70 px-3 py-1 rounded-full border border-white/20 backdrop-blur-md">
@@ -518,7 +518,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
           onClick={onBack}
           className={`flex items-center gap-2 py-2.5 px-4 rounded-2xl text-xs font-bold uppercase tracking-wider border transition active:scale-95 ${
             theme === 'dark'
-              ? 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:border-purple-500/40'
+              ? 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:border-amber-500/40'
               : 'bg-white border-slate-200 text-slate-700 hover:text-slate-900 shadow-sm'
           }`}
         >
@@ -536,7 +536,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
             }`}
             title="How to install this APK on Android"
           >
-            <HelpCircle className="w-4 h-4 text-purple-400" />
+            <HelpCircle className="w-4 h-4 text-amber-400" />
             <span className="hidden sm:inline">Install Guide</span>
           </button>
 
@@ -545,8 +545,8 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
             onClick={handleDirectShare}
             className={`p-2.5 rounded-2xl border transition active:scale-95 ${
               theme === 'dark'
-                ? 'bg-slate-900 border-slate-800 text-slate-400 hover:text-purple-400 hover:border-purple-500/40'
-                : 'bg-white border-slate-200 text-slate-600 hover:text-purple-600 shadow-sm'
+                ? 'bg-slate-900 border-slate-800 text-slate-400 hover:text-amber-400 hover:border-amber-500/40'
+                : 'bg-white border-slate-200 text-slate-600 hover:text-amber-600 shadow-sm'
             }`}
             title="Share & Send Directly"
           >
@@ -562,7 +562,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="fixed top-20 left-1/2 -translate-x-1/2 z-[9999] px-4 py-2.5 rounded-2xl bg-slate-950/90 text-white border border-purple-500/50 shadow-2xl backdrop-blur-md flex items-center gap-2 text-xs font-bold pointer-events-none"
+            className="fixed top-20 left-1/2 -translate-x-1/2 z-[9999] px-4 py-2.5 rounded-2xl bg-slate-950/90 text-white border border-amber-500/50 shadow-2xl backdrop-blur-md flex items-center gap-2 text-xs font-bold pointer-events-none"
           >
             <Check className="w-4 h-4 text-emerald-400" />
             <span>{copyToast}</span>
@@ -592,11 +592,11 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
         }`}
       >
         {/* Glow accent */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-amber-500/10 via-purple-600/15 to-transparent rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-amber-500/10 via-amber-600/15 to-transparent rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex items-center gap-4 sm:gap-6 relative z-10">
           <div className="relative flex-shrink-0">
-            <div className="p-0.5 rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600 shadow-lg">
+            <div className="p-0.5 rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-amber-400 via-amber-500 to-amber-600 shadow-lg">
               <img
                 src={app.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}
                 alt={app.name}
@@ -608,7 +608,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
               />
             </div>
             {app.isHot && (
-              <span className="absolute -top-1.5 -left-1.5 bg-gradient-to-r from-red-600 to-pink-600 text-white text-[8px] sm:text-[9px] font-black px-2 py-0.5 rounded-full shadow-lg border border-white/20 uppercase tracking-wider">
+              <span className="absolute -top-1.5 -left-1.5 bg-gradient-to-r from-red-600 to-amber-600 text-white text-[8px] sm:text-[9px] font-black px-2 py-0.5 rounded-full shadow-lg border border-white/20 uppercase tracking-wider">
                 HOT
               </span>
             )}
@@ -617,12 +617,12 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <VipBadge text="VIP UNLOCKED" />
-              <span className="bg-purple-600/20 text-purple-400 border border-purple-500/30 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full">
+              <span className="bg-amber-600/20 text-amber-400 border border-amber-500/30 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full">
                 {app.cat}
               </span>
             </div>
 
-            <h1 className="text-xl sm:text-3xl font-black tracking-tight leading-tight mb-1 text-white flex items-center gap-1.5 sm:gap-2">
+            <h1 className="font-display text-xl sm:text-3xl font-black tracking-tight leading-tight mb-1 text-white flex items-center gap-1.5 sm:gap-2">
               <span className="truncate">{app.name}</span>
               <VerifiedBadge size={22} />
             </h1>
@@ -647,7 +647,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
           </div>
 
           <div>
-            <p className="text-xs sm:text-sm font-black text-purple-400 font-mono">
+            <p className="text-xs sm:text-sm font-black text-amber-400 font-mono">
               {app.mb} MB
             </p>
             <p className="text-[10px] uppercase font-bold text-slate-500 mt-0.5">Size</p>
@@ -673,7 +673,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
       <div className="space-y-3">
         <button
           onClick={() => (onDirectInstall ? onDirectInstall(app) : onQuickDownload ? onQuickDownload(app) : window.open(app.link, '_blank'))}
-          className="w-full py-4 px-6 rounded-2xl font-black uppercase text-sm tracking-wider text-white bg-gradient-to-r from-amber-500 via-rose-600 to-purple-600 hover:from-amber-400 hover:via-rose-500 hover:to-purple-500 shadow-xl shadow-pink-600/25 active:scale-98 transition flex items-center justify-center gap-2.5 group cursor-pointer"
+          className="w-full py-4 px-6 rounded-2xl font-black uppercase text-sm tracking-wider text-white bg-gradient-to-r from-amber-500 via-amber-600 to-amber-600 hover:from-amber-400 hover:via-amber-500 hover:to-amber-500 shadow-xl shadow-amber-600/25 active:scale-98 transition flex items-center justify-center gap-2.5 group cursor-pointer"
         >
           <Download className="w-5 h-5 group-hover:animate-bounce" />
           <span>Direct Download APK</span>
@@ -696,14 +696,14 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
             onClick={() => onToggleBookmark(app)}
             className={`w-full py-3 px-3 rounded-xl font-bold text-xs tracking-wide transition active:scale-98 flex items-center justify-center gap-2 cursor-pointer border whitespace-nowrap ${
               isBookmarked
-                ? 'bg-purple-600/20 border-purple-500 text-purple-400 shadow-md shadow-purple-900/30'
+                ? 'bg-amber-600/20 border-amber-500 text-amber-400 shadow-md shadow-amber-900/30'
                 : theme === 'dark'
-                ? 'bg-slate-900/90 border-slate-800 text-slate-300 hover:text-white hover:border-purple-500/40'
+                ? 'bg-slate-900/90 border-slate-800 text-slate-300 hover:text-white hover:border-amber-500/40'
                 : 'bg-white border-slate-200 text-slate-700 hover:text-slate-900 shadow-sm'
             }`}
             title={isBookmarked ? 'Saved in Bookmarks' : 'Save to Favorites'}
           >
-            <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-purple-400 text-purple-400' : 'text-slate-400'}`} />
+            <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-amber-400 text-amber-400' : 'text-slate-400'}`} />
             <span>{isBookmarked ? 'Saved' : 'Save App'}</span>
           </button>
         </div>
@@ -712,7 +712,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
         <div className="flex items-center justify-between pt-1 text-xs">
           <button
             onClick={handleCopyLink}
-            className="text-[11px] font-bold text-slate-400 hover:text-purple-400 flex items-center gap-1.5 transition py-1 cursor-pointer"
+            className="text-[11px] font-bold text-slate-400 hover:text-amber-400 flex items-center gap-1.5 transition py-1 cursor-pointer"
             title="Copy app download and store link"
           >
             <Copy className="w-3.5 h-3.5" />
@@ -734,10 +734,10 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
         <div className="space-y-3">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               <span>Preview & Screenshots ({screenshots.length})</span>
             </h3>
-            <span className="text-[10px] text-purple-400 font-bold flex items-center gap-1">
+            <span className="text-[10px] text-amber-400 font-bold flex items-center gap-1">
               <ChevronLeft className="w-3 h-3" />
               <span>Swipe Left / Right</span>
               <ChevronRight className="w-3 h-3" />
@@ -771,7 +771,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
           theme === 'dark' ? 'bg-slate-900/60 border-slate-800/80 text-slate-300' : 'bg-white border-slate-200 text-slate-700'
         }`}
       >
-        <h3 className="text-xs font-black uppercase tracking-wider text-purple-400 mb-3">
+        <h3 className="text-xs font-black uppercase tracking-wider text-amber-400 mb-3">
           About this Application
         </h3>
         <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-line font-normal">
@@ -797,14 +797,14 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
         }`}
       >
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-1.5">
-          <FileCode className="w-4 h-4 text-indigo-400" />
+          <FileCode className="w-4 h-4 text-yellow-400" />
           <span>Technical Information</span>
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
           <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-800/40 border border-slate-700/40">
             <span className="text-slate-400">Package Identifier:</span>
-            <span className="font-mono text-purple-300 font-bold truncate max-w-[160px]">
+            <span className="font-mono text-amber-300 font-bold truncate max-w-[160px]">
               {app.packageName || `com.premium.${app.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`}
             </span>
           </div>
@@ -837,7 +837,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <MessageSquare className="w-4 h-4 text-purple-400" />
+              <MessageSquare className="w-4 h-4 text-amber-400" />
               <span>Reviews ({commentsList.length})</span>
             </h3>
             <span className="text-xs font-bold text-yellow-400 flex items-center gap-1">
@@ -848,7 +848,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
           {/* Tiny subtle corner button to rate */}
           <button
             onClick={() => setShowReviewForm((prev) => !prev)}
-            className="text-[11px] font-bold text-slate-400 hover:text-purple-400 px-2.5 py-1 rounded-lg border border-slate-700/60 hover:border-purple-500/50 bg-slate-800/50 transition cursor-pointer flex items-center gap-1"
+            className="text-[11px] font-bold text-slate-400 hover:text-amber-400 px-2.5 py-1 rounded-lg border border-slate-700/60 hover:border-amber-500/50 bg-slate-800/50 transition cursor-pointer flex items-center gap-1"
           >
             <Star className="w-3 h-3 text-amber-400" />
             <span>{showReviewForm ? 'Cancel' : 'Rate'}</span>
@@ -857,7 +857,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
 
         {/* Compact Dropdown Review Form (shown only if user taps the corner rate button) */}
         {showReviewForm && (
-          <form onSubmit={handleReviewSubmit} className="bg-slate-800/50 p-3.5 rounded-2xl border border-purple-500/30 space-y-2.5 animate-fadeIn">
+          <form onSubmit={handleReviewSubmit} className="bg-slate-800/50 p-3.5 rounded-2xl border border-amber-500/30 space-y-2.5 animate-fadeIn">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-300">Stars:</span>
               <div className="flex gap-1">
@@ -883,7 +883,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
               placeholder="Your Name (Optional)"
               value={authorName}
               onChange={(e) => setAuthorName(e.target.value)}
-              className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
+              className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
             />
 
             <textarea
@@ -891,7 +891,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
               value={reviewContent}
               onChange={(e) => setReviewContent(e.target.value)}
               rows={2}
-              className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 resize-none"
+              className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 resize-none"
             />
 
             <div className="flex justify-end gap-2">
@@ -905,7 +905,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="py-1 px-4 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition disabled:opacity-50"
+                className="py-1 px-4 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition disabled:opacity-50"
               >
                 {isSubmitting ? '...' : 'Post'}
               </button>
@@ -920,7 +920,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
             <p className="text-xs text-slate-400 font-medium">No reviews yet for this app.</p>
             <button
               onClick={() => setShowReviewForm(true)}
-              className="text-xs text-purple-400 hover:text-purple-300 font-bold underline cursor-pointer"
+              className="text-xs text-amber-400 hover:text-amber-300 font-bold underline cursor-pointer"
             >
               Be the first to rate & review!
             </button>
@@ -961,7 +961,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
       {relatedApps.length > 0 && (
         <div className="space-y-3 pt-4">
           <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             <span>Recommended VIP Applications</span>
           </h3>
 
@@ -974,21 +974,21 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
                     onSelectRelatedApp(rel);
                   }
                 }}
-                className="p-3.5 rounded-2xl bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800 hover:border-purple-500/40 transition cursor-pointer flex items-center gap-3 group"
+                className="p-3.5 rounded-2xl bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800 hover:border-amber-500/40 transition cursor-pointer flex items-center gap-3 group"
               >
                 <img
                   src={rel.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}
                   alt={rel.name}
-                  className="w-12 h-12 rounded-xl object-cover border border-purple-500/20 group-hover:scale-105 transition"
+                  className="w-12 h-12 rounded-xl object-cover border border-amber-500/20 group-hover:scale-105 transition"
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1">
-                    <h4 className="text-xs font-black text-white truncate group-hover:text-purple-400 transition">
+                    <h4 className="text-xs font-black text-white truncate group-hover:text-amber-400 transition">
                       {rel.name}
                     </h4>
                     <VerifiedBadge size={14} />
                   </div>
-                  <p className="text-[10px] text-purple-400 font-bold">
+                  <p className="text-[10px] text-amber-400 font-bold">
                     {rel.mb} MB • {rel.cat}
                   </p>
                 </div>

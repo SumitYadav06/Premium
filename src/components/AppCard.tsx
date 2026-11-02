@@ -53,7 +53,7 @@ export const AppCard: React.FC<AppCardProps> = ({
           onClick={() => onSelect(app)}
           className="relative flex-shrink-0 cursor-pointer"
         >
-          <div className="p-0.5 rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-amber-400/80 via-rose-500/80 to-purple-600/80 shadow-md group-hover:scale-105 group-hover:shadow-pink-500/25 transition duration-300">
+          <div className="p-0.5 rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-amber-400/80 via-amber-500/80 to-amber-600/80 shadow-md group-hover:scale-105 group-hover:shadow-amber-500/25 transition duration-300">
             <img
               src={app.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}
               alt={app.name}
@@ -66,7 +66,7 @@ export const AppCard: React.FC<AppCardProps> = ({
           </div>
 
           {app.isHot && (
-            <span className="absolute -top-1.5 -left-1.5 bg-gradient-to-r from-red-600 to-pink-600 text-white text-[8px] font-black px-2 py-0.5 rounded-full shadow-lg border border-white/20 uppercase tracking-wider">
+            <span className="absolute -top-1.5 -left-1.5 bg-gradient-to-r from-red-600 to-amber-600 text-white text-[8px] font-black px-2 py-0.5 rounded-full shadow-lg border border-white/20 uppercase tracking-wider">
               HOT
             </span>
           )}
@@ -79,16 +79,16 @@ export const AppCard: React.FC<AppCardProps> = ({
         >
           <div className="flex items-center gap-1.5 mb-0.5 min-w-0">
             <h3
-              className={`font-black text-sm sm:text-base truncate ${
+              className={`font-display font-black text-sm sm:text-base truncate ${
                 theme === 'dark' ? 'text-white' : 'text-slate-900'
-              } group-hover:text-purple-400 transition`}
+              } group-hover:text-amber-400 transition`}
             >
               {app.name}
             </h3>
             <VerifiedBadge size={16} />
           </div>
 
-          <p className="text-[11px] font-bold text-purple-400 uppercase tracking-wider">
+          <p className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
             v{app.ver} • {app.mb} MB
           </p>
 
@@ -151,14 +151,14 @@ export const AppCard: React.FC<AppCardProps> = ({
               }}
               className={`p-1.5 rounded-xl border transition ${
                 isBookmarked
-                  ? 'bg-purple-600/20 border-purple-500 text-purple-400'
+                  ? 'bg-amber-600/20 border-amber-500 text-amber-400'
                   : theme === 'dark'
                   ? 'bg-slate-800/60 border-slate-700/60 text-slate-500 hover:text-slate-300'
                   : 'bg-slate-100 border-slate-200 text-slate-400 hover:text-slate-600'
               }`}
               title={isBookmarked ? 'Remove from Saved' : 'Save to Favorites'}
             >
-              <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-purple-400' : ''}`} />
+              <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-amber-400' : ''}`} />
             </button>
           </div>
 
@@ -168,7 +168,7 @@ export const AppCard: React.FC<AppCardProps> = ({
               e.stopPropagation();
               onQuickDownload(app);
             }}
-            className="flex items-center gap-1 py-1.5 px-3.5 rounded-xl bg-gradient-to-r from-amber-500 via-rose-600 to-purple-600 hover:from-amber-400 hover:via-rose-500 hover:to-purple-500 text-white text-xs font-black uppercase tracking-wider shadow-md shadow-pink-600/20 active:scale-95 transition cursor-pointer"
+            className="flex items-center gap-1 py-1.5 px-3.5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-amber-600 hover:from-amber-400 hover:via-amber-500 hover:to-amber-500 text-white text-xs font-black uppercase tracking-wider shadow-md shadow-amber-600/20 active:scale-95 transition cursor-pointer"
             title="Direct Download APK"
           >
             <Download className="w-3.5 h-3.5" />

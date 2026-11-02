@@ -129,7 +129,7 @@ export const ReportLinkModal: React.FC<ReportLinkModalProps> = ({
                       onClick={() => setReason(item)}
                       className={`flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition ${
                         reason === item
-                          ? 'bg-purple-950/40 border-purple-500 text-purple-200'
+                          ? 'bg-amber-950/40 border-amber-500 text-amber-200'
                           : 'bg-slate-800/40 border-slate-700/40 text-slate-300'
                       }`}
                     >
@@ -138,7 +138,7 @@ export const ReportLinkModal: React.FC<ReportLinkModalProps> = ({
                         name="issueType"
                         checked={reason === item}
                         onChange={() => setReason(item)}
-                        className="text-purple-600 focus:ring-0"
+                        className="text-amber-600 focus:ring-0"
                       />
                       <span>{item}</span>
                     </label>
@@ -155,7 +155,7 @@ export const ReportLinkModal: React.FC<ReportLinkModalProps> = ({
                   value={extraDetails}
                   onChange={(e) => setExtraDetails(e.target.value)}
                   rows={2}
-                  className="w-full bg-slate-800/80 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-purple-500 resize-none"
+                  className="w-full bg-slate-800/80 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-500 resize-none"
                 />
               </div>
 

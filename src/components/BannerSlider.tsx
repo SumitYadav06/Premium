@@ -94,7 +94,7 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
 
   return (
     <div
-      className="relative w-full rounded-3xl overflow-hidden shadow-2xl border border-purple-500/30 mb-8 select-none touch-pan-y cursor-grab active:cursor-grabbing"
+      className="relative w-full rounded-3xl overflow-hidden shadow-2xl border border-amber-500/30 mb-8 select-none touch-pan-y cursor-grab active:cursor-grabbing"
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
@@ -139,7 +139,7 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
               <img
                 src={current.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}
                 alt={current.name}
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl object-cover border-2 border-purple-500/50 shadow-xl flex-shrink-0 cursor-pointer hover:scale-105 transition-transform"
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl object-cover border-2 border-amber-500/50 shadow-xl flex-shrink-0 cursor-pointer hover:scale-105 transition-transform"
                 onClick={(e) => {
                   e.stopPropagation();
                   onSelectApp(current);
@@ -148,10 +148,10 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                  <span className="bg-gradient-to-r from-amber-600 to-amber-600 text-white text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full shadow-md flex items-center gap-1">
                     <Sparkles className="w-2.5 h-2.5" /> FEATURED VIP
                   </span>
-                  <span className="text-[10px] text-purple-400 font-bold uppercase tracking-wider">
+                  <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">
                     {current.cat}
                   </span>
                 </div>
@@ -161,7 +161,7 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
                     e.stopPropagation();
                     onSelectApp(current);
                   }}
-                  className="text-lg sm:text-2xl font-black text-white truncate cursor-pointer hover:text-purple-300 transition flex items-center gap-1.5"
+                  className="text-lg sm:text-2xl font-black text-white truncate cursor-pointer hover:text-amber-300 transition flex items-center gap-1.5"
                 >
                   <span>{current.name}</span>
                   <VerifiedBadge size={18} />
@@ -201,7 +201,7 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
                         e.stopPropagation();
                         onQuickDownload(current);
                       }}
-                      className="py-1.5 px-3.5 sm:px-4 rounded-xl bg-gradient-to-r from-amber-500 via-rose-600 to-purple-600 hover:from-amber-400 hover:via-rose-500 hover:to-purple-500 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-pink-600/30 active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
+                      className="py-1.5 px-3.5 sm:px-4 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-amber-600 hover:from-amber-400 hover:via-amber-500 hover:to-amber-500 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-amber-600/30 active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
                     >
                       <Download className="w-3.5 h-3.5" />
                       <span>Install</span>
@@ -224,7 +224,7 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
                 }}
                 className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
                   currentIndex === idx
-                    ? 'w-7 bg-gradient-to-r from-amber-400 to-purple-500 shadow-md shadow-purple-500/50'
+                    ? 'w-7 bg-gradient-to-r from-amber-400 to-amber-500 shadow-md shadow-amber-500/50'
                     : 'w-2 bg-slate-700/80 hover:bg-slate-500'
                 }`}
                 aria-label={`Slide ${idx + 1}`}

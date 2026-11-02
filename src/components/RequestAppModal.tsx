@@ -69,10 +69,10 @@ export const RequestAppModal: React.FC<RequestAppModalProps> = ({
           initial={{ opacity: 0, scale: 0.94, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: 15 }}
-          className="relative w-full max-w-md rounded-3xl p-5 sm:p-6 border border-purple-500/40 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 text-white shadow-2xl shadow-purple-950/70 overflow-hidden z-10"
+          className="relative w-full max-w-md rounded-3xl p-5 sm:p-6 border border-amber-500/40 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 text-white shadow-2xl shadow-amber-950/70 overflow-hidden z-10"
         >
           {/* Ambient Glow */}
-          <div className="absolute -top-10 -right-10 w-36 h-36 bg-purple-600/25 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -top-10 -right-10 w-36 h-36 bg-amber-600/25 rounded-full blur-3xl pointer-events-none" />
 
           {/* Close Button */}
           <button
@@ -84,9 +84,9 @@ export const RequestAppModal: React.FC<RequestAppModalProps> = ({
 
           {/* Header */}
           <div className="flex items-center gap-2.5 mb-4">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 to-pink-600 p-0.5 shadow-md shadow-purple-600/30 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-600 to-amber-600 p-0.5 shadow-md shadow-amber-600/30 flex items-center justify-center">
               <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
-                <Smartphone className="w-5 h-5 text-purple-400" />
+                <Smartphone className="w-5 h-5 text-amber-400" />
               </div>
             </div>
             <div>
@@ -119,7 +119,7 @@ export const RequestAppModal: React.FC<RequestAppModalProps> = ({
               {/* Field 1: App Name */}
               <div>
                 <label className="block text-[11px] font-black uppercase tracking-wider text-slate-300 mb-1">
-                  App / Game Name <span className="text-pink-400">*</span>
+                  App / Game Name <span className="text-amber-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -128,7 +128,7 @@ export const RequestAppModal: React.FC<RequestAppModalProps> = ({
                   onChange={(e) => setAppName(e.target.value)}
                   required
                   autoFocus
-                  className="w-full bg-slate-950 border border-purple-500/30 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-purple-400 transition"
+                  className="w-full bg-slate-950 border border-amber-500/30 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-400 transition"
                 />
               </div>
 
@@ -142,13 +142,13 @@ export const RequestAppModal: React.FC<RequestAppModalProps> = ({
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   rows={2}
-                  className="w-full bg-slate-950 border border-purple-500/30 rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-purple-400 transition resize-none"
+                  className="w-full bg-slate-950 border border-amber-500/30 rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-400 transition resize-none"
                 />
               </div>
 
               {/* Notice info */}
-              <div className="p-2.5 rounded-xl bg-purple-950/20 border border-purple-800/30 flex items-center gap-2 text-[11px] text-purple-300">
-                <Info className="w-4 h-4 text-purple-400 flex-shrink-0" />
+              <div className="p-2.5 rounded-xl bg-amber-950/20 border border-amber-800/30 flex items-center gap-2 text-[11px] text-amber-300">
+                <Info className="w-4 h-4 text-amber-400 flex-shrink-0" />
                 <span>Yeh request seedhe aapke store ke admin panel me save ho jayegi.</span>
               </div>
 
@@ -156,7 +156,7 @@ export const RequestAppModal: React.FC<RequestAppModalProps> = ({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 hover:from-purple-500 hover:via-pink-500 hover:to-amber-400 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-purple-600/30 active:scale-98 transition flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-600 via-amber-600 to-amber-500 hover:from-amber-500 hover:via-amber-500 hover:to-amber-400 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-600/30 active:scale-98 transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>{isSubmitting ? 'Sending Request...' : 'Send Request Now'}</span>

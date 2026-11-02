@@ -326,20 +326,20 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
           initial={{ opacity: 0, scale: 0.94, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: 15 }}
-          className="relative w-full max-w-xl rounded-3xl p-4 sm:p-6 border border-purple-500/40 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 text-white shadow-2xl shadow-purple-950/70 overflow-hidden z-10 max-h-[94vh] flex flex-col"
+          className="relative w-full max-w-xl rounded-3xl p-4 sm:p-6 border border-amber-500/40 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 text-white shadow-2xl shadow-amber-950/70 overflow-hidden z-10 max-h-[94vh] flex flex-col"
         >
           {/* Ambient Glows */}
-          <div className="absolute -top-12 -right-12 w-44 h-44 bg-purple-600/25 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-12 -left-12 w-44 h-44 bg-pink-600/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -top-12 -right-12 w-44 h-44 bg-amber-600/25 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-12 -left-12 w-44 h-44 bg-amber-600/20 rounded-full blur-3xl pointer-events-none" />
 
           {/* Top Header */}
           <div className="flex items-center justify-between pb-3 border-b border-slate-800 relative z-10 flex-shrink-0">
             <div className="flex items-center gap-2.5">
-              <span className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500/20 to-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400 flex-shrink-0 shadow-inner">
+              <span className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500/20 to-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 flex-shrink-0 shadow-inner">
                 <ShieldAlert className="w-5 h-5 text-amber-400" />
               </span>
               <div>
-                <h2 className="text-base font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-300 to-purple-200">
+                <h2 className="text-base font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-300 to-amber-200">
                   APK Installation Guide
                 </h2>
                 <p className="text-[11px] text-slate-400 font-medium">
@@ -367,7 +367,7 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
                   onClick={() => setActiveTab(idx)}
                   className={`py-2 px-1 rounded-xl transition-all duration-200 cursor-pointer border text-center relative overflow-hidden ${
                     isActive
-                      ? 'bg-gradient-to-r from-purple-900/90 via-pink-950/80 to-purple-900/90 border-purple-400 shadow-md shadow-purple-500/30'
+                      ? 'bg-gradient-to-r from-amber-900/90 via-amber-950/80 to-amber-900/90 border-amber-400 shadow-md shadow-amber-500/30'
                       : 'bg-slate-900/50 border-slate-800 hover:bg-slate-800/60 opacity-70 hover:opacity-100'
                   }`}
                 >
@@ -383,7 +383,7 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
           </div>
 
           {/* Instruction Box */}
-          <div className="mt-2.5 px-3.5 py-2 rounded-xl bg-purple-950/30 border border-purple-800/40 text-xs text-purple-200 flex items-start gap-2 flex-shrink-0">
+          <div className="mt-2.5 px-3.5 py-2 rounded-xl bg-amber-950/30 border border-amber-800/40 text-xs text-amber-200 flex items-start gap-2 flex-shrink-0">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
             <p className="leading-relaxed text-[11px] sm:text-xs">
               <strong className="text-white font-bold">{currentItem.subtitle}: </strong>
@@ -395,7 +395,7 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
           <div className="flex-1 flex flex-col items-center justify-center py-2.5 overflow-hidden min-h-[260px] sm:min-h-[300px]">
             <div className="w-full flex items-center justify-between px-1 mb-1.5 text-xs text-slate-300">
               <span className="font-bold flex items-center gap-1">
-                <span className="text-purple-400 font-mono">[{activeTab + 1}/4]</span> {currentItem.subtitle}
+                <span className="text-amber-400 font-mono">[{activeTab + 1}/4]</span> {currentItem.subtitle}
               </span>
               <button
                 onClick={() => setIsZoomOpen(true)}
@@ -408,7 +408,7 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
             {/* Clickable Image Container */}
             <div
               onClick={() => setIsZoomOpen(true)}
-              className="relative w-full flex-1 max-h-[50vh] flex items-center justify-center rounded-2xl overflow-hidden bg-slate-950/90 border border-purple-500/40 p-2 cursor-zoom-in group shadow-2xl hover:border-amber-400/80 transition-all duration-300"
+              className="relative w-full flex-1 max-h-[50vh] flex items-center justify-center rounded-2xl overflow-hidden bg-slate-950/90 border border-amber-500/40 p-2 cursor-zoom-in group shadow-2xl hover:border-amber-400/80 transition-all duration-300"
             >
               <img
                 src={getImageSrc(activeTab)}
@@ -419,7 +419,7 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
 
               {/* Hover/Tap Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 text-white backdrop-blur-[2px]">
-                <div className="p-3 rounded-full bg-purple-600/90 border border-white/30 shadow-xl scale-95 group-hover:scale-110 transition-transform">
+                <div className="p-3 rounded-full bg-amber-600/90 border border-white/30 shadow-xl scale-95 group-hover:scale-110 transition-transform">
                   <ZoomIn className="w-6 h-6 text-white" />
                 </div>
                 <span className="text-xs font-black tracking-wide uppercase bg-black/60 px-3 py-1 rounded-full border border-white/20">
@@ -455,7 +455,7 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
             {activeTab < GUIDE_ITEMS.length - 1 ? (
               <button
                 onClick={() => setActiveTab((p) => p + 1)}
-                className="px-5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-purple-600/30 active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-600 hover:from-amber-500 hover:to-amber-500 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-amber-600/30 active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
               >
                 <span>Next</span>
                 <ChevronRight className="w-4 h-4" />
@@ -528,7 +528,7 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
                   {zoomLevel > 1 && (
                     <button
                       onClick={handleResetZoom}
-                      className="p-1.5 rounded-xl bg-purple-900/50 hover:bg-purple-800/80 text-purple-300 text-xs font-bold flex items-center gap-1 transition cursor-pointer"
+                      className="p-1.5 rounded-xl bg-amber-900/50 hover:bg-amber-800/80 text-amber-300 text-xs font-bold flex items-center gap-1 transition cursor-pointer"
                       title="Reset Zoom"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
@@ -542,7 +542,7 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
                     e.stopPropagation();
                     setIsZoomOpen(false);
                   }}
-                  className="p-2 rounded-full bg-slate-800/90 hover:bg-rose-600 text-white transition active:scale-95 cursor-pointer shadow-lg"
+                  className="p-2 rounded-full bg-slate-800/90 hover:bg-amber-600 text-white transition active:scale-95 cursor-pointer shadow-lg"
                   title="Close Fullscreen (Esc)"
                 >
                   <X className="w-5 h-5" />
@@ -567,7 +567,7 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
                     e.stopPropagation();
                     setActiveTab((p) => (p > 0 ? p - 1 : GUIDE_ITEMS.length - 1));
                   }}
-                  className="absolute left-2 sm:left-4 z-30 p-2.5 sm:p-3 rounded-full bg-slate-900/80 hover:bg-purple-600 text-white border border-white/20 shadow-2xl transition active:scale-90 cursor-pointer"
+                  className="absolute left-2 sm:left-4 z-30 p-2.5 sm:p-3 rounded-full bg-slate-900/80 hover:bg-amber-600 text-white border border-white/20 shadow-2xl transition active:scale-90 cursor-pointer"
                   title="Previous Step (Left Arrow)"
                 >
                   <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -586,7 +586,7 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
                     src={getImageSrc(activeTab)}
                     alt={currentItem.title}
                     onError={() => handleImageError(activeTab, getImageSrc(activeTab))}
-                    className="max-h-[82vh] max-w-[92vw] object-contain rounded-2xl shadow-2xl border border-purple-500/40 select-none pointer-events-none"
+                    className="max-h-[82vh] max-w-[92vw] object-contain rounded-2xl shadow-2xl border border-amber-500/40 select-none pointer-events-none"
                     draggable={false}
                   />
                 </div>
@@ -597,7 +597,7 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
                     e.stopPropagation();
                     setActiveTab((p) => (p + 1) % GUIDE_ITEMS.length);
                   }}
-                  className="absolute right-2 sm:right-4 z-30 p-2.5 sm:p-3 rounded-full bg-slate-900/80 hover:bg-purple-600 text-white border border-white/20 shadow-2xl transition active:scale-90 cursor-pointer"
+                  className="absolute right-2 sm:right-4 z-30 p-2.5 sm:p-3 rounded-full bg-slate-900/80 hover:bg-amber-600 text-white border border-white/20 shadow-2xl transition active:scale-90 cursor-pointer"
                   title="Next Step (Right Arrow)"
                 >
                   <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -623,7 +623,7 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
                       onClick={() => setActiveTab(idx)}
                       className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                         activeTab === idx
-                          ? 'bg-gradient-to-r from-amber-500 to-rose-500 text-white shadow-lg shadow-pink-500/40 scale-105'
+                          ? 'bg-gradient-to-r from-amber-500 to-amber-500 text-white shadow-lg shadow-amber-500/40 scale-105'
                           : 'bg-slate-800/80 hover:bg-slate-700 text-slate-400'
                       }`}
                     >

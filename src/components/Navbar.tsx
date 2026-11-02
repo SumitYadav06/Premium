@@ -52,7 +52,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group select-none flex-shrink-0"
         >
           {/* Store Brand: Official App Icon */}
-          <div className="anim-float relative w-11 h-11 rounded-2xl p-0.5 rainbow-bg shadow-lg shadow-pink-500/25 flex items-center justify-center group-hover:scale-105 transition duration-300">
+          <div className="anim-float relative w-11 h-11 rounded-2xl p-0.5 rainbow-bg shadow-lg shadow-amber-500/25 flex items-center justify-center group-hover:scale-105 transition duration-300">
             <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center p-0.5 overflow-hidden">
               <img
                 src={STORE_CONFIG.STORE_APP_ICON}
@@ -70,7 +70,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Store Title & Verified Badge */}
           <div className="flex flex-col justify-center">
-            <h1 className="text-lg sm:text-xl font-black italic tracking-tight rainbow-text leading-none group-hover:opacity-90 transition">
+            <h1 className="font-display text-lg sm:text-xl font-black tracking-tight rainbow-text leading-none group-hover:opacity-90 transition">
               {STORE_CONFIG.STORE_NAME}
             </h1>
             <div className="flex items-center gap-1.5 mt-1">
@@ -97,7 +97,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <Bookmark className="w-4 h-4" />
             {bookmarksCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-purple-600 text-white rounded-full text-[9px] font-bold flex items-center justify-center shadow">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-600 text-white rounded-full text-[9px] font-bold flex items-center justify-center shadow">
                 {bookmarksCount}
               </span>
             )}
@@ -139,7 +139,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Creator Profile Avatar Button */}
           <button
             onClick={onOpenOwner}
-            className="relative p-0.5 rounded-full bg-gradient-to-tr from-purple-500 via-pink-500 to-amber-400 hover:scale-105 transition-transform duration-200 focus:outline-none flex-shrink-0 cursor-pointer shadow-md shadow-purple-500/20"
+            className="relative p-0.5 rounded-full bg-gradient-to-tr from-amber-500 via-amber-500 to-amber-400 hover:scale-105 transition-transform duration-200 focus:outline-none flex-shrink-0 cursor-pointer shadow-md shadow-amber-500/20"
             title={`Creator: ${STORE_CONFIG.OWNER_NAME}`}
           >
             <img
