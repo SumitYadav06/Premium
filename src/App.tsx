@@ -720,19 +720,22 @@ export default function App() {
             {/* Apps Grid */}
             <div className="space-y-3">
               <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-                  <h2 className="font-display text-sm sm:text-base font-black tracking-tight text-white">
-                    {searchQuery ? `Search Results (${filteredApps.length})` : `${selectedCategory} Collection (${filteredApps.length})`}
-                  </h2>
+                <div className="flex items-center gap-2.5">
+                  <span className="w-1.5 h-7 rounded-full bg-gradient-to-b from-amber-300 to-amber-600 shadow-[0_0_14px_rgba(212,175,55,0.8)]" />
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-[0.28em] text-amber-500 leading-none mb-1">Premium Store</p>
+                    <h2 className="font-display text-base sm:text-lg font-black tracking-tight text-white leading-none">
+                      {searchQuery ? `Search Results (${filteredApps.length})` : `${selectedCategory} Collection (${filteredApps.length})`}
+                    </h2>
+                  </div>
                 </div>
-                <span className="text-[11px] font-bold text-slate-400">
-                  100% Tested VIP APKs
+                <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 bg-amber-400/10 border border-amber-400/25 px-2.5 py-1 rounded-full whitespace-nowrap">
+                  100% Tested • VIP
                 </span>
               </div>
 
               {loading && safeAppsList.length === 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                   {[1, 2, 3, 4, 5, 6].map((i) => (
                     <div
                       key={i}
@@ -767,7 +770,7 @@ export default function App() {
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                   {filteredApps.map((app, idx) => (
                     <AppCard
                       key={app.id}

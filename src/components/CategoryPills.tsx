@@ -39,7 +39,7 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
               isSelected
                 ? 'bg-gradient-to-r from-amber-600 to-yellow-600 text-white shadow-lg shadow-amber-600/30 ring-2 ring-amber-400/50'
                 : theme === 'dark'
-                ? 'bg-slate-900/80 border border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80'
+                ? 'bg-white/[0.04] backdrop-blur-xl border border-white/10 text-slate-400 hover:text-amber-300 hover:border-amber-400/40'
                 : 'bg-white border border-slate-200 text-slate-600 hover:text-slate-900 shadow-sm'
             }`}
           >

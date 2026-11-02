@@ -192,19 +192,10 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
                         e.stopPropagation();
                         onSelectApp(current);
                       }}
-                      className="py-1.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur-md transition cursor-pointer"
+                      className="py-2 px-5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-600 hover:from-amber-300 hover:to-yellow-500 text-slate-950 text-xs font-black uppercase tracking-wider shadow-lg shadow-amber-600/40 active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
                     >
-                      Details
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onQuickDownload(current);
-                      }}
-                      className="py-1.5 px-3.5 sm:px-4 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-amber-600 hover:from-amber-400 hover:via-amber-500 hover:to-amber-500 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-amber-600/30 active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>Install</span>
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>View App</span>
                     </button>
                   </div>
                 </div>
