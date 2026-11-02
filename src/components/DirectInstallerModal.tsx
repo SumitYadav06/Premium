@@ -286,7 +286,7 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
               </button>
               <button
                 onClick={startDownloadFlow}
-                className="flex-2 py-3 px-6 rounded-xl font-bold text-sm uppercase tracking-wider text-white bg-gradient-to-r from-amber-600 via-yellow-600 to-blue-600 hover:from-amber-500 hover:to-blue-500 shadow-lg shadow-amber-600/30 active:scale-95 transition flex items-center justify-center gap-2"
+                className="btn-shine flex-2 py-3 px-6 rounded-xl font-bold text-sm uppercase tracking-wider text-white bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 hover:from-violet-500 hover:to-orange-300 shadow-lg shadow-fuchsia-600/30 active:scale-95 transition flex items-center justify-center gap-2"
               >
                 <Download className="w-4 h-4" />
                 <span>Grant & Download</span>

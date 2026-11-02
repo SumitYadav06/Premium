@@ -37,13 +37,13 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
             onClick={() => onSelectCategory(cat)}
             className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all flex-shrink-0 active:scale-95 ${
               isSelected
-                ? 'bg-gradient-to-r from-amber-600 to-yellow-600 text-white shadow-lg shadow-amber-600/30 ring-2 ring-amber-400/50'
+                ? 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 text-white shadow-lg shadow-fuchsia-500/40 ring-2 ring-fuchsia-400/60'
                 : theme === 'dark'
-                ? 'bg-white/[0.04] backdrop-blur-xl border border-white/10 text-slate-400 hover:text-amber-300 hover:border-amber-400/40'
+                ? 'bg-white border border-slate-200 text-slate-500 hover:text-fuchsia-600 hover:border-fuchsia-300 shadow-sm'
                 : 'bg-white border border-slate-200 text-slate-600 hover:text-slate-900 shadow-sm'
             }`}
           >
-            <span className={isSelected ? 'text-white' : 'text-amber-400'}>
+            <span className={isSelected ? 'text-white' : 'text-fuchsia-500'}>
               {CAT_ICONS[cat] || <Sparkles className="w-3.5 h-3.5" />}
             </span>
             <span>{cat}</span>

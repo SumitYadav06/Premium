@@ -52,7 +52,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group select-none flex-shrink-0"
         >
           {/* Store Brand: Official App Icon */}
-          <div className="anim-float relative w-11 h-11 rounded-2xl p-0.5 rainbow-bg shadow-lg shadow-amber-500/25 flex items-center justify-center group-hover:scale-105 transition duration-300">
+          <div className="anim-float relative w-11 h-11 rounded-2xl p-0.5 rainbow-bg shadow-lg shadow-fuchsia-500/30 flex items-center justify-center group-hover:scale-105 transition duration-300">
             <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center p-0.5 overflow-hidden">
               <img
                 src={STORE_CONFIG.STORE_APP_ICON}

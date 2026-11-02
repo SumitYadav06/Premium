@@ -160,7 +160,7 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
 
         {/* Avatar with Animated Circle Ring */}
         <div className="relative mx-auto w-24 h-24 mb-3">
-          <div className="absolute -inset-1 bg-gradient-to-tr from-amber-500 via-amber-500 to-amber-600 rounded-full blur-md opacity-80 animate-pulse" />
+          <div className="absolute -inset-1 bg-gradient-to-tr from-rose-500 via-fuchsia-500 to-violet-600 rounded-full blur-md opacity-80 animate-pulse" />
           <img
             src={ownerImg || STORE_CONFIG.OWNER_IMAGE || "https://i.ibb.co/HffVtwhY/image.jpg"}
             alt="Sumit Yadav"

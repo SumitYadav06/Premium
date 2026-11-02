@@ -48,12 +48,12 @@ export const SplashView: React.FC<SplashViewProps> = ({
           exit={{ opacity: 0, scale: 1.05 }}
           transition={{ duration: 0.35, ease: "easeInOut" }}
           onClick={handleDismiss}
-          className="fixed inset-0 z-[99999] bg-[#030712] flex flex-col items-center justify-center p-4 sm:p-6 select-none overflow-hidden cursor-pointer"
+          className="fixed inset-0 z-[99999] bg-[#fdfaff] flex flex-col items-center justify-center p-4 sm:p-6 select-none overflow-hidden cursor-pointer"
         >
           {/* Ambient background glow circles */}
-          <div className="absolute w-96 h-96 bg-amber-600/25 rounded-full blur-[130px] pointer-events-none -top-20 -left-20 animate-pulse" />
-          <div className="absolute w-96 h-96 bg-amber-600/25 rounded-full blur-[130px] pointer-events-none -bottom-20 -right-20 animate-pulse" />
-          <div className="absolute w-80 h-80 bg-blue-600/20 rounded-full blur-[110px] pointer-events-none top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+          <div className="absolute w-96 h-96 bg-fuchsia-400/30 rounded-full blur-[130px] pointer-events-none -top-20 -left-20 animate-pulse" />
+          <div className="absolute w-96 h-96 bg-rose-400/25 rounded-full blur-[130px] pointer-events-none -bottom-20 -right-20 animate-pulse" />
+          <div className="absolute w-80 h-80 bg-sky-400/25 rounded-full blur-[110px] pointer-events-none top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
 
           {/* Main Container */}
           <motion.div
@@ -64,8 +64,8 @@ export const SplashView: React.FC<SplashViewProps> = ({
           >
             {/* Logo with Glowing Rainbow Border */}
             <div className="anim-float relative mb-5 group">
-              <div className="absolute -inset-2.5 bg-gradient-to-r from-amber-300 via-yellow-500 via-amber-500 to-yellow-600 rounded-[2.8rem] blur-lg opacity-85 animate-pulse"></div>
-              <div className="relative w-44 h-44 sm:w-52 sm:h-52 rounded-[2.4rem] overflow-hidden bg-slate-950 border-2 border-amber-400/60 shadow-2xl p-1.5 flex items-center justify-center">
+              <div className="absolute -inset-2.5 bg-gradient-to-r from-rose-500 via-fuchsia-500 via-amber-400 to-cyan-400 rounded-[2.8rem] blur-lg opacity-80 animate-pulse"></div>
+              <div className="relative w-44 h-44 sm:w-52 sm:h-52 rounded-[2.4rem] overflow-hidden bg-white border-2 border-fuchsia-400/50 shadow-2xl shadow-fuchsia-200 p-1.5 flex items-center justify-center">
                 <img
                   src={logoUrl || STORE_CONFIG.STORE_SPLASH_LOGO || STORE_CONFIG.STORE_APP_ICON}
                   alt={STORE_CONFIG.STORE_NAME}
@@ -99,7 +99,7 @@ export const SplashView: React.FC<SplashViewProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="text-xs text-amber-300/90 font-semibold tracking-wider uppercase mb-5"
+              className="text-xs text-fuchsia-500 font-semibold tracking-wider uppercase mb-5"
             >
               {STORE_CONFIG.STORE_TAGLINE}
             </motion.p>
@@ -109,31 +109,31 @@ export const SplashView: React.FC<SplashViewProps> = ({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.35, duration: 0.4 }}
-              className="w-full p-4 rounded-3xl bg-slate-900/90 border border-amber-500/40 backdrop-blur-xl shadow-2xl shadow-amber-950/60"
+              className="w-full p-4 rounded-3xl bg-white/85 border border-violet-200 backdrop-blur-xl shadow-2xl shadow-violet-200/60"
             >
               {/* Status Text & Version */}
-              <div className="flex items-center justify-between text-[11px] font-mono text-slate-300 mb-2.5">
-                <span className="flex items-center gap-1.5 text-amber-300 font-bold">
+              <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 mb-2.5">
+                <span className="flex items-center gap-1.5 text-fuchsia-600 font-bold">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
                   <span>{loadStep}</span>
                 </span>
-                <span className="text-amber-400 font-black text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30">
+                <span className="text-violet-600 font-black text-[10px] px-2 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/30">
                   VIP v1.0
                 </span>
               </div>
 
               {/* Animated 3D Gradient Progress Bar */}
-              <div className="relative w-full h-2.5 rounded-full bg-slate-950 overflow-hidden border border-amber-900/50 p-0.5 shadow-inner">
+              <div className="relative w-full h-2.5 rounded-full bg-slate-100 overflow-hidden border border-violet-100 p-0.5 shadow-inner">
                 <motion.div
                   initial={{ width: "10%" }}
                   animate={{ width: "100%" }}
                   transition={{ duration: 1.8, ease: "easeInOut" }}
-                  className="h-full rounded-full bg-gradient-to-r from-amber-500 via-amber-500 via-amber-400 to-emerald-400 shadow-lg shadow-amber-500/50"
+                  className="h-full rounded-full bg-gradient-to-r from-rose-500 via-fuchsia-500 to-violet-600 shadow-lg shadow-fuchsia-400/50"
                 />
               </div>
 
               {/* 3 Quick Security Badges */}
-              <div className="mt-3.5 pt-3 border-t border-slate-800/80 grid grid-cols-3 gap-1 text-[10px] font-semibold text-slate-400">
+              <div className="mt-3.5 pt-3 border-t border-slate-200 grid grid-cols-3 gap-1 text-[10px] font-semibold text-slate-500">
                 <div className="flex items-center justify-center gap-1 text-emerald-400">
                   <ShieldCheck className="w-3.5 h-3.5" />
                   <span>Virus Clean</span>

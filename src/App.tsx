@@ -70,7 +70,7 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(true);
 
   // UI Filters
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [theme, setTheme] = useState<'dark' | 'light'>('light');
   const [searchQuery, setSearchQuery] = useState('');
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = React.useRef<any>(null);
@@ -523,7 +523,7 @@ export default function App() {
   }, [selectedApp, safeAppsList]);
 
   return (
-    <div className={`relative min-h-screen ${theme === 'dark' ? 'bg-[#050505] text-white' : 'bg-slate-50 text-slate-900'} antialiased transition-colors duration-200`}>
+    <div className={`relative min-h-screen ${theme === 'dark' ? 'bg-[#0d0a1a] text-white' : 'bg-[#f7f5ff] text-slate-900'} antialiased transition-colors duration-200`}>
       {/* Intro Splash Screen */}
       {showSplash && <SplashView onFinish={() => setShowSplash(false)} />}
 
@@ -576,7 +576,7 @@ export default function App() {
                   className={`w-full pl-10 pr-20 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm font-medium transition focus:outline-none ${
                     isListening
                       ? 'border-amber-500 ring-2 ring-amber-500/30 animate-pulse'
-                      : 'focus:border-amber-500'
+                      : 'focus:border-fuchsia-500'
                   } ${
                     theme === 'dark'
                       ? 'bg-slate-900/90 border border-slate-800 text-white placeholder:text-slate-500 shadow-inner'
@@ -683,14 +683,14 @@ export default function App() {
             {/* Trending Searches */}
             {!searchQuery && trendingSearches.length > 0 && (
               <div className="flex items-center gap-2 flex-wrap px-1 anim-fade-up">
-                <span className="flex items-center gap-1 text-[11px] font-black uppercase tracking-wider text-amber-400">
+                <span className="flex items-center gap-1 text-[11px] font-black uppercase tracking-wider text-rose-500">
                   <Flame className="w-3.5 h-3.5" /> Trending
                 </span>
                 {trendingSearches.map((term) => (
                   <button
                     key={term}
                     onClick={() => setSearchQuery(term)}
-                    className="px-3 py-1.5 rounded-full text-[11px] font-bold bg-slate-900/70 hover:bg-amber-600/30 border border-slate-800 hover:border-amber-500/50 text-slate-300 hover:text-white transition active:scale-95 cursor-pointer"
+                    className="px-3 py-1.5 rounded-full text-[11px] font-bold bg-white hover:bg-fuchsia-50 border border-slate-200 hover:border-fuchsia-400 text-slate-600 hover:text-fuchsia-600 shadow-sm transition active:scale-95 cursor-pointer"
                   >
                     {term}
                   </button>
@@ -721,15 +721,15 @@ export default function App() {
             <div className="space-y-3">
               <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2.5">
-                  <span className="w-1.5 h-7 rounded-full bg-gradient-to-b from-amber-300 to-amber-600 shadow-[0_0_14px_rgba(212,175,55,0.8)]" />
+                  <span className="w-1.5 h-7 rounded-full bg-gradient-to-b from-rose-500 via-fuchsia-500 to-violet-600 shadow-[0_0_14px_rgba(217,70,239,0.55)]" />
                   <div>
-                    <p className="text-[9px] font-black uppercase tracking-[0.28em] text-amber-500 leading-none mb-1">Premium Store</p>
+                    <p className="text-[9px] font-black uppercase tracking-[0.28em] text-fuchsia-600 leading-none mb-1">Premium Store</p>
                     <h2 className="font-display text-base sm:text-lg font-black tracking-tight text-white leading-none">
                       {searchQuery ? `Search Results (${filteredApps.length})` : `${selectedCategory} Collection (${filteredApps.length})`}
                     </h2>
                   </div>
                 </div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 bg-amber-400/10 border border-amber-400/25 px-2.5 py-1 rounded-full whitespace-nowrap">
+                <span className="text-[10px] font-black uppercase tracking-widest text-violet-600 bg-violet-500/10 border border-violet-500/25 px-2.5 py-1 rounded-full whitespace-nowrap">
                   100% Tested • VIP
                 </span>
               </div>

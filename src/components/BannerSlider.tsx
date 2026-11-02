@@ -148,7 +148,7 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="bg-gradient-to-r from-amber-600 to-amber-600 text-white text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                  <span className="bg-gradient-to-r from-rose-500 to-orange-400 text-white text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full shadow-md flex items-center gap-1">
                     <Sparkles className="w-2.5 h-2.5" /> FEATURED VIP
                   </span>
                   <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">
@@ -192,7 +192,7 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
                         e.stopPropagation();
                         onSelectApp(current);
                       }}
-                      className="py-2 px-5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-600 hover:from-amber-300 hover:to-yellow-500 text-slate-950 text-xs font-black uppercase tracking-wider shadow-lg shadow-amber-600/40 active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
+                      className="btn-shine py-2 px-5 rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 hover:from-violet-500 hover:via-fuchsia-400 hover:to-orange-300 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-fuchsia-600/40 active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
                       <span>View App</span>
