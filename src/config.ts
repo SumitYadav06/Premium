@@ -19,7 +19,7 @@ export const STORE_CONFIG = {
   // Owner Info
   OWNER_NAME: "Sumit Yadav",
   OWNER_IMAGE: "https://i.ibb.co/HffVtwhY/image.jpg",
-  OWNER_TELEGRAM: "https://t.me/apna_jugaad",
+  OWNER_TELEGRAM: "https://telegram.openinapp.co/ggzra",
   OWNER_TELEGRAM_USERNAME: "apna_jugaad",
   OWNER_SUBSCRIBERS: "10K+ VIP Members"
 };

@@ -105,11 +105,27 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
 
   const handleOpenTelegram = (e: React.MouseEvent) => {
     e.preventDefault();
-    const webUrl = telegramLink.startsWith('http')
+    const username = telegramUsername || 'apna_jugaad';
+    const fallbackUrl = telegramLink.startsWith('http')
       ? telegramLink
-      : `https://t.me/${telegramUsername}`;
+      : `https://t.me/${username}`;
 
-    window.open(webUrl, '_blank', 'noopener,noreferrer');
+    // Agar Telegram app khul jaye (page background me jaye) to fallback band kar do
+    const timer = window.setTimeout(() => {
+      if (!document.hidden) {
+        window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
+      }
+    }, 1200);
+    const onVis = () => {
+      if (document.hidden) {
+        window.clearTimeout(timer);
+        document.removeEventListener('visibilitychange', onVis);
+      }
+    };
+    document.addEventListener('visibilitychange', onVis);
+
+    // Seedha Telegram app ke andar channel kholo (no browser, no VPN issue)
+    window.location.href = `tg://resolve?domain=${username}`;
   };
 
   return (
