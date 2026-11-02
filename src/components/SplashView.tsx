@@ -63,7 +63,7 @@ export const SplashView: React.FC<SplashViewProps> = ({
             className="relative flex flex-col items-center text-center z-10 max-w-sm w-full"
           >
             {/* Logo with Glowing Rainbow Border */}
-            <div className="relative mb-5 group">
+            <div className="anim-float relative mb-5 group">
               <div className="absolute -inset-2.5 bg-gradient-to-r from-purple-600 via-pink-500 via-amber-400 to-cyan-400 rounded-[2.8rem] blur-lg opacity-85 animate-pulse"></div>
               <div className="relative w-44 h-44 sm:w-52 sm:h-52 rounded-[2.4rem] overflow-hidden bg-slate-950 border-2 border-purple-400/60 shadow-2xl p-1.5 flex items-center justify-center">
                 <img

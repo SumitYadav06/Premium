@@ -6,9 +6,8 @@ import {
   CheckCircle,
   X,
   Heart,
-  Instagram,
+  Send,
   ExternalLink,
-  MessageCircle,
   Globe,
   Share2,
   Copy,
@@ -22,8 +21,8 @@ interface OwnerModalProps {
   isOpen: boolean;
   onClose: () => void;
   ownerImg?: string;
-  instagramLink?: string;
-  instagramUsername?: string;
+  telegramLink?: string;
+  telegramUsername?: string;
   theme: 'dark' | 'light';
 }
 
@@ -31,8 +30,8 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
   isOpen,
   onClose,
   ownerImg = STORE_CONFIG.OWNER_IMAGE,
-  instagramLink = STORE_CONFIG.OWNER_INSTAGRAM,
-  instagramUsername = STORE_CONFIG.OWNER_INSTAGRAM_USERNAME,
+  telegramLink = STORE_CONFIG.OWNER_TELEGRAM,
+  telegramUsername = STORE_CONFIG.OWNER_TELEGRAM_USERNAME,
   theme
 }) => {
   const [copiedLink, setCopiedLink] = useState(false);
@@ -67,7 +66,7 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
       `🛡️ 100% Virus-Free & Verified Android Apps\n\n` +
       `🌐 *Visit Official Website:* ${websiteUrl}\n` +
       `📥 *Download Store APK:* ${storeApkUrl}\n\n` +
-      `👑 By *${STORE_CONFIG.OWNER_NAME}* (@${instagramUsername})`;
+      `👑 By *${STORE_CONFIG.OWNER_NAME}* (@${telegramUsername} on Telegram)`;
     const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
@@ -104,19 +103,13 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
     document.body.removeChild(link);
   };
 
-  const handleOpenInstagram = (e: React.MouseEvent) => {
+  const handleOpenTelegram = (e: React.MouseEvent) => {
     e.preventDefault();
-    const webUrl = instagramLink.startsWith('http')
-      ? instagramLink
-      : `https://www.instagram.com/${instagramUsername}/`;
+    const webUrl = telegramLink.startsWith('http')
+      ? telegramLink
+      : `https://t.me/${telegramUsername}`;
 
     window.open(webUrl, '_blank', 'noopener,noreferrer');
-  };
-
-  const handleOpenDirectChat = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const directDmUrl = `https://ig.me/m/${instagramUsername || 'sumyadav477'}`;
-    window.open(directDmUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -149,21 +142,21 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
           <X className="w-4 h-4" />
         </button>
 
-        {/* Avatar with Instagram Animated Circle Ring */}
+        {/* Avatar with Animated Circle Ring */}
         <div className="relative mx-auto w-24 h-24 mb-3">
           <div className="absolute -inset-1 bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 rounded-full blur-md opacity-80 animate-pulse" />
           <img
             src={ownerImg || STORE_CONFIG.OWNER_IMAGE || "https://i.ibb.co/HffVtwhY/image.jpg"}
             alt="Sumit Yadav"
-            className="relative w-full h-full rounded-full object-cover border-2 border-pink-500 shadow-2xl"
+            className="relative w-full h-full rounded-full object-cover border-2 border-sky-500 shadow-2xl"
             onError={(e) => {
               (e.target as HTMLImageElement).src =
                 "https://i.ibb.co/HffVtwhY/image.jpg";
             }}
           />
-          {/* Instagram Avatar Badge */}
-          <div className="absolute bottom-0 right-0 bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white p-1.5 rounded-full border-2 border-slate-950 shadow-md">
-            <Instagram className="w-3.5 h-3.5" />
+          {/* Telegram Avatar Badge */}
+          <div className="absolute bottom-0 right-0 bg-gradient-to-tr from-sky-400 to-blue-600 text-white p-1.5 rounded-full border-2 border-slate-950 shadow-md">
+            <Send className="w-3.5 h-3.5" />
           </div>
         </div>
 
@@ -222,23 +215,18 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
           </div>
         </div>
 
-        {/* Direct In-App Instagram Action Buttons */}
+        {/* Telegram Action Button */}
         <div className="space-y-2 pt-2 border-t border-slate-800/80">
           <button
-            onClick={handleOpenDirectChat}
-            className="w-full py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-amber-500 via-pink-600 to-purple-600 hover:from-amber-400 hover:via-pink-500 hover:to-purple-500 shadow-lg shadow-pink-600/25 active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer"
+            onClick={handleOpenTelegram}
+            className="tg-glow w-full py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 shadow-lg shadow-sky-600/25 active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer"
           >
-            <MessageCircle className="w-4 h-4 fill-white" />
-            <span>Chat with owner</span>
+            <Send className="w-4 h-4 fill-white" />
+            <span>Join Telegram Channel</span>
           </button>
-
-          <button
-            onClick={handleOpenInstagram}
-            className="w-full py-2 px-4 rounded-xl font-bold text-xs text-slate-400 hover:text-white bg-slate-900/60 hover:bg-slate-800 border border-slate-800/80 transition flex items-center justify-center gap-1.5 cursor-pointer"
-          >
-            <Instagram className="w-3.5 h-3.5 text-pink-400" />
-            <span>Visit Instagram Profile</span>
-          </button>
+          <p className="text-[11px] text-slate-500 font-semibold">
+            @{telegramUsername} • Daily VIP Mod Updates
+          </p>
         </div>
 
         <p className="text-[11px] text-slate-500 flex items-center justify-center gap-1 mt-3">

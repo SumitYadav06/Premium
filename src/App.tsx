@@ -802,7 +802,7 @@ export default function App() {
         theme={theme}
       />
 
-      {/* Creator Profile / Instagram Modal */}
+      {/* Creator Profile / Telegram Modal */}
       <OwnerModal
         isOpen={isOwnerModalOpen}
         onClose={closeOwnerModal}

@@ -38,7 +38,7 @@ export const AppCard: React.FC<AppCardProps> = ({
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.05, 0.4), duration: 0.3 }}
-      className={`group relative rounded-[2rem] p-4 transition-all duration-300 border select-none overflow-hidden ${
+      className={`premium-card anim-fade-up group relative rounded-[2rem] p-4 transition-all duration-300 border select-none overflow-hidden ${
         theme === 'dark'
           ? 'bg-slate-900/80 hover:bg-slate-900 border-slate-800/80 hover:border-amber-500/40 shadow-lg shadow-black/40 hover:shadow-amber-500/10'
           : 'bg-white hover:bg-slate-50 border-slate-200 hover:border-amber-400/60 shadow-md shadow-slate-200/50'

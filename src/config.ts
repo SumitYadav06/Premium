@@ -19,8 +19,8 @@ export const STORE_CONFIG = {
   // Owner Info
   OWNER_NAME: "Sumit Yadav",
   OWNER_IMAGE: "https://i.ibb.co/HffVtwhY/image.jpg",
-  OWNER_INSTAGRAM: "https://www.instagram.com/sumyadav477?igsi=MWdzbWk4cG9hcDFqeg==",
-  OWNER_INSTAGRAM_USERNAME: "sumyadav477",
+  OWNER_TELEGRAM: "https://t.me/apna_jugaad",
+  OWNER_TELEGRAM_USERNAME: "apna_jugaad",
   OWNER_SUBSCRIBERS: "10K+ VIP Members"
 };
 
