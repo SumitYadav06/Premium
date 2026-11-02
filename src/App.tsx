@@ -28,7 +28,8 @@ import {
   Package,
   Mic,
   MicOff,
-  X as XIcon
+  X as XIcon,
+  Flame
 } from 'lucide-react';
 
 export default function App() {
@@ -496,6 +497,18 @@ export default function App() {
     return list;
   }, [safeAppsList, selectedCategory, searchQuery, sortBy, stats]);
 
+  const trendingSearches = useMemo(() => {
+    return [...safeAppsList]
+      .filter((a) => a && a.name)
+      .map((a) => ({
+        name: a.name,
+        dls: stats[a.id]?.downloads ?? stats[getAppKey(a.id)]?.downloads ?? stats[getAppKey(a.name)]?.downloads ?? a.downloads ?? 0,
+      }))
+      .sort((x, y) => y.dls - x.dls)
+      .slice(0, 6)
+      .map((x) => x.name);
+  }, [safeAppsList, stats]);
+
   const bookmarkedApps = useMemo(() => {
     return safeAppsList.filter((a) => a && Array.isArray(bookmarkedIds) && bookmarkedIds.includes(a.id));
   }, [safeAppsList, bookmarkedIds]);
@@ -661,6 +674,24 @@ export default function App() {
                 >
                   <XIcon className="w-3.5 h-3.5" />
                 </button>
+              </div>
+            )}
+
+            {/* Trending Searches */}
+            {!searchQuery && trendingSearches.length > 0 && (
+              <div className="flex items-center gap-2 flex-wrap px-1 anim-fade-up">
+                <span className="flex items-center gap-1 text-[11px] font-black uppercase tracking-wider text-amber-400">
+                  <Flame className="w-3.5 h-3.5" /> Trending
+                </span>
+                {trendingSearches.map((term) => (
+                  <button
+                    key={term}
+                    onClick={() => setSearchQuery(term)}
+                    className="px-3 py-1.5 rounded-full text-[11px] font-bold bg-slate-900/70 hover:bg-purple-600/30 border border-slate-800 hover:border-purple-500/50 text-slate-300 hover:text-white transition active:scale-95 cursor-pointer"
+                  >
+                    {term}
+                  </button>
+                ))}
               </div>
             )}
 
