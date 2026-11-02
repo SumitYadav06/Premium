@@ -19,6 +19,7 @@ import {
 import { AppItem, DownloadTask } from '../types';
 import { incrementAppDownload } from '../services/firebase';
 import { VerifiedBadge } from './AppDetailView';
+import { isNativeApp, downloadApkInApp, openApkInstaller } from '../services/nativeDownload';
 
 interface DirectInstallerModalProps {
   app: AppItem | null;
@@ -42,6 +43,7 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
   const [downloadedMb, setDownloadedMb] = useState(0);
   const [etaSeconds, setEtaSeconds] = useState(0);
   const [hasTriggeredDownload, setHasTriggeredDownload] = useState(false);
+  const [nativePath, setNativePath] = useState<string | null>(null);
 
   // Reset state when app opens
   useEffect(() => {
@@ -50,6 +52,7 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
       setProgress(0);
       setDownloadedMb(0);
       setHasTriggeredDownload(false);
+      setNativePath(null);
     }
   }, [isOpen, app]);
 
@@ -57,8 +60,60 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
 
   const totalMb = typeof app.mb === 'string' ? parseFloat(app.mb) || 50 : app.mb || 50;
 
+  const startNativeDownload = async () => {
+    setStep('downloading');
+
+    const downloadUrl = app.link && app.link.startsWith('http')
+      ? app.link
+      : 'https://archive.org/download/sample-apk-files/sample-app.apk';
+    const fileName = `${app.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_v${app.ver}.apk`;
+
+    const newTask: DownloadTask = {
+      appId: app.id || app.name,
+      appName: app.name,
+      appIcon: app.icon,
+      version: app.ver,
+      sizeMb: app.mb,
+      progress: 0,
+      status: 'downloading',
+      downloadUrl,
+      startedAt: Date.now()
+    };
+    onDownloadStarted?.(newTask);
+    incrementAppDownload(app.name);
+
+    try {
+      const path = await downloadApkInApp(downloadUrl, fileName, (p) => {
+        setProgress(p.pct);
+        setDownloadedMb(parseFloat(p.downloadedMb.toFixed(1)));
+        setDownloadSpeed(`${p.speedMbps.toFixed(1)} MB/s`);
+        setEtaSeconds(p.etaSeconds);
+      });
+      setProgress(100);
+      setDownloadedMb(totalMb);
+      setNativePath(path);
+      setStep('verifying');
+      setTimeout(() => {
+        setStep('ready');
+        // Download pura hote hi installer apne aap khul jayega
+        openApkInstaller(path).catch(() => {});
+      }, 800);
+    } catch (err) {
+      console.warn('In-app download failed, browser fallback:', err);
+      setStep('ready');
+      triggerActualFileDownload();
+    }
+  };
+
   const startDownloadFlow = () => {
     setPermissionGranted(true);
+
+    // Store APK ke andar ho to asli in-app download chalega (Chrome nahi khulega)
+    if (isNativeApp()) {
+      startNativeDownload();
+      return;
+    }
+
     setStep('downloading');
 
     // Notify parent download manager
@@ -111,6 +166,11 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
   };
 
   const triggerActualFileDownload = () => {
+    // App ke andar download hui file ka installer kholo
+    if (nativePath) {
+      openApkInstaller(nativePath).catch(() => {});
+      return;
+    }
     if (hasTriggeredDownload) return;
     setHasTriggeredDownload(true);
 
