@@ -100,7 +100,7 @@ export const PwaInstallBanner: React.FC<PwaInstallBannerProps> = ({ theme }) => 
                 </span>
               </div>
               <p className="text-xs text-slate-400 font-medium max-w-md">
-                Official high-speed Android installer with 1-tap instant installs & VIP daily updates.
+                Official high-speed Android installer with 1-tap instant installs & daily updates.
               </p>
             </div>
           </div>

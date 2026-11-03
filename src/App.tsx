@@ -23,12 +23,10 @@ import { SplashView } from './components/SplashView';
 import { PwaInstallBanner } from './components/PwaInstallBanner';
 import {
   LiveBackground,
-  LiveTicker,
   TopChartsRail,
   RecentlyViewedRow,
   BottomDock
 } from './components/LiveStage';
-import { SettingsModal } from './components/SettingsModal';
 import {
   Search,
   ArrowUpDown,
@@ -225,22 +223,6 @@ export default function App() {
   const [isBookmarksOpen, setIsBookmarksOpen] = useState(false);
   const [isInstallGuideOpen, setIsInstallGuideOpen] = useState(false);
   const [isOwnerModalOpen, setIsOwnerModalOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
-  // Settings (Local storage) — animations on/off
-  const [animationsOn, setAnimationsOn] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem('premium_store_animations') !== 'off';
-    } catch {
-      return true;
-    }
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('premium_store_animations', animationsOn ? 'on' : 'off');
-    } catch (e) {}
-  }, [animationsOn]);
 
   // Synchronized State References to avoid stale closures in event listeners
   const selectedAppRef = React.useRef<AppItem | null>(null);
@@ -260,9 +242,6 @@ export default function App() {
 
   const isOwnerModalOpenRef = React.useRef(isOwnerModalOpen);
   isOwnerModalOpenRef.current = isOwnerModalOpen;
-
-  const isSettingsOpenRef = React.useRef(isSettingsOpen);
-  isSettingsOpenRef.current = isSettingsOpen;
 
   // Recently Viewed (Local storage) — "Jump Back In" row ke liye
   const [recentIds, setRecentIds] = useState<string[]>(() => {
@@ -365,22 +344,6 @@ export default function App() {
     }
   };
 
-  const openSettings = () => {
-    setIsSettingsOpen(true);
-    try {
-      window.history.pushState({ view: 'settings' }, '');
-    } catch (e) {}
-  };
-
-  const closeSettings = () => {
-    setIsSettingsOpen(false);
-    if (window.history.state?.view === 'settings') {
-      try {
-        window.history.back();
-      } catch (e) {}
-    }
-  };
-
   const openDirectInstaller = (app: AppItem) => {
     setDirectInstallApp(app);
     try {
@@ -411,7 +374,6 @@ export default function App() {
     const handlePopState = (event: PopStateEvent) => {
       // Check if any sub-modal or detail view is currently open
       const hasOpenViews =
-        isSettingsOpenRef.current ||
         isInstallGuideOpenRef.current ||
         isOwnerModalOpenRef.current ||
         isBookmarksOpenRef.current ||
@@ -421,9 +383,7 @@ export default function App() {
 
       if (hasOpenViews) {
         // Ek Back = sirf EK step: sabse upar wala view band karo
-        if (isSettingsOpenRef.current) {
-          setIsSettingsOpen(false);
-        } else if (isInstallGuideOpenRef.current) {
+        if (isInstallGuideOpenRef.current) {
           setIsInstallGuideOpen(false);
         } else if (isOwnerModalOpenRef.current) {
           setIsOwnerModalOpen(false);
@@ -663,8 +623,8 @@ export default function App() {
 
   const rotatingPlaceholder =
     trendingSearches.length > 0
-      ? `Try "${trendingSearches[placeholderIdx % trendingSearches.length]}" — VIP Mods, games, tools...`
-      : 'Search VIP Mods, games, premium tools...';
+      ? `Try "${trendingSearches[placeholderIdx % trendingSearches.length]}" — Mods, games, tools...`
+      : 'Search Mods, games, premium tools...';
 
   // Synchronize open detail view with latest real-time data from store
   const currentSelectedApp = useMemo(() => {
@@ -676,7 +636,7 @@ export default function App() {
   }, [selectedApp, safeAppsList]);
 
   return (
-    <div className={`relative min-h-screen ${theme === 'dark' ? 'bg-[#0d0a1a] text-white' : 'bg-[#f7f5ff] text-slate-900'} ${animationsOn ? '' : 'no-anim'} antialiased transition-colors duration-200`}>
+    <div className={`relative min-h-screen ${theme === 'dark' ? 'bg-[#0d0a1a] text-white' : 'bg-[#f7f5ff] text-slate-900'} antialiased transition-colors duration-200`}>
       {/* Intro Splash Screen */}
       {showSplash && <SplashView onFinish={() => setShowSplash(false)} />}
 
@@ -716,15 +676,6 @@ export default function App() {
             {/* Top Official Store APK Direct Download Banner */}
             <PwaInstallBanner theme={theme} />
 
-            {/* LIVE Ticker — news strip */}
-            {!searchQuery && (
-              <LiveTicker
-                appsCount={safeAppsList.length}
-                totalDownloads={totalDownloads}
-                topNames={trendingSearches}
-                theme={theme}
-              />
-            )}
 
             {/* Search Input & Controls Bar */}
             <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
@@ -908,7 +859,7 @@ export default function App() {
                   </div>
                 </div>
                 <span className="text-[10px] font-black uppercase tracking-widest text-violet-600 bg-violet-500/10 border border-violet-500/25 px-2.5 py-1 rounded-full whitespace-nowrap">
-                  100% Tested • VIP
+                  100% Tested
                 </span>
               </div>
 
@@ -983,27 +934,10 @@ export default function App() {
           onOpenBookmarks={openBookmarks}
           onOpenDownloads={openDownloads}
           onOpenOwner={openOwnerModal}
-          onOpenSettings={openSettings}
           bookmarksCount={bookmarkedIds.length}
           downloadsCount={downloadTasks.length}
         />
       )}
-
-      {/* Settings */}
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={closeSettings}
-        theme={theme}
-        onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-        animationsOn={animationsOn}
-        onToggleAnimations={() => setAnimationsOn((v) => !v)}
-        recentCount={recentIds.length}
-        bookmarksCount={bookmarkedIds.length}
-        downloadsCount={downloadTasks.length}
-        onClearRecent={() => setRecentIds([])}
-        onClearBookmarks={() => setBookmarkedIds([])}
-        onClearDownloads={() => setDownloadTasks([])}
-      />
 
       {/* Direct One-Click Fast Installer Modal */}
       <DirectInstallerModal

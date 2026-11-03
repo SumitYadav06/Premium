@@ -12,7 +12,7 @@ export const STORE_CONFIG = {
   
   // Store Branding & App Icon (Direct repo root icon URL)
   STORE_NAME: "Apna Jugaad",
-  STORE_TAGLINE: "VIP Verified Mod & APK Hub",
+  STORE_TAGLINE: "Verified Mod & APK Hub",
   STORE_APP_ICON: "https://raw.githubusercontent.com/SumitYadav06/Premium/main/app-icon.png",
   STORE_SPLASH_LOGO: "https://raw.githubusercontent.com/SumitYadav06/Premium/main/app-icon.png",
 

@@ -11,8 +11,7 @@ import {
   Trophy,
   History,
   Trash2,
-  Radio,
-  Settings
+  Radio
 } from 'lucide-react';
 import { AppItem } from '../types';
 import { VerifiedBadge } from './AppDetailView';
@@ -27,7 +26,11 @@ const ORBS = [
   { left: '58%', size: 13, dur: 16, delay: 8, color: 'rgba(236,72,153,0.45)' },
   { left: '71%', size: 10, dur: 14, delay: 4.5, color: 'rgba(132,204,22,0.45)' },
   { left: '83%', size: 16, dur: 19, delay: 2, color: 'rgba(249,115,22,0.45)' },
-  { left: '93%', size: 8, dur: 11, delay: 7, color: 'rgba(56,189,248,0.5)' }
+  { left: '93%', size: 8, dur: 11, delay: 7, color: 'rgba(56,189,248,0.5)' },
+  { left: '12%', size: 11, dur: 15, delay: 5, color: 'rgba(34,197,94,0.45)' },
+  { left: '41%', size: 15, dur: 18, delay: 9, color: 'rgba(250,204,21,0.4)' },
+  { left: '64%', size: 7, dur: 10, delay: 2.5, color: 'rgba(168,85,247,0.5)' },
+  { left: '78%', size: 12, dur: 14, delay: 6.5, color: 'rgba(244,114,182,0.45)' }
 ];
 
 export const LiveBackground: React.FC = () => (
@@ -263,7 +266,6 @@ interface BottomDockProps {
   onOpenBookmarks: () => void;
   onOpenDownloads: () => void;
   onOpenOwner: () => void;
-  onOpenSettings: () => void;
   bookmarksCount: number;
   downloadsCount: number;
 }
@@ -273,7 +275,6 @@ export const BottomDock: React.FC<BottomDockProps> = ({
   onOpenBookmarks,
   onOpenDownloads,
   onOpenOwner,
-  onOpenSettings,
   bookmarksCount,
   downloadsCount
 }) => {
@@ -316,12 +317,6 @@ export const BottomDock: React.FC<BottomDockProps> = ({
       <button onClick={onOpenOwner} className={`${item} text-sky-500 hover:bg-sky-500/10`}>
         <User className="w-5 h-5" />
         <span className="text-[9px] font-black uppercase tracking-wider">Creator</span>
-        <span className="absolute top-1 right-2.5 w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-      </button>
-
-      <button onClick={onOpenSettings} className={`${item} text-slate-500 hover:bg-slate-500/10`}>
-        <Settings className="w-5 h-5" />
-        <span className="text-[9px] font-black uppercase tracking-wider">Settings</span>
       </button>
     </motion.nav>
   );

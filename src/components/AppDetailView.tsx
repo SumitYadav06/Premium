@@ -626,7 +626,6 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <VipBadge text="VIP UNLOCKED" />
               <span className="bg-amber-600/20 text-amber-400 border border-amber-500/30 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full">
                 {app.cat}
               </span>
@@ -671,7 +670,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
       <div className="space-y-3">
         <button
           onClick={() => (onDirectInstall ? onDirectInstall(app) : onQuickDownload ? onQuickDownload(app) : window.open(app.link, '_blank'))}
-          className="btn-shine w-full py-4 px-6 rounded-2xl font-black uppercase text-sm tracking-wider text-white bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 hover:from-violet-500 hover:via-fuchsia-400 hover:to-orange-300 shadow-xl shadow-fuchsia-600/30 active:scale-95 transition flex items-center justify-center gap-2.5 group cursor-pointer"
+          className="btn-shine btn-live w-full py-4 px-6 rounded-2xl font-black uppercase text-sm tracking-wider text-white bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 hover:from-violet-500 hover:via-fuchsia-400 hover:to-orange-300 shadow-xl shadow-fuchsia-600/30 active:scale-95 transition flex items-center justify-center gap-2.5 group cursor-pointer"
         >
           <Download className="w-5 h-5 group-hover:animate-bounce" />
           <span>Direct Download APK</span>
@@ -934,7 +933,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
                   <div className="flex items-center gap-2">
                     <span className={`text-xs font-black ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{item.user}</span>
                     <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-extrabold uppercase">
-                      VIP User
+                      Member
                     </span>
                   </div>
                   <span className="text-[10px] text-slate-500">{item.time || 'Recently'}</span>
@@ -960,7 +959,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
         <div className="space-y-3 pt-4">
           <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>Recommended VIP Applications</span>
+            <span>Recommended Apps</span>
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

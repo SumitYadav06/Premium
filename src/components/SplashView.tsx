@@ -9,7 +9,7 @@ interface SplashViewProps {
 }
 
 const STEPS = [
-  'Starting VIP Engine...',
+  'Starting Engine...',
   'Verifying Anti-Ban Mod Keys...',
   'Unlocking Premium Catalog...',
   'Welcome to the Hub!'
@@ -119,18 +119,10 @@ export const SplashView: React.FC<SplashViewProps> = ({
                   }}
                 />
               </div>
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.45, type: 'spring', stiffness: 260, damping: 13 }}
-                className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 via-orange-400 to-rose-500 text-white text-[10px] font-black uppercase px-4 py-1.5 rounded-full shadow-xl shadow-orange-400/50 flex items-center gap-1 border-2 border-white whitespace-nowrap"
-              >
-                <Sparkles className="w-3.5 h-3.5" /> VIP Hub
-              </motion.div>
             </motion.div>
 
             {/* Naam — letter by letter */}
-            <h1 className="brand-glow font-display text-[34px] sm:text-[42px] font-black tracking-tight leading-none mb-2 flex flex-wrap justify-center" aria-label={STORE_CONFIG.STORE_NAME}>
+            <h1 className="brand-glow font-display text-[34px] sm:text-[42px] font-black tracking-tight leading-[1.25] pb-1 mb-2 flex flex-wrap justify-center" aria-label={STORE_CONFIG.STORE_NAME}>
               {nameLetters.map((ch, i) => (
                 <motion.span
                   key={i}
@@ -203,7 +195,7 @@ export const SplashView: React.FC<SplashViewProps> = ({
                 </div>
                 <div className="flex items-center justify-center gap-1 text-rose-500">
                   <Star className="w-3.5 h-3.5" />
-                  <span>VIP Mods</span>
+                  <span>Top Mods</span>
                 </div>
               </div>
             </motion.div>

@@ -70,17 +70,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Store Title & Verified Badge */}
           <div className="flex flex-col justify-center">
-            <h1 className="font-display text-[19px] sm:text-[22px] font-black tracking-tight brand-text leading-none group-hover:scale-[1.03] origin-left transition-transform duration-300">
+            <h1 className="font-display text-[19px] sm:text-[22px] font-black tracking-tight brand-text leading-[1.3] group-hover:scale-[1.03] origin-left transition-transform duration-300">
               {STORE_CONFIG.STORE_NAME}
             </h1>
             <div className="flex items-center gap-1.5 mt-1">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-80" />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500" />
-              </span>
-              <span className="text-[10px] font-extrabold text-red-500 uppercase tracking-widest">Live</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               <span className="text-[10px] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-400 uppercase tracking-widest flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3 text-emerald-500" /> VIP Store
+                <ShieldCheck className="w-3 h-3 text-emerald-500" /> Verified Store
               </span>
             </div>
           </div>

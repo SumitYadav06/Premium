@@ -137,13 +137,6 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
           <div className="live-beam" style={{ left: '20%' }} />
-          <span className="absolute top-3 left-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/35 backdrop-blur text-white text-[9px] font-black tracking-[0.2em] border border-white/25">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-90" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500" />
-            </span>
-            CREATOR LIVE
-          </span>
           <button
             onClick={onClose}
             className="absolute top-3 right-3 p-2 text-white rounded-full bg-black/35 backdrop-blur hover:bg-black/55 transition cursor-pointer z-10 border border-white/25"
@@ -186,7 +179,7 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
             {[
               { icon: <ShieldCheck className="w-4 h-4 text-emerald-500" />, label: '100% Tested' },
               { icon: <Zap className="w-4 h-4 text-amber-500" />, label: 'Daily Updates' },
-              { icon: <Users className="w-4 h-4 text-sky-500" />, label: 'VIP Community' }
+              { icon: <Users className="w-4 h-4 text-sky-500" />, label: 'Community' }
             ].map((p) => (
               <div
                 key={p.label}
@@ -212,9 +205,6 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
             <div className="flex items-center justify-between">
               <span className={`text-[10px] font-black uppercase tracking-wider flex items-center gap-1 ${dark ? 'text-fuchsia-300' : 'text-fuchsia-600'}`}>
                 <Globe className="w-3.5 h-3.5" /> Official Website
-              </span>
-              <span className="text-[9px] font-black text-emerald-500 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
-                <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" /> Live
               </span>
             </div>
 
@@ -262,7 +252,7 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
               <span>Join Telegram Channel</span>
             </button>
             <p className="text-[11px] text-slate-400 font-semibold flex items-center justify-center gap-1.5">
-              <Sparkles className="w-3 h-3 text-amber-400" />@{telegramUsername} • Daily VIP Mod Updates
+              <Sparkles className="w-3 h-3 text-amber-400" />@{telegramUsername} • Daily Mod Updates
             </p>
           </motion.div>
 

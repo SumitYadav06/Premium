@@ -113,23 +113,6 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
 
         {/* Top bar: LIVE badge + equalizer + spotlight label */}
         <div className="absolute top-0 inset-x-0 p-4 sm:p-5 flex items-center gap-2.5 pointer-events-none">
-          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-600 text-white text-[9px] font-black tracking-[0.22em] shadow-lg shadow-red-600/50">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-90" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white" />
-            </span>
-            LIVE
-          </span>
-          <span className="flex items-end gap-[2.5px] h-3.5" aria-hidden="true">
-            {[0, 1, 2, 3, 4].map((i) => (
-              <span
-                key={i}
-                className="eq-bar w-[3px] rounded-full bg-white/90"
-                style={{ height: '100%', animationDelay: `${i * 0.13}s`, animationDuration: `${0.7 + i * 0.09}s` }}
-              />
-            ))}
-          </span>
-          <span className="text-[10px] font-black uppercase tracking-[0.24em] text-white/85">Spotlight</span>
           <span className="ml-auto text-[10px] font-bold text-white/70 bg-black/35 backdrop-blur px-2 py-1 rounded-full border border-white/15">
             {currentIndex + 1} / {featuredApps.length}
           </span>
@@ -165,7 +148,7 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
               <div className="flex-1 min-w-0 pb-1">
                 <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                   <span className="bg-gradient-to-r from-rose-500 to-orange-400 text-white text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full shadow-md flex items-center gap-1">
-                    <Sparkles className="w-2.5 h-2.5" /> Featured VIP
+                    <Sparkles className="w-2.5 h-2.5" /> Featured
                   </span>
                   <span className="text-[10px] text-amber-300 font-bold uppercase tracking-wider">{current.cat}</span>
                   <span className="text-[10px] text-emerald-300 font-bold flex items-center gap-1">
@@ -199,7 +182,7 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
                       e.stopPropagation();
                       onSelectApp(current);
                     }}
-                    className="btn-shine ml-auto py-2.5 px-6 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-fuchsia-600/50 active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
+                    className="btn-shine btn-live ml-auto py-2.5 px-6 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-fuchsia-600/50 active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <Play className="w-3.5 h-3.5 fill-white" />
                     <span>View App</span>

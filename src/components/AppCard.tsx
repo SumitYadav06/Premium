@@ -119,7 +119,7 @@ export const AppCard: React.FC<AppCardProps> = ({
         </span>
 
         {/* Floating icon — artwork se bahar nikalta hua */}
-        <div className="absolute left-1/2 -translate-x-1/2 -bottom-7 z-10">
+        <div className="absolute left-1/2 -translate-x-1/2 -bottom-7 z-10 icon-bob" style={{ animationDelay: `${(index % 5) * 0.4}s` }}>
           <div className="relative">
             <div className="absolute -inset-[3px] rounded-[24px] ring-conic opacity-0 group-hover:opacity-90 transition-opacity duration-300" aria-hidden="true" />
             <img
@@ -130,11 +130,6 @@ export const AppCard: React.FC<AppCardProps> = ({
                 (e.target as HTMLImageElement).src = FALLBACK_IMG;
               }}
             />
-            {app.isFeatured && (
-              <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 text-[8px] font-black px-2 py-0.5 rounded-full shadow-lg uppercase tracking-widest flex items-center gap-0.5 whitespace-nowrap">
-                <Sparkles className="w-2.5 h-2.5" /> VIP
-              </span>
-            )}
           </div>
         </div>
       </div>
