@@ -415,7 +415,25 @@ export default function App() {
     };
 
     window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+
+    // Extra safety: agar WebView purani session/cache se restore ho (pageshow persisted)
+    // ya pehla tap ho jaye, guard entry dobara seed kar do — Back hamesha app ke andar rahe
+    const seedGuard = () => {
+      try {
+        window.history.pushState({ premium_app: true, view: 'home_guard' }, '');
+      } catch (e) {}
+    };
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) seedGuard();
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    window.addEventListener('pointerdown', seedGuard, { once: true });
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('pageshow', handlePageShow);
+      window.removeEventListener('pointerdown', seedGuard);
+    };
   }, []);
 
   // Bookmarks (Local storage)
