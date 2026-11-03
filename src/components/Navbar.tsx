@@ -70,7 +70,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Store Title & Verified Badge */}
           <div className="flex flex-col justify-center">
-            <h1 className="font-display text-lg sm:text-xl font-black tracking-tight rainbow-text leading-none group-hover:opacity-90 transition">
+            <h1 className="font-display text-[19px] sm:text-[22px] font-black tracking-tight brand-text leading-none group-hover:scale-[1.03] origin-left transition-transform duration-300">
               {STORE_CONFIG.STORE_NAME}
             </h1>
             <div className="flex items-center gap-1.5 mt-1">

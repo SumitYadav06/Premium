@@ -130,7 +130,7 @@ export const SplashView: React.FC<SplashViewProps> = ({
             </motion.div>
 
             {/* Naam — letter by letter */}
-            <h1 className="font-display text-[34px] sm:text-[42px] font-black tracking-tight leading-none mb-2 flex flex-wrap justify-center" aria-label={STORE_CONFIG.STORE_NAME}>
+            <h1 className="brand-glow font-display text-[34px] sm:text-[42px] font-black tracking-tight leading-none mb-2 flex flex-wrap justify-center" aria-label={STORE_CONFIG.STORE_NAME}>
               {nameLetters.map((ch, i) => (
                 <motion.span
                   key={i}

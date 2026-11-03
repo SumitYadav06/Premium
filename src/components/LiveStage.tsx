@@ -11,7 +11,8 @@ import {
   Trophy,
   History,
   Trash2,
-  Radio
+  Radio,
+  Settings
 } from 'lucide-react';
 import { AppItem } from '../types';
 import { VerifiedBadge } from './AppDetailView';
@@ -262,6 +263,7 @@ interface BottomDockProps {
   onOpenBookmarks: () => void;
   onOpenDownloads: () => void;
   onOpenOwner: () => void;
+  onOpenSettings: () => void;
   bookmarksCount: number;
   downloadsCount: number;
 }
@@ -271,6 +273,7 @@ export const BottomDock: React.FC<BottomDockProps> = ({
   onOpenBookmarks,
   onOpenDownloads,
   onOpenOwner,
+  onOpenSettings,
   bookmarksCount,
   downloadsCount
 }) => {
@@ -314,6 +317,11 @@ export const BottomDock: React.FC<BottomDockProps> = ({
         <User className="w-5 h-5" />
         <span className="text-[9px] font-black uppercase tracking-wider">Creator</span>
         <span className="absolute top-1 right-2.5 w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+      </button>
+
+      <button onClick={onOpenSettings} className={`${item} text-slate-500 hover:bg-slate-500/10`}>
+        <Settings className="w-5 h-5" />
+        <span className="text-[9px] font-black uppercase tracking-wider">Settings</span>
       </button>
     </motion.nav>
   );

@@ -171,7 +171,7 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
 
           <motion.div {...stagger(0.18)}>
             <div className="flex items-center justify-center gap-1.5 leading-tight mb-1">
-              <h3 className="font-display font-black text-[22px] rainbow-text">
+              <h3 className="font-display font-black text-[22px] brand-text">
                 {STORE_CONFIG.OWNER_NAME}
               </h3>
               <VerifiedBadge size={20} />

@@ -665,21 +665,6 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
           ))}
         </div>
 
-        {/* VIP Perks strip */}
-        <div className="flex flex-wrap gap-1.5 mt-4 relative z-10">
-          {['⚡ Unlimited Speed', '🛡️ Anti-Ban Safe', '🚫 No Waiting', '🔄 Daily Updates'].map((perk) => (
-            <span
-              key={perk}
-              className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
-                theme === 'dark'
-                  ? 'bg-fuchsia-500/10 border-fuchsia-500/25 text-fuchsia-200'
-                  : 'bg-fuchsia-50 border-fuchsia-200 text-fuchsia-600'
-              }`}
-            >
-              {perk}
-            </span>
-          ))}
-        </div>
       </div>
 
       {/* Primary Direct Download & Installation Action Button */}
