@@ -14,6 +14,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { STORE_CONFIG } from '../config';
+import { getDownloadMode } from '../services/nativeDownload';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -222,6 +223,37 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <span className={`block text-[11px] ${subText}`}>VIP v1.0 • By {STORE_CONFIG.OWNER_NAME}</span>
             </span>
           </motion.div>
+
+          {/* Download mode — ye APK in-app download ke liye ready hai ya nahi */}
+          {(() => {
+            const mode = getDownloadMode();
+            return (
+              <motion.div {...stagger(0.56)} className={`flex items-center gap-3 p-3.5 rounded-2xl border ${card}`}>
+                <span className="w-9 h-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-emerald-400 to-teal-500 shadow-md shadow-emerald-500/25">
+                  <Download className="w-4 h-4 text-white" />
+                </span>
+                <span className="flex-1">
+                  <span className={`block text-[13px] font-bold ${rowText}`}>Download Mode</span>
+                  <span className={`block text-[11px] ${subText}`}>
+                    {mode === 'native'
+                      ? 'In-App Download ready hai ✓'
+                      : mode === 'old-apk'
+                      ? 'Purana APK — naya store APK install karo'
+                      : 'Browser Mode (website)'}
+                  </span>
+                </span>
+                <span
+                  className={`text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-full border ${
+                    mode === 'native'
+                      ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/30'
+                      : 'text-amber-500 bg-amber-500/10 border-amber-500/30'
+                  }`}
+                >
+                  {mode === 'native' ? 'Ready' : 'Update'}
+                </span>
+              </motion.div>
+            );
+          })()}
         </div>
       </motion.div>
     </div>

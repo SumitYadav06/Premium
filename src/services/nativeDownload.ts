@@ -9,6 +9,27 @@ export const isNativeApp = (): boolean => {
   }
 };
 
+/** True jab installed store APK me Filesystem plugin maujud ho (naya APK) */
+export const isFilesystemAvailable = (): boolean => {
+  try {
+    return Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('Filesystem');
+  } catch {
+    return false;
+  }
+};
+
+export type DownloadMode = 'native' | 'old-apk' | 'browser';
+
+/** native = in-app download chalega | old-apk = purana store APK, plugin nahi | browser = website mode */
+export const getDownloadMode = (): DownloadMode => {
+  try {
+    if (!Capacitor.isNativePlatform()) return 'browser';
+    return Capacitor.isPluginAvailable('Filesystem') ? 'native' : 'old-apk';
+  } catch {
+    return 'browser';
+  }
+};
+
 export interface NativeProgress {
   pct: number;
   downloadedMb: number;

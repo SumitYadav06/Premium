@@ -19,7 +19,7 @@ import {
 import { AppItem, DownloadTask } from '../types';
 import { incrementAppDownload } from '../services/firebase';
 import { VerifiedBadge } from './AppDetailView';
-import { isNativeApp, downloadApkInApp, openApkInstaller } from '../services/nativeDownload';
+import { isNativeApp, isFilesystemAvailable, downloadApkInApp, openApkInstaller } from '../services/nativeDownload';
 
 interface DirectInstallerModalProps {
   app: AppItem | null;
@@ -28,7 +28,7 @@ interface DirectInstallerModalProps {
   onDownloadStarted?: (task: DownloadTask) => void;
 }
 
-type InstallStep = 'permission' | 'downloading' | 'verifying' | 'ready' | 'guide';
+type InstallStep = 'permission' | 'downloading' | 'verifying' | 'ready' | 'guide' | 'oldapk' | 'error';
 
 export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
   app,
@@ -44,6 +44,7 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
   const [etaSeconds, setEtaSeconds] = useState(0);
   const [hasTriggeredDownload, setHasTriggeredDownload] = useState(false);
   const [nativePath, setNativePath] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState('');
 
   // Reset state when app opens
   useEffect(() => {
@@ -53,6 +54,7 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
       setDownloadedMb(0);
       setHasTriggeredDownload(false);
       setNativePath(null);
+      setErrorMsg('');
     }
   }, [isOpen, app]);
 
@@ -98,10 +100,11 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
         // Download pura hote hi installer apne aap khul jayega
         openApkInstaller(path).catch(() => {});
       }, 800);
-    } catch (err) {
-      console.warn('In-app download failed, browser fallback:', err);
-      setStep('ready');
-      triggerActualFileDownload();
+    } catch (err: any) {
+      // Chup-chaap Chrome nahi kholenge — asli error dikhayenge taaki problem samajh aaye
+      console.warn('In-app download failed:', err);
+      setErrorMsg(err?.message ? String(err.message) : String(err));
+      setStep('error');
     }
   };
 
@@ -110,6 +113,11 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
 
     // Store APK ke andar ho to asli in-app download chalega (Chrome nahi khulega)
     if (isNativeApp()) {
+      if (!isFilesystemAvailable()) {
+        // Purana store APK — isme in-app download wala plugin hi nahi hai
+        setStep('oldapk');
+        return;
+      }
       startNativeDownload();
       return;
     }
@@ -315,6 +323,79 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
               >
                 <Copy className="w-3 h-3" />
                 <span>Copy APK URL</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* PURANA APK: in-app download plugin hi nahi hai */}
+        {step === 'oldapk' && (
+          <div className="space-y-4 stagger-list">
+            <div className="bg-amber-500/10 border border-amber-500/40 rounded-2xl p-4 text-center space-y-2">
+              <div className="w-12 h-12 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto border border-amber-500/30">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <h4 className="font-black text-base text-amber-300">Ye Purana App Hai</h4>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Is store app me in-app download wala feature nahi hai, isliye Chrome khul raha hai.
+                Ek baar <strong className="text-white">naya store APK</strong> install kar lo — phir har
+                download isi app ke andar % ke saath hoga, Chrome kabhi nahi khulega.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => window.open('https://github.com/SumitYadav06/Premium/actions', '_blank')}
+                className="btn-shine w-full py-3.5 px-4 rounded-xl font-black text-sm uppercase tracking-wider text-white bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 shadow-lg shadow-fuchsia-600/30 active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Download className="w-4 h-4" />
+                <span>Naya Store APK Lo</span>
+              </button>
+              <button
+                onClick={() => {
+                  setStep('ready');
+                  triggerActualFileDownload();
+                }}
+                className="w-full py-2.5 text-xs text-slate-400 hover:text-white font-medium transition text-center cursor-pointer"
+              >
+                Abhi ke liye Chrome se download karo
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ERROR: in-app download fail — asli wajah dikhao */}
+        {step === 'error' && (
+          <div className="space-y-4 stagger-list">
+            <div className="bg-rose-500/10 border border-rose-500/40 rounded-2xl p-4 text-center space-y-2">
+              <div className="w-12 h-12 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto border border-rose-500/30">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <h4 className="font-black text-base text-rose-300">Download Fail Ho Gaya</h4>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                App ke andar download nahi ho paya. Is screen ka screenshot bhej do, main fix kar dunga.
+              </p>
+              {errorMsg && (
+                <p className="text-[10px] font-mono text-rose-200/80 bg-black/30 rounded-lg px-2.5 py-1.5 break-all">
+                  {errorMsg}
+                </p>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => startNativeDownload()}
+                className="btn-shine w-full py-3.5 px-4 rounded-xl font-black text-sm uppercase tracking-wider text-white bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 shadow-lg shadow-fuchsia-600/30 active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span>Phir Se Try Karo</span>
+              </button>
+              <button
+                onClick={() => {
+                  setStep('ready');
+                  triggerActualFileDownload();
+                }}
+                className="w-full py-2.5 text-xs text-slate-400 hover:text-white font-medium transition text-center cursor-pointer"
+              >
+                Chrome se download karo
               </button>
             </div>
           </div>
