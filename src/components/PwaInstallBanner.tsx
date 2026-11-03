@@ -76,7 +76,7 @@ export const PwaInstallBanner: React.FC<PwaInstallBannerProps> = ({ theme }) => 
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl p-0.5 rainbow-bg shadow-lg shadow-amber-500/25 flex-shrink-0 flex items-center justify-center">
+            <div className="anim-float w-12 h-12 rounded-2xl p-0.5 rainbow-bg shadow-lg shadow-amber-500/25 flex-shrink-0 flex items-center justify-center">
               <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center p-1 overflow-hidden">
                 <img
                   src={STORE_CONFIG.STORE_APP_ICON}

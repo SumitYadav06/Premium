@@ -680,7 +680,7 @@ export default function App() {
             {/* Search Input & Controls Bar */}
             <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
               {/* Search Bar */}
-              <div className="relative flex-1">
+              <div className="relative flex-1 search-live">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-400" />
                 <input
                   type="text"
@@ -853,7 +853,7 @@ export default function App() {
                   <span className="w-1.5 h-7 rounded-full bg-gradient-to-b from-rose-500 via-fuchsia-500 to-violet-600 shadow-[0_0_14px_rgba(217,70,239,0.55)]" />
                   <div>
                     <p className="text-[9px] font-black uppercase tracking-[0.28em] text-fuchsia-600 leading-none mb-1">Premium Store</p>
-                    <h2 className={`font-display text-base sm:text-lg font-black tracking-tight leading-none ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                    <h2 className="font-display text-base sm:text-lg font-black tracking-tight leading-none text-flow">
                       {searchQuery ? `Search Results (${filteredApps.length})` : `${selectedCategory} Collection (${filteredApps.length})`}
                     </h2>
                   </div>

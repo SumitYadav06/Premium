@@ -37,9 +37,12 @@ export const LiveBackground: React.FC = () => (
   <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden" aria-hidden="true">
     {/* Base living gradient wash */}
     <div className="absolute inset-0 aurora-layer" />
+    {/* Ghumta hua rang gola */}
+    <div className="vfx-disc absolute w-[70vmax] h-[70vmax] left-1/2 top-1/3 -translate-x-1/2 opacity-60" aria-hidden="true" />
     {/* Stage light beams */}
     <div className="live-beam" style={{ left: '4%' }} />
     <div className="live-beam" style={{ left: '46%', animationDelay: '-5.5s' }} />
+    <div className="live-beam" style={{ left: '78%', animationDelay: '-8s' }} />
     {/* Rising orbs */}
     {ORBS.map((o, i) => (
       <span
@@ -142,7 +145,7 @@ export const TopChartsRail: React.FC<TopChartsRailProps> = ({ ranked, onSelect, 
         </span>
         <div>
           <p className="text-[9px] font-black uppercase tracking-[0.28em] text-orange-500 leading-none mb-0.5">Charts</p>
-          <h2 className={`font-display text-base sm:text-lg font-black leading-none ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+          <h2 className="font-display text-base sm:text-lg font-black leading-none text-flow">
             Top 10 This Week
           </h2>
         </div>
@@ -165,6 +168,7 @@ export const TopChartsRail: React.FC<TopChartsRailProps> = ({ ranked, onSelect, 
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: Math.min(idx * 0.05, 0.35), duration: 0.3 }}
             whileTap={{ scale: 0.96 }}
+            whileHover={{ y: -4, scale: 1.02 }}
             onClick={() => onSelect(app)}
             className={`snap-start shrink-0 w-[228px] text-left rounded-3xl p-3 flex items-center gap-3 border cursor-pointer transition ${
               theme === 'dark'
@@ -226,7 +230,7 @@ export const RecentlyViewedRow: React.FC<RecentlyViewedRowProps> = ({ apps, onSe
         </span>
         <div>
           <p className="text-[9px] font-black uppercase tracking-[0.28em] text-cyan-600 leading-none mb-0.5">Jump Back In</p>
-          <h2 className={`font-display text-base sm:text-lg font-black leading-none ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+          <h2 className="font-display text-base sm:text-lg font-black leading-none text-flow">
             Recently Viewed
           </h2>
         </div>

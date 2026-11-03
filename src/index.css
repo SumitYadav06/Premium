@@ -443,6 +443,76 @@ html {
   animation: iconBob 3.6s ease-in-out infinite;
 }
 
+/* ===== VFX MAX — har cheez zinda, har jagah motion ===== */
+
+/* Behta hua rang wala text — headings ke liye */
+.text-flow {
+  background: linear-gradient(90deg, #7c3aed, #db2777, #ea580c, #ca8a04, #7c3aed);
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: rainbow_anim 6s linear infinite;
+}
+
+/* Dheere zoom-in/zoom-out saans leti hui images */
+@keyframes zoomBreath {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.09); }
+}
+.zoom-breath {
+  animation: zoomBreath 9s ease-in-out infinite;
+}
+
+/* Search bar — ghumta hua rang glow */
+@keyframes searchGlow {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.18), 0 10px 30px -12px rgba(217, 70, 239, 0.35); }
+  33% { box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.20), 0 10px 30px -12px rgba(245, 158, 11, 0.35); }
+  66% { box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.20), 0 10px 30px -12px rgba(6, 182, 212, 0.35); }
+}
+.search-live {
+  animation: searchGlow 6s ease-in-out infinite;
+  border-radius: 1rem;
+}
+
+/* Icons hover par halka sa wiggle */
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-8deg) scale(1.12); }
+  75% { transform: rotate(8deg) scale(1.12); }
+}
+.dock-glass button:hover svg,
+header button:hover svg {
+  animation: wiggle 0.45s ease-in-out;
+}
+
+/* Bada ghumta hua rang gola — background VFX */
+@keyframes spinVerySlow {
+  to { transform: rotate(360deg); }
+}
+.vfx-disc {
+  background: conic-gradient(from 0deg, rgba(244,63,94,0.20), rgba(245,158,11,0.20), rgba(34,197,94,0.18), rgba(6,182,212,0.20), rgba(139,92,246,0.20), rgba(244,63,94,0.20));
+  filter: blur(60px);
+  animation: spinVerySlow 46s linear infinite;
+  border-radius: 9999px;
+}
+
+/* Card hover — rang badalti hui roshni */
+@keyframes cardGlowCycle {
+  0%, 100% { box-shadow: 0 22px 44px -14px rgba(217, 70, 239, 0.40); }
+  33% { box-shadow: 0 22px 44px -14px rgba(245, 158, 11, 0.40); }
+  66% { box-shadow: 0 22px 44px -14px rgba(6, 182, 212, 0.40); }
+}
+.premium-card:hover {
+  animation: cardGlowCycle 3.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .text-flow, .zoom-breath, .search-live, .vfx-disc, .premium-card:hover {
+    animation: none !important;
+  }
+}
+
 /* ===== STAGGER — sections ek-ek karke animate hokar aate hain ===== */
 .detail-root > *:nth-child(-n+8) {
   animation: fadeUp 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;

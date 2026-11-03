@@ -4,8 +4,7 @@ import {
   Bookmark,
   Sun,
   Moon,
-  ShieldCheck,
-  Send
+  ShieldCheck
 } from 'lucide-react';
 import { STORE_CONFIG } from '../config';
 
@@ -137,24 +136,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
 
-          {/* Creator Profile Avatar Button */}
-          <button
-            onClick={onOpenOwner}
-            className="relative p-0.5 rounded-full bg-gradient-to-tr from-amber-500 via-amber-500 to-amber-400 hover:scale-105 transition-transform duration-200 focus:outline-none flex-shrink-0 cursor-pointer shadow-md shadow-amber-500/20"
-            title={`Creator: ${STORE_CONFIG.OWNER_NAME}`}
-          >
-            <img
-              src={ownerImg}
-              alt={STORE_CONFIG.OWNER_NAME}
-              className="w-8 h-8 rounded-full object-cover shadow"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = "https://i.ibb.co/HffVtwhY/image.jpg";
-              }}
-            />
-            <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-gradient-to-tr from-sky-400 to-blue-600 border-2 border-slate-950 rounded-full flex items-center justify-center shadow-sm">
-              <Send className="w-2 h-2 text-white" />
-            </span>
-          </button>
         </div>
       </div>
     </header>

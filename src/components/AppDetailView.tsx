@@ -102,7 +102,7 @@ const ScreenshotThumbnail: React.FC<{
         decoding="async"
         referrerPolicy="no-referrer"
         onError={handleError}
-        className="w-36 sm:w-48 h-60 sm:h-72 object-cover rounded-2xl sm:rounded-3xl border-2 border-amber-500/20 group-hover:border-amber-500 shadow-lg transition duration-150 pointer-events-none bg-slate-900"
+        className="zoom-breath w-36 sm:w-48 h-60 sm:h-72 object-cover rounded-2xl sm:rounded-3xl border-2 border-amber-500/20 group-hover:border-amber-500 shadow-lg transition duration-150 pointer-events-none bg-slate-900"
       />
       <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition rounded-2xl sm:rounded-3xl flex items-center justify-center pointer-events-none">
         <span className="text-[11px] font-bold text-white bg-black/70 px-3 py-1 rounded-full border border-white/20 backdrop-blur-md">
@@ -768,7 +768,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
           theme === 'dark' ? 'bg-slate-900/60 border-slate-800/80 text-slate-300' : 'bg-white border-slate-200 text-slate-700'
         }`}
       >
-        <h3 className="text-xs font-black uppercase tracking-wider text-amber-400 mb-3">
+        <h3 className="text-xs font-black uppercase tracking-wider text-flow mb-3">
           About this Application
         </h3>
         <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-line font-normal">
