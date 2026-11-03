@@ -37,7 +37,7 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
             onClick={() => onSelectCategory(cat)}
             className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all flex-shrink-0 active:scale-95 ${
               isSelected
-                ? 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 text-white shadow-lg shadow-fuchsia-500/40 ring-2 ring-fuchsia-400/60'
+                ? 'chip-live bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 text-white shadow-lg shadow-fuchsia-500/40 ring-2 ring-fuchsia-400/60'
                 : theme === 'dark'
                 ? 'bg-white border border-slate-200 text-slate-500 hover:text-fuchsia-600 hover:border-fuchsia-300 shadow-sm'
                 : 'bg-white border border-slate-200 text-slate-600 hover:text-slate-900 shadow-sm'

@@ -606,7 +606,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
         <div className="flex items-center gap-4 sm:gap-6 relative z-10">
           <div className="relative flex-shrink-0">
             <div className="absolute -inset-1 rounded-[26px] sm:rounded-[34px] ring-conic opacity-60 blur-[5px]" aria-hidden="true" />
-            <div className="relative p-0.5 rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-orange-400 shadow-lg">
+            <div className="anim-float relative p-0.5 rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-orange-400 shadow-lg">
               <img
                 src={app.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}
                 alt={app.name}
@@ -670,7 +670,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
       <div className="space-y-3">
         <button
           onClick={() => (onDirectInstall ? onDirectInstall(app) : onQuickDownload ? onQuickDownload(app) : window.open(app.link, '_blank'))}
-          className="btn-shine btn-live w-full py-4 px-6 rounded-2xl font-black uppercase text-sm tracking-wider text-white bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 hover:from-violet-500 hover:via-fuchsia-400 hover:to-orange-300 shadow-xl shadow-fuchsia-600/30 active:scale-95 transition flex items-center justify-center gap-2.5 group cursor-pointer"
+          className="btn-shine btn-live chip-live dl-pulse w-full py-4 px-6 rounded-2xl font-black uppercase text-sm tracking-wider text-white bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 hover:from-violet-500 hover:via-fuchsia-400 hover:to-orange-300 shadow-xl shadow-fuchsia-600/30 active:scale-95 transition flex items-center justify-center gap-2.5 group cursor-pointer"
         >
           <Download className="w-5 h-5 group-hover:animate-bounce" />
           <span>Direct Download APK</span>

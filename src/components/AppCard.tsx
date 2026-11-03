@@ -167,7 +167,7 @@ export const AppCard: React.FC<AppCardProps> = ({
           )}
         </div>
 
-        <span className={`text-[9px] font-black uppercase tracking-[0.18em] px-2.5 py-1 rounded-full bg-gradient-to-r ${grad} text-white shadow-sm`}>
+        <span className={`chip-live text-[9px] font-black uppercase tracking-[0.18em] px-2.5 py-1 rounded-full bg-gradient-to-r ${grad} text-white shadow-sm`}>
           {app.cat}
         </span>
       </div>

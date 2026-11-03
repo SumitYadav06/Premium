@@ -45,6 +45,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           : 'bg-white/90 border-slate-200/80 text-slate-900 shadow-sm'
       }`}
     >
+      <div className="absolute bottom-0 inset-x-0 h-[2.5px] rainbow-bg opacity-80" aria-hidden="true" />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
         {/* Left: Brand Logo & Title */}
         <div

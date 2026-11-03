@@ -230,9 +230,18 @@ export const RecentlyViewedRow: React.FC<RecentlyViewedRowProps> = ({ apps, onSe
             Recently Viewed
           </h2>
         </div>
+        <span className="ml-auto flex items-end gap-[2.5px] h-4 mr-1" aria-hidden="true">
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className="eq-bar w-[3px] rounded-full bg-gradient-to-t from-cyan-400 to-blue-500"
+              style={{ height: '100%', animationDelay: `${i * 0.16}s` }}
+            />
+          ))}
+        </span>
         <button
           onClick={onClear}
-          className="ml-auto flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-rose-500 transition cursor-pointer"
+          className="flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-rose-500 transition cursor-pointer"
         >
           <Trash2 className="w-3 h-3" /> Clear
         </button>

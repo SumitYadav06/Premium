@@ -405,6 +405,49 @@ html {
   animation: rainbow_anim 3s linear infinite;
 }
 
+/* Shine sweep — bina hover ke, lagatar chalta hua */
+.chip-live {
+  position: relative;
+  overflow: hidden;
+}
+.chip-live::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.45) 50%, transparent 68%);
+  transform: translateX(-130%);
+  animation: chipSweep 2.8s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes chipSweep {
+  0% { transform: translateX(-130%); }
+  60%, 100% { transform: translateX(130%); }
+}
+
+/* Download button — pulsing ring, sabki nazar yahin jaye */
+@keyframes dlPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(217, 70, 239, 0.45), 0 18px 36px -12px rgba(217, 70, 239, 0.5); }
+  50% { box-shadow: 0 0 0 11px rgba(217, 70, 239, 0), 0 18px 36px -12px rgba(217, 70, 239, 0.5); }
+}
+.dl-pulse {
+  animation: dlPulse 2s ease-in-out infinite;
+}
+
+/* Dock — halki si saans leti hui shadow */
+@keyframes dockPulse {
+  0%, 100% { box-shadow: 0 18px 44px -12px rgba(109, 40, 217, 0.35), 0 4px 14px -6px rgba(0, 0, 0, 0.12); }
+  50% { box-shadow: 0 18px 50px -10px rgba(217, 70, 239, 0.55), 0 4px 18px -6px rgba(245, 158, 11, 0.25); }
+}
+.dock-glass {
+  animation: dockPulse 3.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chip-live::after, .dl-pulse, .dock-glass, .icon-bob {
+    animation: none !important;
+  }
+}
+
 /* Card ke icons — halka sa hamesha dolta hua */
 @keyframes iconBob {
   0%, 100% { transform: translateY(0); }

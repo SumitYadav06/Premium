@@ -672,7 +672,7 @@ export default function App() {
             theme={theme}
           />
         ) : (
-          <div className="space-y-4 sm:space-y-6">
+          <div className="space-y-4 sm:space-y-6 stagger-list">
             {/* Top Official Store APK Direct Download Banner */}
             <PwaInstallBanner theme={theme} />
 
@@ -804,7 +804,7 @@ export default function App() {
                   <button
                     key={term}
                     onClick={() => setSearchQuery(term)}
-                    className="px-3 py-1.5 rounded-full text-[11px] font-bold bg-white hover:bg-fuchsia-50 border border-slate-200 hover:border-fuchsia-400 text-slate-600 hover:text-fuchsia-600 shadow-sm transition active:scale-95 cursor-pointer"
+                    className="chip-live px-3 py-1.5 rounded-full text-[11px] font-bold bg-white hover:bg-fuchsia-50 border border-slate-200 hover:border-fuchsia-400 text-slate-600 hover:text-fuchsia-600 shadow-sm transition active:scale-95 cursor-pointer"
                   >
                     {term}
                   </button>
