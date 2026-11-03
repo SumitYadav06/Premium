@@ -503,7 +503,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
     .slice(0, 3);
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 pb-24 animate-in fade-in duration-300">
+    <div className="detail-root max-w-3xl mx-auto space-y-6 pb-24">
       {/* Lightbox for screenshots */}
       <ScreenshotLightbox
         images={screenshots}
@@ -592,7 +592,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
         }`}
       >
         {/* Living artwork strip — Ken Burns video effect */}
-        <div className="absolute inset-x-0 top-0 h-32 sm:h-36 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div className="absolute inset-x-0 top-0 h-44 sm:h-48 overflow-hidden pointer-events-none" aria-hidden="true">
           <img
             src={app.p1 || app.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80"}
             alt=""
@@ -643,39 +643,42 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
           </div>
         </div>
 
-        {/* Quick Stats Grid */}
-        <div
-          className={`grid grid-cols-4 gap-2 mt-6 pt-5 border-t text-center ${
-            theme === 'dark' ? 'border-slate-800' : 'border-slate-100'
-          }`}
-        >
-          <div>
-            <p className="text-xs sm:text-sm font-black text-yellow-400 flex items-center justify-center gap-1">
-              {app.rating || 4.9} <Star className="w-3 h-3 fill-yellow-400" />
-            </p>
-            <p className="text-[10px] uppercase font-bold text-slate-500 mt-0.5">Rating</p>
-          </div>
+        {/* Quick Stats — glass pill cards */}
+        <div className="grid grid-cols-4 gap-2 mt-6 relative z-10">
+          {[
+            { value: <>{app.rating || 4.9} <Star className="w-3 h-3 fill-amber-400 text-amber-400" /></>, label: 'Rating', color: 'text-amber-500' },
+            { value: <>{app.mb} MB</>, label: 'Size', color: 'text-fuchsia-500' },
+            { value: <>{viewsCount.toLocaleString()}</>, label: 'Views', color: 'text-emerald-500' },
+            { value: <>3+</>, label: 'Age', color: 'text-sky-500' }
+          ].map((s) => (
+            <div
+              key={s.label}
+              className={`rounded-2xl px-1 py-2.5 text-center border backdrop-blur ${
+                theme === 'dark' ? 'bg-white/[0.05] border-white/10' : 'bg-white/70 border-slate-200/80 shadow-sm'
+              }`}
+            >
+              <p className={`text-xs sm:text-sm font-black font-display flex items-center justify-center gap-1 ${s.color}`}>
+                {s.value}
+              </p>
+              <p className="text-[9px] uppercase font-black tracking-widest text-slate-400 mt-0.5">{s.label}</p>
+            </div>
+          ))}
+        </div>
 
-          <div>
-            <p className="text-xs sm:text-sm font-black text-amber-400 font-mono">
-              {app.mb} MB
-            </p>
-            <p className="text-[10px] uppercase font-bold text-slate-500 mt-0.5">Size</p>
-          </div>
-
-          <div>
-            <p className="text-xs sm:text-sm font-black text-emerald-400 font-mono">
-              {viewsCount.toLocaleString()}
-            </p>
-            <p className="text-[10px] uppercase font-bold text-slate-500 mt-0.5">Views</p>
-          </div>
-
-          <div>
-            <p className="text-xs sm:text-sm font-black text-blue-400 font-mono">
-              3+
-            </p>
-            <p className="text-[10px] uppercase font-bold text-slate-500 mt-0.5">Age</p>
-          </div>
+        {/* VIP Perks strip */}
+        <div className="flex flex-wrap gap-1.5 mt-4 relative z-10">
+          {['⚡ Unlimited Speed', '🛡️ Anti-Ban Safe', '🚫 No Waiting', '🔄 Daily Updates'].map((perk) => (
+            <span
+              key={perk}
+              className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
+                theme === 'dark'
+                  ? 'bg-fuchsia-500/10 border-fuchsia-500/25 text-fuchsia-200'
+                  : 'bg-fuchsia-50 border-fuchsia-200 text-fuchsia-600'
+              }`}
+            >
+              {perk}
+            </span>
+          ))}
         </div>
       </div>
 
@@ -812,24 +815,24 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-          <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-800/40 border border-slate-700/40">
+          <div className={`flex items-center justify-between p-3 rounded-2xl border ${theme === 'dark' ? 'bg-slate-800/40 border-slate-700/40' : 'bg-slate-50 border-slate-200'}`}>
             <span className="text-slate-400">Package Identifier:</span>
             <span className="font-mono text-amber-300 font-bold truncate max-w-[160px]">
               {app.packageName || `com.premium.${app.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`}
             </span>
           </div>
 
-          <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-800/40 border border-slate-700/40">
+          <div className={`flex items-center justify-between p-3 rounded-2xl border ${theme === 'dark' ? 'bg-slate-800/40 border-slate-700/40' : 'bg-slate-50 border-slate-200'}`}>
             <span className="text-slate-400">Requires OS:</span>
             <span className="font-semibold text-slate-200">{app.minAndroid || 'Android 8.0+'}</span>
           </div>
 
-          <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-800/40 border border-slate-700/40">
+          <div className={`flex items-center justify-between p-3 rounded-2xl border ${theme === 'dark' ? 'bg-slate-800/40 border-slate-700/40' : 'bg-slate-50 border-slate-200'}`}>
             <span className="text-slate-400">Architecture:</span>
             <span className="font-mono text-slate-200">{app.architecture || 'arm64-v8a'}</span>
           </div>
 
-          <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-800/40 border border-slate-700/40">
+          <div className={`flex items-center justify-between p-3 rounded-2xl border ${theme === 'dark' ? 'bg-slate-800/40 border-slate-700/40' : 'bg-slate-50 border-slate-200'}`}>
             <span className="text-slate-400">Security Audit:</span>
             <span className="text-emerald-400 font-bold flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5" /> Passed Clean
@@ -925,7 +928,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
 
         {/* Real Reviews List or Clean Empty State */}
         {commentsList.length === 0 ? (
-          <div className="text-center py-6 px-4 rounded-2xl bg-slate-800/20 border border-dashed border-slate-700/60 space-y-2">
+          <div className={`text-center py-6 px-4 rounded-2xl border border-dashed space-y-2 ${theme === 'dark' ? 'bg-slate-800/20 border-slate-700/60' : 'bg-slate-50 border-slate-300'}`}>
             <MessageSquare className="w-6 h-6 text-slate-500 mx-auto" />
             <p className="text-xs text-slate-400 font-medium">No reviews yet for this app.</p>
             <button
@@ -940,11 +943,11 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
             {commentsList.map((item, idx) => (
               <div
                 key={idx}
-                className="p-4 rounded-2xl bg-slate-800/30 border border-slate-700/30 space-y-1.5"
+                className={`p-4 rounded-2xl border space-y-1.5 ${theme === 'dark' ? 'bg-slate-800/30 border-slate-700/30' : 'bg-slate-50 border-slate-200'}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-black text-white">{item.user}</span>
+                    <span className={`text-xs font-black ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{item.user}</span>
                     <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-extrabold uppercase">
                       VIP User
                     </span>
@@ -958,7 +961,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
                   ))}
                 </div>
 
-                <p className="text-xs text-slate-300 leading-relaxed font-normal">
+                <p className={`text-xs leading-relaxed font-normal ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
                   "{item.text}"
                 </p>
               </div>
@@ -984,7 +987,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
                     onSelectRelatedApp(rel);
                   }
                 }}
-                className="p-3.5 rounded-2xl bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800 hover:border-amber-500/40 transition cursor-pointer flex items-center gap-3 group"
+                className={`p-3.5 rounded-2xl border transition cursor-pointer flex items-center gap-3 group ${theme === 'dark' ? 'bg-slate-900/60 hover:bg-slate-800/80 border-slate-800 hover:border-fuchsia-500/40' : 'bg-white hover:bg-fuchsia-50/60 border-slate-200 hover:border-fuchsia-300 shadow-sm'}`}
               >
                 <img
                   src={rel.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}
@@ -993,12 +996,12 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1">
-                    <h4 className="text-xs font-black text-white truncate group-hover:text-amber-400 transition">
+                    <h4 className={`text-xs font-black truncate transition ${theme === 'dark' ? 'text-white group-hover:text-fuchsia-300' : 'text-slate-900 group-hover:text-fuchsia-600'}`}>
                       {rel.name}
                     </h4>
                     <VerifiedBadge size={14} />
                   </div>
-                  <p className="text-[10px] text-amber-400 font-bold">
+                  <p className="text-[10px] text-fuchsia-500 font-bold">
                     {rel.mb} MB • {rel.cat}
                   </p>
                 </div>

@@ -74,19 +74,21 @@ export const AppCard: React.FC<AppCardProps> = ({
       }`}
     >
       {/* ===== Artwork zone — poster / video thumbnail ===== */}
-      <div className={`relative h-[104px] sm:h-[116px] bg-gradient-to-br ${grad} overflow-hidden`}>
-        {/* Blurred artwork backdrop */}
-        <img
-          src={app.p1 || app.icon || FALLBACK_IMG}
-          alt=""
-          aria-hidden="true"
-          className="kenburns absolute inset-0 w-full h-full object-cover opacity-45"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = FALLBACK_IMG;
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-white/10" />
-        <div className="poster-glow absolute -top-8 left-1/3 w-28 h-28 rounded-full bg-white/35 blur-2xl" aria-hidden="true" />
+      <div className={`relative h-[104px] sm:h-[116px] bg-gradient-to-br ${grad}`}>
+        {/* Artwork backdrop — sirf ye hissa clip hota hai, floating icon NAHI */}
+        <div className="absolute inset-0 overflow-hidden rounded-t-[1.6rem]">
+          <img
+            src={app.p1 || app.icon || FALLBACK_IMG}
+            alt=""
+            aria-hidden="true"
+            className="kenburns absolute inset-0 w-full h-full object-cover opacity-45"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = FALLBACK_IMG;
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-white/10" />
+          <div className="poster-glow absolute -top-8 left-1/3 w-28 h-28 rounded-full bg-white/35 blur-2xl" aria-hidden="true" />
+        </div>
 
         {/* HOT badge */}
         {app.isHot && (

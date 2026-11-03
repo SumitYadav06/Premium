@@ -40,13 +40,13 @@ export const BookmarksDrawer: React.FC<BookmarksDrawerProps> = ({
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+        <div className={`flex items-center justify-between pb-4 border-b ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-amber-600/20 text-amber-400 border border-amber-500/30">
-              <Bookmark className="w-5 h-5 fill-amber-400" />
+            <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-lg shadow-fuchsia-500/30">
+              <Bookmark className="w-5 h-5 fill-white" />
             </div>
             <div>
-              <h3 className="font-black text-base text-white leading-none">
+              <h3 className={`font-display font-black text-base leading-none ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                 Saved Favorites
               </h3>
               <p className="text-[11px] text-slate-400 mt-1">
@@ -64,7 +64,7 @@ export const BookmarksDrawer: React.FC<BookmarksDrawerProps> = ({
         </div>
 
         {/* List */}
-        <div className="flex-1 overflow-y-auto py-4 space-y-3">
+        <div className="flex-1 overflow-y-auto py-4 space-y-3 stagger-list">
           {safeBookmarks.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500">
               <Bookmark className="w-12 h-12 stroke-[1.5] mb-3 text-slate-600" />
