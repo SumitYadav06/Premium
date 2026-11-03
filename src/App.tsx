@@ -804,7 +804,7 @@ export default function App() {
                   <button
                     key={term}
                     onClick={() => setSearchQuery(term)}
-                    className="chip-live px-3 py-1.5 rounded-full text-[11px] font-bold bg-white hover:bg-fuchsia-50 border border-slate-200 hover:border-fuchsia-400 text-slate-600 hover:text-fuchsia-600 shadow-sm transition active:scale-95 cursor-pointer"
+                    className="px-3 py-1.5 rounded-full text-[11px] font-bold bg-white hover:bg-fuchsia-50 border border-slate-200 hover:border-fuchsia-400 text-slate-600 hover:text-fuchsia-600 shadow-sm transition active:scale-95 cursor-pointer"
                   >
                     {term}
                   </button>

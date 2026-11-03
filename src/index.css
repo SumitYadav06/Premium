@@ -399,30 +399,16 @@ html {
   filter: drop-shadow(0 4px 18px rgba(217, 70, 239, 0.45)) drop-shadow(0 2px 4px rgba(245, 158, 11, 0.30));
 }
 
-/* Bade CTA buttons — behta hua animated gradient */
+/* Bade CTA buttons — rang dheere-dheere ghulta-milta hai, koi line nahi, koi jhatka nahi */
 .btn-live {
-  background-size: 220% auto !important;
-  animation: rainbow_anim 3s linear infinite;
+  animation: btnBlend 7s ease-in-out infinite;
+}
+@keyframes btnBlend {
+  0%, 100% { filter: hue-rotate(0deg) brightness(1); }
+  50% { filter: hue-rotate(24deg) brightness(1.07); }
 }
 
-/* Shine sweep — bina hover ke, lagatar chalta hua */
-.chip-live {
-  position: relative;
-  overflow: hidden;
-}
-.chip-live::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.45) 50%, transparent 68%);
-  transform: translateX(-130%);
-  animation: chipSweep 2.8s ease-in-out infinite;
-  pointer-events: none;
-}
-@keyframes chipSweep {
-  0% { transform: translateX(-130%); }
-  60%, 100% { transform: translateX(130%); }
-}
+/* (chip-live sweep hata diya gaya — saaf dikhti line owner ko pasand nahi) */
 
 /* Download button — pulsing ring, sabki nazar yahin jaye */
 @keyframes dlPulse {

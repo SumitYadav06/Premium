@@ -670,7 +670,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
       <div className="space-y-3">
         <button
           onClick={() => (onDirectInstall ? onDirectInstall(app) : onQuickDownload ? onQuickDownload(app) : window.open(app.link, '_blank'))}
-          className="btn-shine btn-live chip-live dl-pulse w-full py-4 px-6 rounded-2xl font-black uppercase text-sm tracking-wider text-white bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 hover:from-violet-500 hover:via-fuchsia-400 hover:to-orange-300 shadow-xl shadow-fuchsia-600/30 active:scale-95 transition flex items-center justify-center gap-2.5 group cursor-pointer"
+          className="btn-live dl-pulse w-full py-4 px-6 rounded-2xl font-black uppercase text-sm tracking-wider text-white bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 hover:from-violet-500 hover:via-fuchsia-400 hover:to-orange-300 shadow-xl shadow-fuchsia-600/30 active:scale-95 transition flex items-center justify-center gap-2.5 group cursor-pointer"
         >
           <Download className="w-5 h-5 group-hover:animate-bounce" />
           <span>Direct Download APK</span>
