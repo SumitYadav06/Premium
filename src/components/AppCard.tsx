@@ -119,8 +119,8 @@ export const AppCard: React.FC<AppCardProps> = ({
         </span>
 
         {/* Floating icon — artwork se bahar nikalta hua */}
-        <div className="absolute left-1/2 -translate-x-1/2 -bottom-7 z-10 icon-bob" style={{ animationDelay: `${(index % 5) * 0.4}s` }}>
-          <div className="relative">
+        <div className="absolute left-1/2 -translate-x-1/2 -bottom-7 z-10">
+          <div className="relative icon-bob" style={{ animationDelay: `${(index % 5) * 0.35}s` }}>
             <div className="absolute -inset-[3px] rounded-[24px] ring-conic opacity-0 group-hover:opacity-90 transition-opacity duration-300" aria-hidden="true" />
             <img
               src={app.icon || FALLBACK_IMG}

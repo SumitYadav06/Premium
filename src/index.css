@@ -429,7 +429,7 @@ html {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .chip-live::after, .dl-pulse, .dock-glass, .icon-bob {
+  .chip-live::after, .dock-glass {
     animation: none !important;
   }
 }
@@ -437,10 +437,19 @@ html {
 /* Card ke icons — halka sa hamesha dolta hua */
 @keyframes iconBob {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
+  50% { transform: translateY(-9px); }
 }
 .icon-bob {
-  animation: iconBob 3.6s ease-in-out infinite;
+  animation: iconBob 2.4s ease-in-out infinite;
+}
+
+/* Download button — sticker/GIF ki tarah upar-neeche hota hua + chamakti ring + ghulta rang */
+@keyframes btnBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+.dl-live {
+  animation: dlPulse 2s ease-in-out infinite, btnBob 1.9s ease-in-out infinite, btnBlend 7s ease-in-out infinite;
 }
 
 /* ===== VFX MAX — har cheez zinda, har jagah motion ===== */

@@ -180,7 +180,7 @@ export const TopChartsRail: React.FC<TopChartsRailProps> = ({ ranked, onSelect, 
             <img
               src={app.icon}
               alt={app.name}
-              className="w-14 h-14 rounded-2xl object-cover bg-slate-900 shrink-0 shadow"
+              className="icon-bob w-14 h-14 rounded-2xl object-cover bg-slate-900 shrink-0 shadow"
               onError={(e) => {
                 (e.target as HTMLImageElement).src =
                   'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80';
@@ -262,7 +262,7 @@ export const RecentlyViewedRow: React.FC<RecentlyViewedRowProps> = ({ apps, onSe
                 : 'bg-white border-slate-200 text-slate-700 shadow-sm hover:border-cyan-300'
             }`}
           >
-            <img src={app.icon} alt={app.name} className="w-7 h-7 rounded-full object-cover bg-slate-900" />
+            <img src={app.icon} alt={app.name} className="icon-bob w-7 h-7 rounded-full object-cover bg-slate-900" />
             <span className="text-[11px] font-bold max-w-[110px] truncate">{app.name}</span>
             <Eye className="w-3 h-3 text-cyan-500" />
           </button>
