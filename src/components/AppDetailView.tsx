@@ -591,12 +591,22 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
             : 'bg-white border-slate-200 text-slate-900'
         }`}
       >
+        {/* Living artwork strip — Ken Burns video effect */}
+        <div className="absolute inset-x-0 top-0 h-32 sm:h-36 overflow-hidden pointer-events-none" aria-hidden="true">
+          <img
+            src={app.p1 || app.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80"}
+            alt=""
+            className={`kenburns w-full h-full object-cover ${theme === 'dark' ? 'opacity-25' : 'opacity-20'}`}
+          />
+          <div className={`absolute inset-0 bg-gradient-to-b from-transparent ${theme === 'dark' ? 'to-slate-900' : 'to-white'}`} />
+        </div>
         {/* Glow accent */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-amber-500/10 via-amber-600/15 to-transparent rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-fuchsia-500/10 via-violet-600/15 to-transparent rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex items-center gap-4 sm:gap-6 relative z-10">
           <div className="relative flex-shrink-0">
-            <div className="p-0.5 rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-amber-400 via-amber-500 to-amber-600 shadow-lg">
+            <div className="absolute -inset-1 rounded-[26px] sm:rounded-[34px] ring-conic opacity-60 blur-[5px]" aria-hidden="true" />
+            <div className="relative p-0.5 rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-orange-400 shadow-lg">
               <img
                 src={app.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}
                 alt={app.name}
@@ -622,7 +632,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
               </span>
             </div>
 
-            <h1 className="font-display text-xl sm:text-3xl font-black tracking-tight leading-tight mb-1 text-white flex items-center gap-1.5 sm:gap-2">
+            <h1 className={`font-display text-xl sm:text-3xl font-black tracking-tight leading-tight mb-1 flex items-center gap-1.5 sm:gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
               <span className="truncate">{app.name}</span>
               <VerifiedBadge size={22} />
             </h1>

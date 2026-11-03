@@ -251,3 +251,130 @@ html {
     animation: none !important;
   }
 }
+
+/* ===== CINEMA LIVE — Video-Jaisa Live Effect Pack ===== */
+
+/* Ken Burns: photo/video dheere zoom-pan — live video feel */
+@keyframes kenburns {
+  0% { transform: scale(1.02) translate(0, 0); }
+  50% { transform: scale(1.16) translate(-1.5%, 1.5%); }
+  100% { transform: scale(1.02) translate(0, 0); }
+}
+.kenburns {
+  animation: kenburns 16s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Upar uthte hue floating orbs — live background particles */
+@keyframes orbRise {
+  0% { transform: translateY(12vh) scale(0.7); opacity: 0; }
+  12% { opacity: 0.55; }
+  85% { opacity: 0.4; }
+  100% { transform: translateY(-88vh) scale(1.15); opacity: 0; }
+}
+.live-orb {
+  position: absolute;
+  bottom: -6vh;
+  border-radius: 9999px;
+  filter: blur(2px);
+  animation: orbRise linear infinite;
+  will-change: transform, opacity;
+}
+
+/* Light beam sweep — stage light jaise */
+@keyframes beamSweep {
+  0% { transform: translateX(-30%) rotate(14deg); opacity: 0; }
+  18% { opacity: 0.16; }
+  50% { transform: translateX(55%) rotate(14deg); opacity: 0.10; }
+  82% { opacity: 0.14; }
+  100% { transform: translateX(130%) rotate(14deg); opacity: 0; }
+}
+.live-beam {
+  position: absolute;
+  top: -25%;
+  height: 160%;
+  width: 22vmax;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+  filter: blur(28px);
+  animation: beamSweep 11s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* Live ticker marquee — news channel strip */
+@keyframes marqueeX {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marqueeX 26s linear infinite;
+}
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* Music/video equalizer bars */
+@keyframes eqBounce {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+.eq-bar {
+  transform-origin: bottom;
+  animation: eqBounce 0.9s ease-in-out infinite;
+}
+
+/* Rotating conic ring — icon ke peeche ghumta hua rang */
+@keyframes spinSlow {
+  to { transform: rotate(360deg); }
+}
+.ring-conic {
+  background: conic-gradient(from 0deg, #f43f5e, #f59e0b, #84cc16, #06b6d4, #8b5cf6, #ec4899, #f43f5e);
+  animation: spinSlow 5s linear infinite;
+}
+
+/* Hero slide timeline — video progress bar */
+@keyframes slideProgress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+.slide-progress {
+  animation: slideProgress 4.5s linear forwards;
+}
+.slide-progress.paused {
+  animation-play-state: paused;
+}
+
+/* Bade rank number — outline style */
+.rank-num {
+  -webkit-text-stroke: 2px rgba(168, 85, 247, 0.55);
+  color: transparent;
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+}
+
+/* Floating bottom dock */
+.dock-glass {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  border: 1px solid rgba(217, 70, 239, 0.25);
+  box-shadow: 0 18px 44px -12px rgba(109, 40, 217, 0.35), 0 4px 14px -6px rgba(0, 0, 0, 0.12);
+}
+.dark .dock-glass {
+  background: rgba(15, 10, 30, 0.82);
+}
+
+/* Poster card artwork zone shimmer */
+@keyframes posterGlow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.95; }
+}
+.poster-glow {
+  animation: posterGlow 3.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kenburns, .live-orb, .live-beam, .marquee-track, .eq-bar, .ring-conic, .slide-progress, .poster-glow {
+    animation: none !important;
+  }
+}

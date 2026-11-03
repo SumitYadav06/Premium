@@ -52,7 +52,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group select-none flex-shrink-0"
         >
           {/* Store Brand: Official App Icon */}
-          <div className="anim-float relative w-11 h-11 rounded-2xl p-0.5 rainbow-bg shadow-lg shadow-fuchsia-500/30 flex items-center justify-center group-hover:scale-105 transition duration-300">
+          <div className="anim-float relative w-11 h-11 rounded-2xl p-0.5 ring-conic shadow-lg shadow-fuchsia-500/30 flex items-center justify-center group-hover:scale-105 transition duration-300">
             <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center p-0.5 overflow-hidden">
               <img
                 src={STORE_CONFIG.STORE_APP_ICON}
@@ -74,9 +74,13 @@ export const Navbar: React.FC<NavbarProps> = ({
               {STORE_CONFIG.STORE_NAME}
             </h1>
             <div className="flex items-center gap-1.5 mt-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[10px] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300 uppercase tracking-widest flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3 text-emerald-400" /> VIP Store
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-80" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500" />
+              </span>
+              <span className="text-[10px] font-extrabold text-red-500 uppercase tracking-widest">Live</span>
+              <span className="text-[10px] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-400 uppercase tracking-widest flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-emerald-500" /> VIP Store
               </span>
             </div>
           </div>

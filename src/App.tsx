@@ -22,6 +22,13 @@ import { OwnerModal } from './components/OwnerModal';
 import { SplashView } from './components/SplashView';
 import { PwaInstallBanner } from './components/PwaInstallBanner';
 import {
+  LiveBackground,
+  LiveTicker,
+  TopChartsRail,
+  RecentlyViewedRow,
+  BottomDock
+} from './components/LiveStage';
+import {
   Search,
   ArrowUpDown,
   HelpCircle,
@@ -205,9 +212,23 @@ export default function App() {
   const isOwnerModalOpenRef = React.useRef(isOwnerModalOpen);
   isOwnerModalOpenRef.current = isOwnerModalOpen;
 
+  // Recently Viewed (Local storage) — "Jump Back In" row ke liye
+  const [recentIds, setRecentIds] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('premium_store_recent') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('premium_store_recent', JSON.stringify(recentIds));
+  }, [recentIds]);
+
   // View Openers & Closers with Automatic Browser / Android History Pushes
   const openAppDetail = (app: AppItem) => {
     incrementAppView(app.id || app.name);
+    setRecentIds((prev) => [app.id, ...prev.filter((id) => id !== app.id)].slice(0, 10));
     setSelectedApp(app);
     try {
       window.history.pushState({ view: 'app_detail', id: app.id || app.name }, '');
@@ -513,6 +534,43 @@ export default function App() {
     return safeAppsList.filter((a) => a && Array.isArray(bookmarkedIds) && bookmarkedIds.includes(a.id));
   }, [safeAppsList, bookmarkedIds]);
 
+  // Live totals + Top Charts ranking (real stats se)
+  const downloadsOf = (a: AppItem) =>
+    stats[a.id]?.downloads ?? stats[getAppKey(a.id)]?.downloads ?? stats[getAppKey(a.name)]?.downloads ?? a.downloads ?? 0;
+
+  const totalDownloads = useMemo(() => {
+    return safeAppsList.reduce((sum, a) => sum + (a ? downloadsOf(a) : 0), 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [safeAppsList, stats]);
+
+  const rankedApps = useMemo(() => {
+    return [...safeAppsList]
+      .filter((a) => a && a.name)
+      .map((a) => ({ app: a, downloads: downloadsOf(a) }))
+      .sort((x, y) => y.downloads - x.downloads);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [safeAppsList, stats]);
+
+  const recentApps = useMemo(() => {
+    return recentIds
+      .map((id) => safeAppsList.find((a) => a && a.id === id))
+      .filter((a): a is AppItem => !!a)
+      .slice(0, 8);
+  }, [recentIds, safeAppsList]);
+
+  // Rotating search placeholder — trending naam bari-bari dikhte hain
+  const [placeholderIdx, setPlaceholderIdx] = useState(0);
+  useEffect(() => {
+    if (trendingSearches.length === 0) return;
+    const t = setInterval(() => setPlaceholderIdx((i) => i + 1), 2600);
+    return () => clearInterval(t);
+  }, [trendingSearches.length]);
+
+  const rotatingPlaceholder =
+    trendingSearches.length > 0
+      ? `Try "${trendingSearches[placeholderIdx % trendingSearches.length]}" — VIP Mods, games, tools...`
+      : 'Search VIP Mods, games, premium tools...';
+
   // Synchronize open detail view with latest real-time data from store
   const currentSelectedApp = useMemo(() => {
     if (!selectedApp) return null;
@@ -527,8 +585,8 @@ export default function App() {
       {/* Intro Splash Screen */}
       {showSplash && <SplashView onFinish={() => setShowSplash(false)} />}
 
-      {/* Ambient Gold Aurora Background */}
-      <div className="aurora-layer" aria-hidden="true" />
+      {/* CINEMA LIVE Background — beams, orbs, living gradient */}
+      <LiveBackground />
 
       {/* Top Navbar */}
       <Navbar
@@ -544,7 +602,7 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <main className="relative max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
+      <main className="relative max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-28">
         {currentSelectedApp ? (
           <AppDetailView
             app={currentSelectedApp}
@@ -563,6 +621,16 @@ export default function App() {
             {/* Top Official Store APK Direct Download Banner */}
             <PwaInstallBanner theme={theme} />
 
+            {/* LIVE Ticker — news strip */}
+            {!searchQuery && (
+              <LiveTicker
+                appsCount={safeAppsList.length}
+                totalDownloads={totalDownloads}
+                topNames={trendingSearches}
+                theme={theme}
+              />
+            )}
+
             {/* Search Input & Controls Bar */}
             <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
               {/* Search Bar */}
@@ -570,7 +638,7 @@ export default function App() {
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-400" />
                 <input
                   type="text"
-                  placeholder={isListening ? "Listening... Speak now..." : "Search VIP Mods, games, premium tools..."}
+                  placeholder={isListening ? "Listening... Speak now..." : rotatingPlaceholder}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className={`w-full pl-10 pr-20 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm font-medium transition focus:outline-none ${
@@ -698,12 +766,27 @@ export default function App() {
               </div>
             )}
 
-            {/* Featured Slider Banner */}
+            {/* Featured Slider Banner — Cinema Spotlight */}
             {!searchQuery && selectedCategory === 'All' && (
               <BannerSlider
                 apps={safeAppsList}
                 onSelectApp={(app) => openAppDetail(app)}
                 onQuickDownload={(app) => handleQuickDownload(app)}
+                theme={theme}
+              />
+            )}
+
+            {/* Top 10 Charts Rail */}
+            {!searchQuery && selectedCategory === 'All' && (
+              <TopChartsRail ranked={rankedApps} onSelect={(app) => openAppDetail(app)} theme={theme} />
+            )}
+
+            {/* Recently Viewed */}
+            {!searchQuery && selectedCategory === 'All' && (
+              <RecentlyViewedRow
+                apps={recentApps}
+                onSelect={(app) => openAppDetail(app)}
+                onClear={() => setRecentIds([])}
                 theme={theme}
               />
             )}
@@ -724,7 +807,7 @@ export default function App() {
                   <span className="w-1.5 h-7 rounded-full bg-gradient-to-b from-rose-500 via-fuchsia-500 to-violet-600 shadow-[0_0_14px_rgba(217,70,239,0.55)]" />
                   <div>
                     <p className="text-[9px] font-black uppercase tracking-[0.28em] text-fuchsia-600 leading-none mb-1">Premium Store</p>
-                    <h2 className="font-display text-base sm:text-lg font-black tracking-tight text-white leading-none">
+                    <h2 className={`font-display text-base sm:text-lg font-black tracking-tight leading-none ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                       {searchQuery ? `Search Results (${filteredApps.length})` : `${selectedCategory} Collection (${filteredApps.length})`}
                     </h2>
                   </div>
@@ -739,23 +822,24 @@ export default function App() {
                   {[1, 2, 3, 4, 5, 6].map((i) => (
                     <div
                       key={i}
-                      className="p-4 rounded-3xl bg-slate-900/60 border border-slate-800 animate-pulse flex items-center gap-3.5"
+                      className={`rounded-[1.6rem] overflow-hidden animate-pulse border ${
+                        theme === 'dark' ? 'bg-white/[0.04] border-white/10' : 'bg-white border-slate-200'
+                      }`}
                     >
-                      <div className="w-16 h-16 rounded-2xl bg-slate-800 flex-shrink-0" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 bg-slate-800 rounded-md w-3/4" />
-                        <div className="h-3 bg-slate-800/60 rounded-md w-1/2" />
-                        <div className="h-3 bg-slate-800/40 rounded-md w-1/3" />
+                      <div className={`h-[104px] ${theme === 'dark' ? 'bg-white/[0.06]' : 'bg-gradient-to-br from-violet-200 via-fuchsia-200 to-amber-200'}`} />
+                      <div className="p-4 pt-9 space-y-2 flex flex-col items-center">
+                        <div className={`h-4 rounded-md w-3/4 ${theme === 'dark' ? 'bg-white/10' : 'bg-slate-200'}`} />
+                        <div className={`h-3 rounded-md w-1/2 ${theme === 'dark' ? 'bg-white/[0.07]' : 'bg-slate-100'}`} />
                       </div>
                     </div>
                   ))}
                 </div>
               ) : filteredApps.length === 0 ? (
-                <div className="py-16 text-center space-y-3 bg-slate-900/40 rounded-3xl border border-slate-800">
-                  <div className="w-14 h-14 rounded-2xl bg-slate-800 mx-auto flex items-center justify-center text-slate-500">
+                <div className={`py-16 text-center space-y-3 rounded-3xl border ${theme === 'dark' ? 'bg-slate-900/40 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
+                  <div className={`w-14 h-14 rounded-2xl mx-auto flex items-center justify-center ${theme === 'dark' ? 'bg-slate-800 text-slate-500' : 'bg-fuchsia-50 text-fuchsia-400'}`}>
                     <Package className="w-7 h-7" />
                   </div>
-                  <h3 className="text-base font-bold text-white">No Apps Found</h3>
+                  <h3 className={`text-base font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>No Apps Found</h3>
                   <p className="text-xs text-slate-400 max-w-sm mx-auto">
                     Try searching with another keyword or browse categories above.
                   </p>
@@ -776,6 +860,7 @@ export default function App() {
                       key={app.id}
                       app={app}
                       views={stats[app.id]?.views ?? stats[getAppKey(app.id)]?.views ?? stats[getAppKey(app.name)]?.views ?? app.views ?? 0}
+                      downloads={downloadsOf(app)}
                       isBookmarked={bookmarkedIds.includes(app.id)}
                       onSelect={(a) => openAppDetail(a)}
                       onQuickDownload={(a) => handleQuickDownload(a)}
@@ -790,6 +875,23 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {/* Floating Bottom Dock */}
+      {!currentSelectedApp && (
+        <BottomDock
+          onHome={() => {
+            closeAppDetail();
+            setSearchQuery('');
+            setSelectedCategory('All');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          onOpenBookmarks={openBookmarks}
+          onOpenDownloads={openDownloads}
+          onOpenOwner={openOwnerModal}
+          bookmarksCount={bookmarkedIds.length}
+          downloadsCount={downloadTasks.length}
+        />
+      )}
 
       {/* Direct One-Click Fast Installer Modal */}
       <DirectInstallerModal

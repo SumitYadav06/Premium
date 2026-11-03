@@ -62,8 +62,9 @@ export const SplashView: React.FC<SplashViewProps> = ({
             transition={{ duration: 0.5, ease: "easeOut" }}
             className="relative flex flex-col items-center text-center z-10 max-w-sm w-full"
           >
-            {/* Logo with Glowing Rainbow Border */}
+            {/* Logo with Glowing Rainbow Border + ghumta hua live ring */}
             <div className="anim-float relative mb-5 group">
+              <div className="absolute -inset-4 rounded-[3rem] ring-conic opacity-60 blur-md" aria-hidden="true"></div>
               <div className="absolute -inset-2.5 bg-gradient-to-r from-rose-500 via-fuchsia-500 via-amber-400 to-cyan-400 rounded-[2.8rem] blur-lg opacity-80 animate-pulse"></div>
               <div className="relative w-44 h-44 sm:w-52 sm:h-52 rounded-[2.4rem] overflow-hidden bg-white border-2 border-fuchsia-400/50 shadow-2xl shadow-fuchsia-200 p-1.5 flex items-center justify-center">
                 <img
@@ -99,10 +100,21 @@ export const SplashView: React.FC<SplashViewProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="text-xs text-fuchsia-500 font-semibold tracking-wider uppercase mb-5"
+              className="text-xs text-fuchsia-500 font-semibold tracking-wider uppercase mb-3"
             >
               {STORE_CONFIG.STORE_TAGLINE}
             </motion.p>
+
+            {/* Live equalizer — video/music jaisa pulse */}
+            <div className="flex items-end gap-[3px] h-5 mb-5" aria-hidden="true">
+              {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+                <span
+                  key={i}
+                  className="eq-bar w-[4px] rounded-full bg-gradient-to-t from-rose-500 via-fuchsia-500 to-amber-400"
+                  style={{ height: '100%', animationDelay: `${i * 0.11}s`, animationDuration: `${0.65 + (i % 3) * 0.14}s` }}
+                />
+              ))}
+            </div>
 
             {/* High-Tech Security Matrix Status Card */}
             <motion.div
