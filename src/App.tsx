@@ -186,6 +186,38 @@ export default function App() {
     return () => clearTimeout(timer);
   }, []);
 
+  // AUTO-UPDATE: WebView cache me purana version atka ho to khud pehchano aur fresh load karo.
+  // Live index.html (no-store) se naya bundle hash padho; alag ho to ek baar reload.
+  useEffect(() => {
+    const checkUpdate = async () => {
+      try {
+        const res = await fetch(`/Premium/?aj_check=${Date.now()}`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const html = await res.text();
+        const m = html.match(/assets\/index-[A-Za-z0-9_-]+\.js/);
+        if (!m) return;
+        const current =
+          document.querySelector('script[src*="assets/index-"]')?.getAttribute('src') || '';
+        if (current && !current.includes(m[0])) {
+          const KEY = 'aj_update_reloaded_for';
+          if (sessionStorage.getItem(KEY) !== m[0]) {
+            sessionStorage.setItem(KEY, m[0]);
+            window.location.reload();
+          }
+        }
+      } catch (e) {}
+    };
+    const t = setTimeout(checkUpdate, 2500);
+    const onVis = () => {
+      if (document.visibilityState === 'visible') checkUpdate();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, []);
+
   // Navigation & Modals
   const [selectedApp, setSelectedApp] = useState<AppItem | null>(null);
   const [directInstallApp, setDirectInstallApp] = useState<AppItem | null>(null);
