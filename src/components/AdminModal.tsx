@@ -16,7 +16,8 @@ import {
   CheckCircle2,
   AlertTriangle,
   Loader2,
-  Power
+  Power,
+  ImagePlus
 } from 'lucide-react';
 import { AppItem, StoreStatus } from '../types';
 import {
@@ -53,10 +54,57 @@ const EMPTY_FORM = {
   link: '',
   icon: '',
   desc: '',
-  screenshotsText: '',
+  changelog: '',
+  developer: '',
+  minAndroid: '',
+  arch: '',
   isFeatured: false,
-  isHot: false
+  isHot: false,
+  isPinned: false
 };
+
+/** Gallery ki photo ko chhota karke data-URL banana (uske Admin app jaisa hi tareeka —
+ *  koi hosting nahi chahiye, photo seedha app ke data me save hoti hai) */
+async function fileToDataUrl(file: File): Promise<string> {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = reject;
+      i.src = url;
+    });
+    const scale = Math.min(1, 960 / Math.max(img.width, img.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(img.width * scale));
+    canvas.height = Math.max(1, Math.round(img.height * scale));
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('canvas unavailable');
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    let out = '';
+    try {
+      out = canvas.toDataURL('image/webp', 0.75);
+    } catch (e) {}
+    if (!out || !out.startsWith('data:image/webp')) {
+      out = canvas.toDataURL('image/jpeg', 0.72);
+    }
+    return out;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+/** App ke saare screenshot ikattha karo — p1..p10 fields aur screenshots array dono se */
+function collectShots(app: AppItem): string[] {
+  const out: string[] = [];
+  const push = (v: any) => {
+    if (typeof v === 'string' && v.trim() && !out.includes(v)) out.push(v);
+  };
+  for (let i = 1; i <= 10; i++) push((app as any)[`p${i}`]);
+  if (Array.isArray(app.screenshots)) app.screenshots.forEach(push);
+  else if (typeof app.screenshots === 'string') push(app.screenshots);
+  return out.slice(0, 15);
+}
 
 export const AdminModal: React.FC<AdminModalProps> = ({
   isOpen,
@@ -81,6 +129,9 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<AppItem | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
+  const [shots, setShots] = useState<string[]>([]);
+  const [shotUrl, setShotUrl] = useState('');
+  const [uploadingShots, setUploadingShots] = useState(false);
   const [toast, setToast] = useState<Toast>(null);
   const [saving, setSaving] = useState(false);
   const [autofilling, setAutofilling] = useState(false);
@@ -165,6 +216,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const openAdd = () => {
     setEditing(null);
     setForm({ ...EMPTY_FORM });
+    setShots([]);
+    setShotUrl('');
     setView('form');
   };
 
@@ -178,15 +231,46 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       link: app.link || '',
       icon: app.icon || '',
       desc: app.desc || '',
-      screenshotsText: Array.isArray(app.screenshots)
-        ? app.screenshots.join('\n')
-        : typeof app.screenshots === 'string'
-          ? app.screenshots
-          : '',
+      changelog: app.changelog || '',
+      developer: app.developer || '',
+      minAndroid: app.minAndroid || '',
+      arch: (app as any).arch || (app as any).architecture || '',
       isFeatured: !!app.isFeatured,
-      isHot: !!app.isHot
+      isHot: !!app.isHot,
+      isPinned: !!(app as any).isPinned
     });
+    setShots(collectShots(app));
+    setShotUrl('');
     setView('form');
+  };
+
+  const handleShotFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploadingShots(true);
+    try {
+      const added: string[] = [];
+      for (const file of Array.from(files)) {
+        if (shots.length + added.length >= 15) break;
+        added.push(await fileToDataUrl(file));
+      }
+      setShots((prev) => [...prev, ...added].slice(0, 15));
+      if (added.length) showToast('ok', `${added.length} screenshot jud gaya ✓`);
+    } catch (e) {
+      showToast('err', 'Screenshot upload fail ho gaya. Dobara try karo.');
+    } finally {
+      setUploadingShots(false);
+    }
+  };
+
+  const handleIconFile = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    try {
+      const dataUrl = await fileToDataUrl(files[0]);
+      setForm((f) => ({ ...f, icon: dataUrl }));
+      showToast('ok', 'Icon lag gaya ✓');
+    } catch (e) {
+      showToast('err', 'Icon upload fail ho gaya.');
+    }
   };
 
   const handleAutofill = async () => {
@@ -223,7 +307,12 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       showToast('err', 'APK ka sahi download link (http se shuru) daalo.');
       return;
     }
+    // MERGE save: purane app ki saari fields (jo is form me nahi hain — packageId,
+    // safetyStatus, downloadCount waghera) waise ki waisi rahengi, sirf edit wali badlengi.
+    // Bina iske save karne se uske Admin app se dala purana data ud jata.
+    const base: Record<string, any> = editing ? { ...(editing as any) } : {};
     const appToSave: AppItem = {
+      ...base,
       id: editing?.id || getAppKey(name) || `app_${Date.now()}`,
       name,
       cat: form.cat.trim() || 'Apps',
@@ -232,15 +321,24 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       link,
       icon: form.icon.trim(),
       desc: form.desc.trim(),
-      screenshots: form.screenshotsText
-        .split(/[\n,]+/)
-        .map((s) => s.trim())
-        .filter(Boolean),
+      changelog: form.changelog.trim(),
+      developer: form.developer.trim(),
+      minAndroid: form.minAndroid.trim(),
+      arch: form.arch.trim(),
+      screenshots: shots,
       isFeatured: form.isFeatured,
       isHot: form.isHot,
-      downloads: editing?.downloads || 0,
-      rating: editing?.rating || 4.8
+      isPinned: form.isPinned,
+      downloads: (base as any).downloads || 0,
+      rating: (base as any).rating || 4.8,
+      updatedAt: Date.now()
     };
+    // p1..p10 screenshot fields — dono admin ki shared schema
+    for (let i = 1; i <= 10; i++) {
+      const key = `p${i}`;
+      if (shots[i - 1]) (appToSave as any)[key] = shots[i - 1];
+      else delete (appToSave as any)[key];
+    }
 
     setSaving(true);
     const result = await saveAppStrict(appToSave);
@@ -718,38 +816,154 @@ export const AdminModal: React.FC<AdminModalProps> = ({
               </div>
 
               <div>
-                <label className={labelCls}>Icon Image Link (URL)</label>
-                <input
-                  value={form.icon}
-                  onChange={(e) => setForm({ ...form, icon: e.target.value })}
-                  placeholder="https://.../icon.png"
-                  className={inputCls}
-                />
+                <label className={labelCls}>Icon (Link ya Gallery se)</label>
+                <div className="flex items-center gap-2">
+                  {form.icon ? (
+                    <img
+                      src={form.icon}
+                      alt=""
+                      className="w-10 h-10 rounded-lg object-cover border border-white/10 flex-shrink-0"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  ) : null}
+                  <input
+                    value={form.icon.startsWith('data:') ? '' : form.icon}
+                    onChange={(e) => setForm({ ...form, icon: e.target.value })}
+                    placeholder={form.icon.startsWith('data:') ? 'Icon gallery se laga hua hai ✓' : 'https://.../icon.png'}
+                    className={inputCls}
+                  />
+                  <label className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-violet-500/15 border border-violet-500/40 text-violet-300 text-[11px] font-black uppercase tracking-wider cursor-pointer active:scale-95 transition whitespace-nowrap">
+                    <ImagePlus className="w-3.5 h-3.5" />
+                    <span>Gallery</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        handleIconFile(e.target.files);
+                        e.target.value = '';
+                      }}
+                    />
+                  </label>
+                </div>
               </div>
 
               <div>
-                <label className={labelCls}>Description</label>
+                <label className={labelCls}>Description / Features (line by line likho)</label>
                 <textarea
                   value={form.desc}
                   onChange={(e) => setForm({ ...form, desc: e.target.value })}
-                  placeholder="App ke baare me 1-2 line…"
-                  rows={3}
+                  placeholder={'🚫 No Ads\n⚡ Fast Speed\n✨ Premium Features Unlocked'}
+                  rows={5}
                   className={`${inputCls} resize-none`}
                 />
               </div>
 
               <div>
-                <label className={labelCls}>Screenshots (har line me ek image link)</label>
+                <label className={labelCls}>What's New (Changelog)</label>
                 <textarea
-                  value={form.screenshotsText}
-                  onChange={(e) => setForm({ ...form, screenshotsText: e.target.value })}
-                  placeholder={'https://.../shot1.jpg\nhttps://.../shot2.jpg'}
+                  value={form.changelog}
+                  onChange={(e) => setForm({ ...form, changelog: e.target.value })}
+                  placeholder="Is version me kya naya/better hua…"
                   rows={2}
-                  className={`${inputCls} resize-none font-mono text-xs`}
+                  className={`${inputCls} resize-none`}
                 />
               </div>
 
-              <div className="flex items-center gap-4">
+              <div className="grid grid-cols-3 gap-2.5">
+                <div>
+                  <label className={labelCls}>Developer</label>
+                  <input
+                    value={form.developer}
+                    onChange={(e) => setForm({ ...form, developer: e.target.value })}
+                    placeholder="Naam"
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>Min Android</label>
+                  <input
+                    value={form.minAndroid}
+                    onChange={(e) => setForm({ ...form, minAndroid: e.target.value })}
+                    placeholder="8.0+"
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>Arch</label>
+                  <input
+                    value={form.arch}
+                    onChange={(e) => setForm({ ...form, arch: e.target.value })}
+                    placeholder="arm64"
+                    className={inputCls}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className={labelCls}>Screenshots ({shots.length}/15)</label>
+                {shots.length > 0 && (
+                  <div className="grid grid-cols-4 gap-2 mb-2">
+                    {shots.map((s, i) => (
+                      <div
+                        key={i}
+                        className="relative rounded-lg overflow-hidden border border-white/10 aspect-[3/4] bg-slate-900"
+                      >
+                        <img src={s} alt="" className="w-full h-full object-cover" />
+                        <button
+                          onClick={() => setShots((prev) => prev.filter((_, j) => j !== i))}
+                          className="absolute top-1 right-1 p-1 rounded-md bg-black/70 text-white cursor-pointer"
+                          title="Hatao"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <input
+                    value={shotUrl}
+                    onChange={(e) => setShotUrl(e.target.value)}
+                    placeholder="Image link paste karo…"
+                    className={inputCls}
+                  />
+                  <button
+                    onClick={() => {
+                      const u = shotUrl.trim();
+                      if (u) {
+                        setShots((prev) => [...prev, u].slice(0, 15));
+                        setShotUrl('');
+                      }
+                    }}
+                    className="px-3.5 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-100 text-[11px] font-black uppercase tracking-wider transition active:scale-95 cursor-pointer"
+                  >
+                    Jodo
+                  </button>
+                </div>
+                <label className="mt-2 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-violet-500/15 border border-violet-500/40 text-violet-300 hover:bg-violet-500/25 text-[11px] font-black uppercase tracking-wider cursor-pointer active:scale-95 transition">
+                  {uploadingShots ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <ImagePlus className="w-3.5 h-3.5" />
+                  )}
+                  <span>{uploadingShots ? 'Upload Ho Raha Hai…' : 'Gallery Se Screenshots Upload Karo'}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      handleShotFiles(e.target.files);
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+              </div>
+
+              <div className="flex items-center gap-4 flex-wrap">
                 <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
                   <input
                     type="checkbox"
@@ -767,6 +981,15 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                     className="w-4 h-4 accent-orange-500"
                   />
                   HOT
+                </label>
+                <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.isPinned}
+                    onChange={(e) => setForm({ ...form, isPinned: e.target.checked })}
+                    className="w-4 h-4 accent-sky-500"
+                  />
+                  Pinned
                 </label>
               </div>
 
