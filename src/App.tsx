@@ -48,7 +48,6 @@ import {
   MicOff,
   X as XIcon,
   Flame,
-  Megaphone,
   ArrowUp,
   RefreshCw,
   Store,
@@ -789,55 +788,9 @@ export default function App() {
       {/* Main Content Area */}
       <main className="relative max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-28">
         {!storeStatus.active ? (
-          <div className="relative min-h-[62vh] flex items-center justify-center py-10">
-            {/* Danger glow backdrop */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                background:
-                  'radial-gradient(ellipse at center, rgba(244,63,94,0.16), transparent 65%)'
-              }}
-            />
-            <div className="relative max-w-md w-full text-center space-y-4 rounded-[2rem] border-2 border-rose-500/60 bg-slate-950 p-8 shadow-[0_0_70px_rgba(244,63,94,0.35)]">
-              <div className="relative w-20 h-20 mx-auto">
-                <span className="absolute inset-0 rounded-full bg-rose-500/40 animate-ping" />
-                <div className="relative w-20 h-20 rounded-full flex items-center justify-center bg-gradient-to-br from-rose-600 to-red-700 text-white shadow-lg shadow-rose-600/50 animate-pulse">
-                  <AlertTriangle className="w-10 h-10" />
-                </div>
-              </div>
-              <p className="text-[11px] font-black tracking-[0.35em] text-rose-400 uppercase">
-                ⚠ Attention
-              </p>
-              <h2 className="font-display text-3xl font-black text-white leading-none">
-                STORE BAND HAI
-              </h2>
-              <p className="text-base text-slate-200 font-semibold leading-relaxed">
-                {storeStatus.msg || 'Store kuch der ke liye band hai. Thodi der baad phir try karo.'}
-              </p>
-              <div className="flex flex-col gap-2.5 pt-2">
-                {storeStatus.link && storeStatus.link.startsWith('http') && (
-                  <button
-                    onClick={() => openStoreLink(storeStatus.link)}
-                    className="w-full py-3.5 px-4 rounded-2xl font-black text-sm uppercase tracking-wider text-white bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 shadow-lg shadow-sky-600/40 active:scale-95 transition cursor-pointer flex items-center justify-center gap-2"
-                  >
-                    <Send className="w-4 h-4 fill-white" />
-                    <span>
-                      {storeStatus.link.includes('t.me')
-                        ? 'Telegram Channel Kholo'
-                        : 'Zaroori Link Kholo'}
-                    </span>
-                  </button>
-                )}
-                <button
-                  onClick={() => window.location.reload()}
-                  className="w-full py-2.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider text-slate-400 hover:text-white active:scale-95 transition cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  <span>Dobara Check Karo</span>
-                </button>
-              </div>
-            </div>
-          </div>
+          // Store band hai — asal popup neeche root par full-screen overlay hai,
+          // yahan sirf khali jagah (peeche ka home overlay se dhaka rahega)
+          <div className="min-h-[45vh]" />
         ) : currentSelectedApp ? (
           <React.Suspense fallback={<ChunkLoader />}>
           <AppDetailView
@@ -855,19 +808,8 @@ export default function App() {
           </React.Suspense>
         ) : (
           <div className="space-y-4 sm:space-y-6 stagger-list">
-            {/* Owner announcement (Firebase store_status se — sirf custom msg par dikhta hai) */}
-            {storeStatus.msg &&
-              !['Store is Active', 'Welcome to Premium Store'].includes(storeStatus.msg.trim()) && (
-                <button
-                  onClick={() => {
-                    if (storeStatus.link) openStoreLink(storeStatus.link);
-                  }}
-                  className="w-full flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 text-white text-left shadow-lg shadow-fuchsia-600/25 active:scale-[0.99] transition cursor-pointer"
-                >
-                  <Megaphone className="w-5 h-5 flex-shrink-0" />
-                  <span className="text-xs sm:text-sm font-bold leading-snug">{storeStatus.msg}</span>
-                </button>
-              )}
+            {/* Note: store_status ka msg ab sirf BAND wale full-screen popup me dikhta hai
+                (owner ki marzi — home par koi patli announcement strip nahi aayegi) */}
 
             {/* Top Official Store APK Direct Download Banner */}
             <PwaInstallBanner theme={theme} />
@@ -1172,6 +1114,51 @@ export default function App() {
 
       {/* Direct One-Click Fast Installer Modal */}
       <StoreUpdateModal />
+
+      {/* STORE BAND — full-screen danger popup. Koi cancel/close nahi:
+          store chalu hote hi (live Firebase update se) ye apne aap hat jata hai */}
+      {!storeStatus.active && (
+        <div className="fixed inset-0 z-[10000] bg-slate-950 flex items-center justify-center p-4 overflow-hidden">
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background:
+                'radial-gradient(ellipse at center, rgba(244,63,94,0.22), transparent 62%)'
+            }}
+          />
+          <div className="relative w-full max-w-lg text-center space-y-5 rounded-[2rem] border-2 border-rose-500/70 bg-[#12060d] px-6 py-10 sm:p-10 shadow-[0_0_90px_rgba(244,63,94,0.45)]">
+            <div className="relative w-24 h-24 mx-auto">
+              <span className="absolute inset-0 rounded-full bg-rose-500/40 animate-ping" />
+              <div className="relative w-24 h-24 rounded-full flex items-center justify-center bg-gradient-to-br from-rose-600 to-red-700 text-white shadow-lg shadow-rose-600/50 animate-pulse">
+                <AlertTriangle className="w-12 h-12" />
+              </div>
+            </div>
+            <p className="text-[11px] font-black tracking-[0.35em] text-rose-400 uppercase">
+              ⚠ Attention
+            </p>
+            <h2 className="font-display text-4xl font-black text-white leading-none">
+              STORE BAND HAI
+            </h2>
+            <p className="text-lg text-slate-100 font-semibold leading-relaxed">
+              {storeStatus.msg || 'Store kuch der ke liye band hai. Thodi der baad phir try karo.'}
+            </p>
+            {storeStatus.link && storeStatus.link.startsWith('http') && (
+              <button
+                onClick={() => openStoreLink(storeStatus.link)}
+                className="w-full py-4 px-4 rounded-2xl font-black text-base uppercase tracking-wider text-white bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 shadow-lg shadow-sky-600/40 active:scale-95 transition cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Send className="w-5 h-5 fill-white" />
+                <span>
+                  {storeStatus.link.includes('t.me') ? 'Telegram Channel Kholo' : 'Zaroori Link Kholo'}
+                </span>
+              </button>
+            )}
+            <p className="text-[11px] text-slate-500 font-semibold">
+              Store chalu hote hi ye screen apne aap hat jayegi.
+            </p>
+          </div>
+        </div>
+      )}
       <React.Suspense fallback={null}>
       <DirectInstallerModal
         app={directInstallApp}
