@@ -8,7 +8,7 @@ export const STORE_CONFIG = {
   STORE_BASE_URL: "https://sumityadav06.github.io/Premium/",
 
   // 2. Official Store App APK Direct Download Link (For the "Download Store APK" button)
-  STORE_APP_APK_URL: "https://github.com/SumitYadav06/Premium/releases/download/1.0.3/Premium.App.Store_1.0.apk",
+  STORE_APP_APK_URL: "https://github.com/SumitYadav06/Premium/releases/download/store-latest/app-debug.apk",
   
   // Store Branding & App Icon (Direct repo root icon URL)
   STORE_NAME: "Apna Jugaad",

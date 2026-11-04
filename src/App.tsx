@@ -15,6 +15,7 @@ import { CategoryPills } from './components/CategoryPills';
 import { AppCard } from './components/AppCard';
 import { AppDetailView } from './components/AppDetailView';
 import { DirectInstallerModal } from './components/DirectInstallerModal';
+import { StoreUpdateModal } from './components/StoreUpdateModal';
 import { DownloadManagerDrawer } from './components/DownloadManagerDrawer';
 import { BookmarksDrawer } from './components/BookmarksDrawer';
 import { InstallGuideModal } from './components/InstallGuideModal';
@@ -940,6 +941,7 @@ export default function App() {
       )}
 
       {/* Direct One-Click Fast Installer Modal */}
+      <StoreUpdateModal />
       <DirectInstallerModal
         app={directInstallApp}
         isOpen={!!directInstallApp}

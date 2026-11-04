@@ -20,6 +20,7 @@ import { AppItem, DownloadTask } from '../types';
 import { incrementAppDownload } from '../services/firebase';
 import { VerifiedBadge } from './AppDetailView';
 import { isNativeApp, isFilesystemAvailable, downloadApkInApp, openApkInstaller, findDownloadedApk } from '../services/nativeDownload';
+import { STORE_CONFIG } from '../config';
 
 interface DirectInstallerModalProps {
   app: AppItem | null;
@@ -383,11 +384,11 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
             </div>
             <div className="flex flex-col gap-2">
               <button
-                onClick={() => window.open('https://github.com/SumitYadav06/Premium/actions', '_blank')}
+                onClick={() => window.open(STORE_CONFIG.STORE_APP_APK_URL, '_blank')}
                 className="btn-shine w-full py-3.5 px-4 rounded-xl font-black text-sm uppercase tracking-wider text-white bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 shadow-lg shadow-fuchsia-600/30 active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Download className="w-4 h-4" />
-                <span>Naya Store APK Lo</span>
+                <span>Naya Store APK Download Karo</span>
               </button>
               <button
                 onClick={() => {

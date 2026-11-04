@@ -29,7 +29,7 @@ export const StoreApkPopupModal: React.FC<StoreApkPopupModalProps> = ({
   const handleDownloadApk = () => {
     const apkUrl =
       STORE_CONFIG.STORE_APP_APK_URL ||
-      'https://github.com/SumitYadav06/Premium/releases/download/1.0.3/Premium.App.Store_1.0.apk';
+      'https://github.com/SumitYadav06/Premium/releases/download/store-latest/app-debug.apk';
 
     const link = document.createElement('a');
     link.href = apkUrl;
