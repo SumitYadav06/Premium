@@ -68,9 +68,53 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap&display=swap" rel="stylesheet" />
+    <style>
+      #aj-boot{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#020617;transition:opacity .35s ease;font-family:'Plus Jakarta Sans',system-ui,sans-serif}
+      #aj-boot .aj-brand{font-family:'Outfit',system-ui,sans-serif;font-size:34px;font-weight:900;letter-spacing:.5px;background:linear-gradient(90deg,#f472b6,#a78bfa,#38bdf8,#4ade80,#facc15,#f472b6);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:ajFlow 3s linear infinite}
+      @keyframes ajFlow{to{background-position:300% 0}}
+      #aj-boot .aj-spin{width:44px;height:44px;border-radius:50%;border:4px solid rgba(255,255,255,.15);border-top-color:#a78bfa;border-right-color:#38bdf8;animation:ajSpin .8s linear infinite}
+      @keyframes ajSpin{to{transform:rotate(360deg)}}
+      #aj-boot .aj-sub{color:#94a3b8;font-size:13px;font-weight:600}
+      #aj-boot-retry{display:none;text-align:center;padding:0 24px}
+      #aj-boot-retry p{color:#e2e8f0;font-size:14px;font-weight:600;margin:0 0 12px}
+      #aj-boot-retry button{background:linear-gradient(90deg,#7c3aed,#db2777);color:#fff;border:0;border-radius:9999px;padding:12px 26px;font-size:15px;font-weight:800;cursor:pointer}
+    </style>
   </head>
   <body class="bg-slate-950 text-white antialiased overflow-x-hidden selection:bg-purple-500 selection:text-white">
     <div id="root"></div>
+    <div id="aj-boot">
+      <div class="aj-brand">Apna Jugaad</div>
+      <div class="aj-spin" id="aj-boot-spin"></div>
+      <div class="aj-sub" id="aj-boot-sub">Store khul raha hai…</div>
+      <div id="aj-boot-retry">
+        <p>Internet slow lag raha hai. Ek baar phir try karo:</p>
+        <button onclick="window.__ajRetry()">Dobara Try Karo</button>
+      </div>
+    </div>
+    <script>
+      (function () {
+        window.__ajRetry = function () {
+          try { sessionStorage.removeItem('aj_boot_tries'); } catch (e) {}
+          location.replace(location.origin + location.pathname + '?aj_boot=' + Date.now());
+        };
+        setTimeout(function () {
+          if (window.__AJ_BOOTED) return;
+          var tries = 0;
+          try { tries = +(sessionStorage.getItem('aj_boot_tries') || 0); } catch (e) {}
+          if (tries < 2) {
+            try { sessionStorage.setItem('aj_boot_tries', String(tries + 1)); } catch (e) {}
+            location.replace(location.origin + location.pathname + '?aj_boot=' + Date.now());
+          } else {
+            var r = document.getElementById('aj-boot-retry');
+            var s = document.getElementById('aj-boot-spin');
+            var sub = document.getElementById('aj-boot-sub');
+            if (r) r.style.display = 'block';
+            if (s) s.style.display = 'none';
+            if (sub) sub.style.display = 'none';
+          }
+        }, 9000);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
