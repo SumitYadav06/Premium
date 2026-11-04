@@ -41,7 +41,7 @@ export const SplashView: React.FC<SplashViewProps> = ({
   const stepText = STEPS[Math.min(STEPS.length - 1, Math.floor(percent / 30))];
 
   useEffect(() => {
-    const autoCloseTimer = setTimeout(() => handleDismiss(), 1650);
+    const autoCloseTimer = setTimeout(() => handleDismiss(), 1250);
     return () => clearTimeout(autoCloseTimer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

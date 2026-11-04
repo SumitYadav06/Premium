@@ -202,7 +202,6 @@ html {
   width: 55vmax;
   height: 55vmax;
   border-radius: 9999px;
-  filter: blur(100px);
   opacity: 0.22;
   animation: auroraDrift 20s ease-in-out infinite;
 }
@@ -501,7 +500,8 @@ header button:hover svg {
 }
 .vfx-disc {
   background: conic-gradient(from 0deg, rgba(244,63,94,0.20), rgba(245,158,11,0.20), rgba(34,197,94,0.18), rgba(6,182,212,0.20), rgba(139,92,246,0.20), rgba(244,63,94,0.20));
-  filter: blur(60px);
+  -webkit-mask-image: radial-gradient(closest-side, black 25%, transparent 72%);
+  mask-image: radial-gradient(closest-side, black 25%, transparent 72%);
   animation: spinVerySlow 46s linear infinite;
   border-radius: 9999px;
 }

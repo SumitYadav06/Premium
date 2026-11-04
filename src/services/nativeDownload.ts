@@ -88,6 +88,19 @@ export async function downloadApkInApp(
   }
 }
 
+/** Pehle se download ho chuki APK file Cache me hai ya nahi — hai to uska path, dobara download ki zaroorat nahi */
+export async function findDownloadedApk(fileName: string): Promise<string | null> {
+  try {
+    const { Filesystem, Directory } = await import('@capacitor/filesystem');
+    const stat = await Filesystem.stat({ path: fileName, directory: Directory.Cache });
+    if (!stat || !stat.size || stat.size < 100 * 1024) return null;
+    const uri = await Filesystem.getUri({ path: fileName, directory: Directory.Cache });
+    return uri.uri;
+  } catch {
+    return null;
+  }
+}
+
 /** Download ki hui APK ka Android system installer kholta hai */
 export async function openApkInstaller(path: string): Promise<void> {
   const { FileOpener } = await import('@capawesome-team/capacitor-file-opener');

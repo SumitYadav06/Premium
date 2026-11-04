@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Download, Sparkles, X, Smartphone, CheckCircle2 } from 'lucide-react';
 import { STORE_CONFIG } from '../config';
+import { isNativeApp } from '../services/nativeDownload';
 
 interface PwaInstallBannerProps {
   theme: 'dark' | 'light';
@@ -52,7 +53,13 @@ export const PwaInstallBanner: React.FC<PwaInstallBannerProps> = ({ theme }) => 
     } catch {}
   };
 
-  if (isDismissed) return null;
+  // Jiske phone me store app pehle se installed hai (ya PWA installed hai), use ye
+  // "Download Store App" wala popup/banner kabhi nahi dikhega — aur Chrome bhi nahi khulega
+  const isStandalone =
+    typeof window !== 'undefined' &&
+    !!window.matchMedia &&
+    window.matchMedia('(display-mode: standalone)').matches;
+  if (isDismissed || isNativeApp() || isStandalone) return null;
 
   return (
     <AnimatePresence>

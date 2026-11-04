@@ -19,7 +19,7 @@ import {
 import { AppItem, DownloadTask } from '../types';
 import { incrementAppDownload } from '../services/firebase';
 import { VerifiedBadge } from './AppDetailView';
-import { isNativeApp, isFilesystemAvailable, downloadApkInApp, openApkInstaller } from '../services/nativeDownload';
+import { isNativeApp, isFilesystemAvailable, downloadApkInApp, openApkInstaller, findDownloadedApk } from '../services/nativeDownload';
 
 interface DirectInstallerModalProps {
   app: AppItem | null;
@@ -55,6 +55,18 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
       setHasTriggeredDownload(false);
       setNativePath(null);
       setErrorMsg('');
+      // File pehle se download hai to yaad kar lo — permission dekar wapas aane par
+      // ya modal dobara khulne par DOBARA download nahi karna padega
+      if (isNativeApp() && isFilesystemAvailable()) {
+        const fileName = `${app.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_v${app.ver}.apk`;
+        let cancelled = false;
+        findDownloadedApk(fileName).then((p) => {
+          if (!cancelled && p) setNativePath(p);
+        });
+        return () => {
+          cancelled = true;
+        };
+      }
     }
   }, [isOpen, app]);
 
@@ -83,6 +95,20 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
     };
     onDownloadStarted?.(newTask);
     incrementAppDownload(app.name);
+
+    // File pehle se padi hai to download skip — seedha installer
+    const existing = await findDownloadedApk(fileName);
+    if (existing) {
+      setNativePath(existing);
+      setProgress(100);
+      setDownloadedMb(totalMb);
+      setStep('verifying');
+      setTimeout(() => {
+        setStep('ready');
+        openApkInstaller(existing).catch(() => {});
+      }, 500);
+      return;
+    }
 
     try {
       const path = await downloadApkInApp(downloadUrl, fileName, (p) => {
@@ -116,6 +142,12 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
       if (!isFilesystemAvailable()) {
         // Purana store APK — isme in-app download wala plugin hi nahi hai
         setStep('oldapk');
+        return;
+      }
+      // File pehle se download hai — permission dekar wapas aaye ho, seedha install kholo
+      if (nativePath) {
+        setStep('ready');
+        openApkInstaller(nativePath).catch(() => {});
         return;
       }
       startNativeDownload();
@@ -285,6 +317,13 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
               </span>
             </div>
 
+            {nativePath && (
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center gap-2 text-xs font-semibold text-emerald-300">
+                <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                <span>Ye app pehle se download hai — dobara download nahi hoga, seedha install hoga.</span>
+              </div>
+            )}
+
             <div className="flex gap-3 pt-2">
               <button
                 onClick={onClose}
@@ -297,7 +336,7 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
                 className="btn-live dl-live flex-2 py-3 px-6 rounded-xl font-bold text-sm uppercase tracking-wider text-white bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 hover:from-violet-500 hover:to-orange-300 shadow-lg shadow-fuchsia-600/30 active:scale-95 transition flex items-center justify-center gap-2"
               >
                 <Download className="w-4 h-4" />
-                <span>Grant & Download</span>
+                <span>{nativePath ? 'Install Karo' : 'Grant & Download'}</span>
               </button>
             </div>
 

@@ -27,10 +27,6 @@ const ORBS = [
   { left: '71%', size: 10, dur: 14, delay: 4.5, color: 'rgba(132,204,22,0.45)' },
   { left: '83%', size: 16, dur: 19, delay: 2, color: 'rgba(249,115,22,0.45)' },
   { left: '93%', size: 8, dur: 11, delay: 7, color: 'rgba(56,189,248,0.5)' },
-  { left: '12%', size: 11, dur: 15, delay: 5, color: 'rgba(34,197,94,0.45)' },
-  { left: '41%', size: 15, dur: 18, delay: 9, color: 'rgba(250,204,21,0.4)' },
-  { left: '64%', size: 7, dur: 10, delay: 2.5, color: 'rgba(168,85,247,0.5)' },
-  { left: '78%', size: 12, dur: 14, delay: 6.5, color: 'rgba(244,114,182,0.45)' }
 ];
 
 export const LiveBackground: React.FC = () => (
@@ -38,7 +34,7 @@ export const LiveBackground: React.FC = () => (
     {/* Base living gradient wash */}
     <div className="absolute inset-0 aurora-layer" />
     {/* Ghumta hua rang gola */}
-    <div className="vfx-disc absolute w-[70vmax] h-[70vmax] left-1/2 top-1/3 -translate-x-1/2 opacity-60" aria-hidden="true" />
+    <div className="vfx-disc absolute w-[52vmax] h-[52vmax] left-1/2 top-1/3 -translate-x-1/2 opacity-50" aria-hidden="true" />
     {/* Stage light beams */}
     <div className="live-beam" style={{ left: '4%' }} />
     <div className="live-beam" style={{ left: '46%', animationDelay: '-5.5s' }} />
@@ -180,7 +176,7 @@ export const TopChartsRail: React.FC<TopChartsRailProps> = ({ ranked, onSelect, 
             <img
               src={app.icon}
               alt={app.name}
-              className="icon-bob w-14 h-14 rounded-2xl object-cover bg-slate-900 shrink-0 shadow"
+              loading="lazy" className="icon-bob w-14 h-14 rounded-2xl object-cover bg-slate-900 shrink-0 shadow"
               onError={(e) => {
                 (e.target as HTMLImageElement).src =
                   'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80';
@@ -262,7 +258,7 @@ export const RecentlyViewedRow: React.FC<RecentlyViewedRowProps> = ({ apps, onSe
                 : 'bg-white border-slate-200 text-slate-700 shadow-sm hover:border-cyan-300'
             }`}
           >
-            <img src={app.icon} alt={app.name} className="icon-bob w-7 h-7 rounded-full object-cover bg-slate-900" />
+            <img loading="lazy" src={app.icon} alt={app.name} className="icon-bob w-7 h-7 rounded-full object-cover bg-slate-900" />
             <span className="text-[11px] font-bold max-w-[110px] truncate">{app.name}</span>
             <Eye className="w-3 h-3 text-cyan-500" />
           </button>

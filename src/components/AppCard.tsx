@@ -78,6 +78,7 @@ export const AppCard: React.FC<AppCardProps> = ({
         {/* Artwork backdrop — sirf ye hissa clip hota hai, floating icon NAHI */}
         <div className="absolute inset-0 overflow-hidden rounded-t-[1.6rem]">
           <img
+            loading="lazy"
             src={app.p1 || app.icon || FALLBACK_IMG}
             alt=""
             aria-hidden="true"
@@ -125,7 +126,7 @@ export const AppCard: React.FC<AppCardProps> = ({
             <img
               src={app.icon || FALLBACK_IMG}
               alt={app.name}
-              className="relative w-[68px] h-[68px] rounded-[21px] object-cover bg-slate-950 block border-[2.5px] border-white shadow-xl group-hover:scale-[1.06] transition duration-300"
+              loading="lazy" className="relative w-[68px] h-[68px] rounded-[21px] object-cover bg-slate-950 block border-[2.5px] border-white shadow-xl group-hover:scale-[1.06] transition duration-300"
               onError={(e) => {
                 (e.target as HTMLImageElement).src = FALLBACK_IMG;
               }}
