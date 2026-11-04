@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { AppItem, AppStats, StoreStatus, DownloadTask } from './types';
+import { AppItem, AppStats, DownloadTask } from './types';
 import {
   subscribeToApps,
   addAppReview,
@@ -50,9 +50,7 @@ import {
   Flame,
   ArrowUp,
   RefreshCw,
-  Store,
-  AlertTriangle,
-  Send
+  Store
 } from 'lucide-react';
 
 export default function App() {
@@ -77,11 +75,6 @@ export default function App() {
     return [];
   });
   const [stats, setStats] = useState<Record<string, AppStats>>({});
-  const [storeStatus, setStoreStatus] = useState<StoreStatus>({
-    active: true,
-    msg: '',
-    link: ''
-  });
   const [loading, setLoading] = useState<boolean>(() => {
     try {
       const cached = localStorage.getItem('premium_store_cached_apps');
@@ -408,21 +401,20 @@ export default function App() {
     }
   };
 
-  // Store status wala link kholna — Telegram link ho to seedha Telegram app me
-  // kholne ki koshish (bina VPN wali dikkat), na khule to web link fallback
-  const openStoreLink = (link: string) => {
-    if (!link || !link.startsWith('http')) return;
-    const m = link.match(/t\.me\/([A-Za-z0-9_]+)/);
-    if (m) {
-      try {
-        window.location.href = `tg://resolve?domain=${m[1]}`;
-      } catch (e) {}
-      setTimeout(() => {
-        if (!document.hidden) window.open(link, '_blank');
-      }, 900);
-    } else {
-      window.open(link, '_blank');
+
+  // Dock ka Home button: home par pehle se ho aur upar hi ho to REFRESH,
+  // warna aaram se home + sabse upar
+  const handleDockHome = () => {
+    const alreadyHome =
+      !selectedApp && !searchQuery.trim() && selectedCategory === 'All' && window.scrollY < 10;
+    closeAppDetail();
+    setSearchQuery('');
+    setSelectedCategory('All');
+    if (alreadyHome) {
+      window.location.reload();
+      return;
     }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const openDirectInstaller = (app: AppItem) => {
@@ -543,9 +535,9 @@ export default function App() {
       (loadedStats) => {
         setStats(loadedStats);
       },
-      (loadedStatus) => {
-        setStoreStatus(loadedStatus);
-      }
+      // Kill switch hata diya gaya hai — store_status ab ignore hota hai,
+      // store hamesha chalu rahega
+      () => {}
     );
 
     // Network slow ho to loading par atka mat rakho — 8 second me screen khol do,
@@ -566,6 +558,57 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('premium_store_download_tasks', JSON.stringify(downloadTasks));
   }, [downloadTasks]);
+
+  // Pull-to-refresh: page sabse upar ho tab neeche kheenchne par refresh.
+  // Koi modal/drawer khula ho to engage nahi hota.
+  const pullDistRef = React.useRef(0);
+  const [pullUi, setPullUi] = useState(0);
+  const [ptrRefreshing, setPtrRefreshing] = useState(false);
+  useEffect(() => {
+    let startY: number | null = null;
+    const anyOverlayOpen = () =>
+      isAdminOpenRef.current ||
+      isRequestOpenRef.current ||
+      isOwnerModalOpenRef.current ||
+      isBookmarksOpenRef.current ||
+      isDownloadsOpenRef.current ||
+      isInstallGuideOpenRef.current;
+    const onStart = (e: TouchEvent) => {
+      startY = window.scrollY <= 0 && !anyOverlayOpen() ? e.touches[0].clientY : null;
+    };
+    const onMove = (e: TouchEvent) => {
+      if (startY === null) return;
+      const dy = e.touches[0].clientY - startY;
+      if (dy > 0 && window.scrollY <= 0) {
+        const d = Math.min(dy * 0.5, 90);
+        pullDistRef.current = d;
+        setPullUi(d);
+        if (dy > 8 && e.cancelable) e.preventDefault();
+      } else if (pullDistRef.current !== 0) {
+        pullDistRef.current = 0;
+        setPullUi(0);
+      }
+    };
+    const onEnd = () => {
+      if (startY !== null && pullDistRef.current > 60) {
+        setPtrRefreshing(true);
+        setTimeout(() => window.location.reload(), 400);
+      }
+      startY = null;
+      pullDistRef.current = 0;
+      setPullUi(0);
+    };
+    window.addEventListener('touchstart', onStart, { passive: true });
+    window.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('touchend', onEnd);
+    window.addEventListener('touchcancel', onEnd);
+    return () => {
+      window.removeEventListener('touchstart', onStart);
+      window.removeEventListener('touchmove', onMove);
+      window.removeEventListener('touchend', onEnd);
+      window.removeEventListener('touchcancel', onEnd);
+    };
+  }, []);
 
   // GitHub Releases se auto-listed apps — owner saare APK wahi upload karta hai,
   // store khud unhe utha kar list kar deta hai (10 min cache, service ke andar)
@@ -787,11 +830,7 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="relative max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-28">
-        {!storeStatus.active ? (
-          // Store band hai — asal popup neeche root par full-screen overlay hai,
-          // yahan sirf khali jagah (peeche ka home overlay se dhaka rahega)
-          <div className="min-h-[45vh]" />
-        ) : currentSelectedApp ? (
+        {currentSelectedApp ? (
           <React.Suspense fallback={<ChunkLoader />}>
           <AppDetailView
             app={currentSelectedApp}
@@ -1085,14 +1124,9 @@ export default function App() {
       </main>
 
       {/* Floating Bottom Dock */}
-      {!currentSelectedApp && storeStatus.active && (
+      {!currentSelectedApp && (
         <BottomDock
-          onHome={() => {
-            closeAppDetail();
-            setSearchQuery('');
-            setSelectedCategory('All');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
+          onHome={handleDockHome}
           onOpenBookmarks={openBookmarks}
           onOpenDownloads={openDownloads}
           onOpenOwner={openOwnerModal}
@@ -1101,8 +1135,37 @@ export default function App() {
         />
       )}
 
+      {/* Pull-to-refresh indicator */}
+      {(pullUi > 0 || ptrRefreshing) && (
+        <div
+          className="fixed top-3 left-1/2 z-[9500] pointer-events-none"
+          style={{
+            transform: `translateX(-50%) translateY(${ptrRefreshing ? 0 : Math.max(0, pullUi - 42)}px)`,
+            opacity: ptrRefreshing ? 1 : Math.min(1, pullUi / 55)
+          }}
+        >
+          <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-slate-900/90 border border-white/15 text-white text-[11px] font-bold shadow-xl backdrop-blur">
+            <RefreshCw
+              className={`w-3.5 h-3.5 ${ptrRefreshing || pullUi > 60 ? 'animate-spin' : ''}`}
+              style={
+                !ptrRefreshing && pullUi <= 60
+                  ? { transform: `rotate(${pullUi * 3}deg)` }
+                  : undefined
+              }
+            />
+            <span>
+              {ptrRefreshing
+                ? 'Refresh ho raha hai…'
+                : pullUi > 60
+                  ? 'Chhodo — refresh hoga'
+                  : 'Neeche kheecho…'}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Scroll to top — lambi list me turant upar jaane ke liye */}
-      {showScrollTop && !currentSelectedApp && storeStatus.active && (
+      {showScrollTop && !currentSelectedApp && (
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           className="fixed bottom-28 right-4 z-[6000] w-11 h-11 rounded-full bg-gradient-to-br from-violet-600 via-fuchsia-500 to-orange-400 text-white shadow-xl shadow-fuchsia-600/40 flex items-center justify-center active:scale-90 transition cursor-pointer"
@@ -1115,50 +1178,6 @@ export default function App() {
       {/* Direct One-Click Fast Installer Modal */}
       <StoreUpdateModal />
 
-      {/* STORE BAND — full-screen danger popup. Koi cancel/close nahi:
-          store chalu hote hi (live Firebase update se) ye apne aap hat jata hai */}
-      {!storeStatus.active && (
-        <div className="fixed inset-0 z-[10000] bg-slate-950 flex items-center justify-center p-4 overflow-hidden">
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background:
-                'radial-gradient(ellipse at center, rgba(244,63,94,0.22), transparent 62%)'
-            }}
-          />
-          <div className="relative w-full max-w-lg text-center space-y-5 rounded-[2rem] border-2 border-rose-500/70 bg-[#12060d] px-6 py-10 sm:p-10 shadow-[0_0_90px_rgba(244,63,94,0.45)]">
-            <div className="relative w-24 h-24 mx-auto">
-              <span className="absolute inset-0 rounded-full bg-rose-500/40 animate-ping" />
-              <div className="relative w-24 h-24 rounded-full flex items-center justify-center bg-gradient-to-br from-rose-600 to-red-700 text-white shadow-lg shadow-rose-600/50 animate-pulse">
-                <AlertTriangle className="w-12 h-12" />
-              </div>
-            </div>
-            <p className="text-[11px] font-black tracking-[0.35em] text-rose-400 uppercase">
-              ⚠ Attention
-            </p>
-            <h2 className="font-display text-4xl font-black text-white leading-none">
-              STORE BAND HAI
-            </h2>
-            <p className="text-lg text-slate-100 font-semibold leading-relaxed">
-              {storeStatus.msg || 'Store kuch der ke liye band hai. Thodi der baad phir try karo.'}
-            </p>
-            {storeStatus.link && storeStatus.link.startsWith('http') && (
-              <button
-                onClick={() => openStoreLink(storeStatus.link)}
-                className="w-full py-4 px-4 rounded-2xl font-black text-base uppercase tracking-wider text-white bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 shadow-lg shadow-sky-600/40 active:scale-95 transition cursor-pointer flex items-center justify-center gap-2"
-              >
-                <Send className="w-5 h-5 fill-white" />
-                <span>
-                  {storeStatus.link.includes('t.me') ? 'Telegram Channel Kholo' : 'Zaroori Link Kholo'}
-                </span>
-              </button>
-            )}
-            <p className="text-[11px] text-slate-500 font-semibold">
-              Store chalu hote hi ye screen apne aap hat jayegi.
-            </p>
-          </div>
-        </div>
-      )}
       <React.Suspense fallback={null}>
       <DirectInstallerModal
         app={directInstallApp}
@@ -1229,7 +1248,6 @@ export default function App() {
           setHiddenLinks((prev) => (prev.includes(app.link) ? prev : [...prev, app.link]))
         }
         onUnhideRelease={(app) => setHiddenLinks((prev) => prev.filter((l) => l !== app.link))}
-        storeStatus={storeStatus}
         theme={theme}
       />
 
