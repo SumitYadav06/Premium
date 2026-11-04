@@ -15,16 +15,18 @@ import {
   ArrowLeft,
   CheckCircle2,
   AlertTriangle,
-  Loader2
+  Loader2,
+  Power
 } from 'lucide-react';
-import { AppItem } from '../types';
+import { AppItem, StoreStatus } from '../types';
 import {
   saveAppStrict,
   deleteAppFromStore,
   getAdminPinHash,
   setAdminPinHash,
   sha256Hex,
-  getAppKey
+  getAppKey,
+  setStoreStatus
 } from '../services/firebase';
 import { fetchReleaseAssetInfo } from '../services/githubApps';
 
@@ -36,6 +38,7 @@ interface AdminModalProps {
   hiddenApps: AppItem[];
   onHideRelease: (app: AppItem) => void;
   onUnhideRelease: (app: AppItem) => void;
+  storeStatus: StoreStatus;
   theme: 'dark' | 'light';
 }
 
@@ -63,6 +66,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   hiddenApps,
   onHideRelease,
   onUnhideRelease,
+  storeStatus,
   theme
 }) => {
   const dark = theme === 'dark';
@@ -82,6 +86,11 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [autofilling, setAutofilling] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
+  // Kill switch / announcement (Store Control)
+  const [statusForm, setStatusForm] = useState<StoreStatus>({ active: true, msg: '', link: '' });
+  const [statusSaving, setStatusSaving] = useState(false);
+  const [confirmKill, setConfirmKill] = useState(false);
+
   // Modal khulte hi PIN ki sthiti check karo (server par hai ya pehli baar banana hai)
   useEffect(() => {
     if (!isOpen) return;
@@ -94,6 +103,12 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     setPinNote('');
     setSearch('');
     setConfirmDeleteId(null);
+    setStatusForm({
+      active: storeStatus?.active !== false,
+      msg: storeStatus?.msg || '',
+      link: storeStatus?.link || ''
+    });
+    setConfirmKill(false);
     (async () => {
       const cloud = await getAdminPinHash().catch(() => null);
       let local: string | null = null;
@@ -262,6 +277,20 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     showToast(ok ? 'ok' : 'err', ok ? 'App delete ho gaya.' : 'Delete fail ho gaya, dobara try karo.');
   };
 
+  const handleStatusSave = async (next?: Partial<StoreStatus>) => {
+    const payload: StoreStatus = { ...statusForm, ...(next || {}) };
+    setStatusSaving(true);
+    const ok = await setStoreStatus(payload);
+    setStatusSaving(false);
+    setConfirmKill(false);
+    if (ok) {
+      setStatusForm(payload);
+      showToast('ok', payload.active ? 'Store chalu hai ✓' : 'Store BAND kar diya gaya hai 🔴');
+    } else {
+      showToast('err', 'Store status save nahi hua. Ek baar phir try karo, nahi ho to mujhe batao.');
+    }
+  };
+
   const filtered = apps.filter(
     (a) => a && (!search.trim() || (a.name || '').toLowerCase().includes(search.trim().toLowerCase()))
   );
@@ -403,6 +432,86 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                   {pinNote}
                 </p>
               )}
+              {/* Store Control — kill switch + announcement */}
+              <div
+                className={`p-3.5 rounded-2xl border space-y-2.5 ${
+                  dark ? 'bg-slate-900/70 border-slate-800' : 'bg-slate-50 border-slate-200'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`w-2.5 h-2.5 rounded-full ${
+                        statusForm.active ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'
+                      }`}
+                    />
+                    <p className="text-xs font-black uppercase tracking-wider">
+                      Store {statusForm.active ? 'Chalu Hai' : 'Band Hai'}
+                    </p>
+                  </div>
+                  {statusForm.active ? (
+                    <button
+                      onClick={() => {
+                        if (!confirmKill) {
+                          setConfirmKill(true);
+                          setTimeout(() => setConfirmKill(false), 3000);
+                          return;
+                        }
+                        handleStatusSave({ active: false });
+                      }}
+                      disabled={statusSaving}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider transition active:scale-95 cursor-pointer disabled:opacity-50 ${
+                        confirmKill
+                          ? 'bg-rose-600 text-white'
+                          : 'bg-rose-500/15 border border-rose-500/40 text-rose-400 hover:bg-rose-500/25'
+                      }`}
+                    >
+                      <Power className="w-3.5 h-3.5" />
+                      <span>{confirmKill ? 'Pakka Band Karo?' : 'Store Band Karo'}</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleStatusSave({ active: true })}
+                      disabled={statusSaving}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/25 transition active:scale-95 cursor-pointer disabled:opacity-50"
+                    >
+                      <Power className="w-3.5 h-3.5" />
+                      <span>Store Chalu Karo</span>
+                    </button>
+                  )}
+                </div>
+                <input
+                  value={statusForm.msg}
+                  onChange={(e) => setStatusForm({ ...statusForm, msg: e.target.value })}
+                  placeholder="Announcement message (jaise: Naya update aaya hai!) — khali = koi banner nahi"
+                  className={inputCls}
+                />
+                <div className="flex items-center gap-2">
+                  <input
+                    value={statusForm.link}
+                    onChange={(e) => setStatusForm({ ...statusForm, link: e.target.value })}
+                    placeholder="Announcement ka link (optional)"
+                    className={inputCls}
+                  />
+                  <button
+                    onClick={() => handleStatusSave()}
+                    disabled={statusSaving}
+                    className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-100 text-[11px] font-black uppercase tracking-wider transition active:scale-95 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                  >
+                    {statusSaving ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Save className="w-3.5 h-3.5" />
+                    )}
+                    <span>Save</span>
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-500 leading-relaxed">
+                  Band karte hi sabke liye store band ho jayega aur upar wala message dikhega. Store band ho to
+                  message hi sabko nazar aayega.
+                </p>
+              </div>
+
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />

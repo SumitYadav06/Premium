@@ -391,3 +391,15 @@ export async function setAdminPinHash(hash: string): Promise<boolean> {
     return false;
   }
 }
+
+/** Kill switch / announcement — Admin Panel se store_status badalna */
+export async function setStoreStatus(status: StoreStatus): Promise<boolean> {
+  if (!db) return false;
+  try {
+    await set(ref(db, 'store_status'), status);
+    return true;
+  } catch (e) {
+    console.error('Store status save failed:', e);
+    return false;
+  }
+}

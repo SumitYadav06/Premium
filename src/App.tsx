@@ -1172,6 +1172,7 @@ export default function App() {
           setHiddenLinks((prev) => (prev.includes(app.link) ? prev : [...prev, app.link]))
         }
         onUnhideRelease={(app) => setHiddenLinks((prev) => prev.filter((l) => l !== app.link))}
+        storeStatus={storeStatus}
         theme={theme}
       />
       </React.Suspense>
