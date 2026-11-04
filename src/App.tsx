@@ -51,7 +51,9 @@ import {
   Megaphone,
   ArrowUp,
   RefreshCw,
-  Store
+  Store,
+  AlertTriangle,
+  Send
 } from 'lucide-react';
 
 export default function App() {
@@ -404,6 +406,23 @@ export default function App() {
       try {
         window.history.back();
       } catch (e) {}
+    }
+  };
+
+  // Store status wala link kholna — Telegram link ho to seedha Telegram app me
+  // kholne ki koshish (bina VPN wali dikkat), na khule to web link fallback
+  const openStoreLink = (link: string) => {
+    if (!link || !link.startsWith('http')) return;
+    const m = link.match(/t\.me\/([A-Za-z0-9_]+)/);
+    if (m) {
+      try {
+        window.location.href = `tg://resolve?domain=${m[1]}`;
+      } catch (e) {}
+      setTimeout(() => {
+        if (!document.hidden) window.open(link, '_blank');
+      }, 900);
+    } else {
+      window.open(link, '_blank');
     }
   };
 
@@ -770,29 +789,50 @@ export default function App() {
       {/* Main Content Area */}
       <main className="relative max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-28">
         {!storeStatus.active ? (
-          <div className="min-h-[55vh] flex items-center justify-center py-10">
-            <div className={`max-w-md w-full text-center space-y-4 rounded-3xl border p-8 ${theme === 'dark' ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-xl'}`}>
-              <div className="w-16 h-16 rounded-3xl mx-auto flex items-center justify-center bg-gradient-to-br from-violet-600 via-fuchsia-500 to-orange-400 text-white shadow-lg shadow-fuchsia-600/30">
-                <Store className="w-8 h-8" />
+          <div className="relative min-h-[62vh] flex items-center justify-center py-10">
+            {/* Danger glow backdrop */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background:
+                  'radial-gradient(ellipse at center, rgba(244,63,94,0.16), transparent 65%)'
+              }}
+            />
+            <div className="relative max-w-md w-full text-center space-y-4 rounded-[2rem] border-2 border-rose-500/60 bg-slate-950 p-8 shadow-[0_0_70px_rgba(244,63,94,0.35)]">
+              <div className="relative w-20 h-20 mx-auto">
+                <span className="absolute inset-0 rounded-full bg-rose-500/40 animate-ping" />
+                <div className="relative w-20 h-20 rounded-full flex items-center justify-center bg-gradient-to-br from-rose-600 to-red-700 text-white shadow-lg shadow-rose-600/50 animate-pulse">
+                  <AlertTriangle className="w-10 h-10" />
+                </div>
               </div>
-              <h2 className={`font-display text-xl font-black ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Store Abhi Band Hai</h2>
-              <p className="text-sm text-slate-400 leading-relaxed">
+              <p className="text-[11px] font-black tracking-[0.35em] text-rose-400 uppercase">
+                ⚠ Attention
+              </p>
+              <h2 className="font-display text-3xl font-black text-white leading-none">
+                STORE BAND HAI
+              </h2>
+              <p className="text-base text-slate-200 font-semibold leading-relaxed">
                 {storeStatus.msg || 'Store kuch der ke liye band hai. Thodi der baad phir try karo.'}
               </p>
-              <div className="flex flex-col gap-2 pt-1">
+              <div className="flex flex-col gap-2.5 pt-2">
                 {storeStatus.link && storeStatus.link.startsWith('http') && (
                   <button
-                    onClick={() => window.open(storeStatus.link, '_blank')}
-                    className="btn-live w-full py-3 px-4 rounded-xl font-black text-sm uppercase tracking-wider text-white shadow-lg active:scale-95 transition cursor-pointer"
+                    onClick={() => openStoreLink(storeStatus.link)}
+                    className="w-full py-3.5 px-4 rounded-2xl font-black text-sm uppercase tracking-wider text-white bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 shadow-lg shadow-sky-600/40 active:scale-95 transition cursor-pointer flex items-center justify-center gap-2"
                   >
-                    <span>Zaroori Link Kholo</span>
+                    <Send className="w-4 h-4 fill-white" />
+                    <span>
+                      {storeStatus.link.includes('t.me')
+                        ? 'Telegram Channel Kholo'
+                        : 'Zaroori Link Kholo'}
+                    </span>
                   </button>
                 )}
                 <button
                   onClick={() => window.location.reload()}
-                  className={`w-full py-3 px-4 rounded-xl font-black text-sm uppercase tracking-wider active:scale-95 transition cursor-pointer flex items-center justify-center gap-2 ${theme === 'dark' ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}
+                  className="w-full py-2.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider text-slate-400 hover:text-white active:scale-95 transition cursor-pointer flex items-center justify-center gap-2"
                 >
-                  <RefreshCw className="w-4 h-4" />
+                  <RefreshCw className="w-3.5 h-3.5" />
                   <span>Dobara Check Karo</span>
                 </button>
               </div>
@@ -820,7 +860,7 @@ export default function App() {
               !['Store is Active', 'Welcome to Premium Store'].includes(storeStatus.msg.trim()) && (
                 <button
                   onClick={() => {
-                    if (storeStatus.link && storeStatus.link.startsWith('http')) window.open(storeStatus.link, '_blank');
+                    if (storeStatus.link) openStoreLink(storeStatus.link);
                   }}
                   className="w-full flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 text-white text-left shadow-lg shadow-fuchsia-600/25 active:scale-[0.99] transition cursor-pointer"
                 >
