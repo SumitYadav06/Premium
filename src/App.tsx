@@ -8,6 +8,7 @@ import {
   getAppKey
 } from './services/firebase';
 import { STORE_CONFIG } from './config';
+import { fetchReleaseApps } from './services/githubApps';
 import { Navbar } from './components/Navbar';
 import { BannerSlider } from './components/BannerSlider';
 import { CategoryPills } from './components/CategoryPills';
@@ -22,6 +23,7 @@ const DownloadManagerDrawer = React.lazy(() => import('./components/DownloadMana
 const BookmarksDrawer = React.lazy(() => import('./components/BookmarksDrawer').then((m) => ({ default: m.BookmarksDrawer })));
 const InstallGuideModal = React.lazy(() => import('./components/InstallGuideModal').then((m) => ({ default: m.InstallGuideModal })));
 const OwnerModal = React.lazy(() => import('./components/OwnerModal').then((m) => ({ default: m.OwnerModal })));
+const AdminModal = React.lazy(() => import('./components/AdminModal').then((m) => ({ default: m.AdminModal })));
 
 const ChunkLoader: React.FC = () => (
   <div className="min-h-[50vh] flex items-center justify-center">
@@ -243,6 +245,7 @@ export default function App() {
   const [isBookmarksOpen, setIsBookmarksOpen] = useState(false);
   const [isInstallGuideOpen, setIsInstallGuideOpen] = useState(false);
   const [isOwnerModalOpen, setIsOwnerModalOpen] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
 
   // Synchronized State References to avoid stale closures in event listeners
   const selectedAppRef = React.useRef<AppItem | null>(null);
@@ -262,6 +265,9 @@ export default function App() {
 
   const isOwnerModalOpenRef = React.useRef(isOwnerModalOpen);
   isOwnerModalOpenRef.current = isOwnerModalOpen;
+
+  const isAdminOpenRef = React.useRef(isAdminOpen);
+  isAdminOpenRef.current = isAdminOpen;
 
   // Recently Viewed (Local storage) — "Jump Back In" row ke liye
   const [recentIds, setRecentIds] = useState<string[]>(() => {
@@ -364,6 +370,22 @@ export default function App() {
     }
   };
 
+  const openAdmin = () => {
+    setIsAdminOpen(true);
+    try {
+      window.history.pushState({ view: 'admin' }, '');
+    } catch (e) {}
+  };
+
+  const closeAdmin = () => {
+    setIsAdminOpen(false);
+    if (window.history.state?.view === 'admin') {
+      try {
+        window.history.back();
+      } catch (e) {}
+    }
+  };
+
   const openDirectInstaller = (app: AppItem) => {
     setDirectInstallApp(app);
     try {
@@ -394,6 +416,7 @@ export default function App() {
     const handlePopState = (event: PopStateEvent) => {
       // Check if any sub-modal or detail view is currently open
       const hasOpenViews =
+        isAdminOpenRef.current ||
         isInstallGuideOpenRef.current ||
         isOwnerModalOpenRef.current ||
         isBookmarksOpenRef.current ||
@@ -403,7 +426,9 @@ export default function App() {
 
       if (hasOpenViews) {
         // Ek Back = sirf EK step: sabse upar wala view band karo
-        if (isInstallGuideOpenRef.current) {
+        if (isAdminOpenRef.current) {
+          setIsAdminOpen(false);
+        } else if (isInstallGuideOpenRef.current) {
           setIsInstallGuideOpen(false);
         } else if (isOwnerModalOpenRef.current) {
           setIsOwnerModalOpen(false);
@@ -500,10 +525,46 @@ export default function App() {
     localStorage.setItem('premium_store_download_tasks', JSON.stringify(downloadTasks));
   }, [downloadTasks]);
 
-  // Safe Apps Array Fallback (Never show fake dummy apps)
+  // GitHub Releases se auto-listed apps — owner saare APK wahi upload karta hai,
+  // store khud unhe utha kar list kar deta hai (10 min cache, service ke andar)
+  const [releaseApps, setReleaseApps] = useState<AppItem[]>([]);
+  useEffect(() => {
+    let alive = true;
+    fetchReleaseApps()
+      .then((list) => {
+        if (alive) setReleaseApps(list);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // Release apps jo owner ne Admin Panel se is phone par hide kar diye
+  const [hiddenLinks, setHiddenLinks] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('premium_store_hidden_links') || '[]');
+    } catch {
+      return [];
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem('premium_store_hidden_links', JSON.stringify(hiddenLinks));
+    } catch (e) {}
+  }, [hiddenLinks]);
+
+  // Safe Apps Array: Firebase apps + GitHub Release auto apps.
+  // Same link dono jagah ho to Firebase wala jeetega (Admin Panel ka edit pakka ho jata hai);
+  // hide kiye hue release apps is phone par nahi dikhte. Dummy apps kabhi nahi dikhte.
   const safeAppsList = useMemo(() => {
-    return Array.isArray(apps) ? apps : [];
-  }, [apps]);
+    const base = Array.isArray(apps) ? apps : [];
+    const fbLinks = new Set(base.map((a) => a?.link).filter(Boolean));
+    const ghosts = releaseApps.filter(
+      (g) => g && g.link && !fbLinks.has(g.link) && !hiddenLinks.includes(g.link)
+    );
+    return [...base, ...ghosts];
+  }, [apps, releaseApps, hiddenLinks]);
 
   // Categories list
   const categories = useMemo(() => {
@@ -1093,6 +1154,24 @@ export default function App() {
       <OwnerModal
         isOpen={isOwnerModalOpen}
         onClose={closeOwnerModal}
+        onOpenAdmin={() => {
+          closeOwnerModal();
+          openAdmin();
+        }}
+        theme={theme}
+      />
+
+      {/* Admin Panel — apps add/edit/delete, PIN se khulta hai */}
+      <AdminModal
+        isOpen={isAdminOpen}
+        onClose={closeAdmin}
+        apps={safeAppsList}
+        releaseIds={releaseApps.map((a) => a.id)}
+        hiddenApps={releaseApps.filter((a) => hiddenLinks.includes(a.link))}
+        onHideRelease={(app) =>
+          setHiddenLinks((prev) => (prev.includes(app.link) ? prev : [...prev, app.link]))
+        }
+        onUnhideRelease={(app) => setHiddenLinks((prev) => prev.filter((l) => l !== app.link))}
         theme={theme}
       />
       </React.Suspense>

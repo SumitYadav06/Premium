@@ -328,3 +328,66 @@ export async function submitBrokenLinkReport(report: {
   }
 }
 
+
+/** Admin save — purane saveAppToStore se alag, ye sach batata hai ki save kahan hua:
+ *  'firebase' = server par gaya (sabko dikhega), 'local' = sirf is phone par, false = fail */
+export async function saveAppStrict(appItem: AppItem): Promise<'firebase' | 'local' | false> {
+  if (!appItem.name) return false;
+  const appId = appItem.id || `app_${Date.now()}`;
+  const appToSave: AppItem = {
+    ...appItem,
+    id: appId,
+    downloads: appItem.downloads || 0,
+    rating: appItem.rating || 4.8
+  };
+
+  if (db) {
+    try {
+      const appRef = ref(db, `apps_list/${appId}`);
+      await set(appRef, appToSave);
+      return 'firebase';
+    } catch (e) {
+      console.warn('Firebase strict save failed:', e);
+    }
+  }
+
+  try {
+    const localApps = JSON.parse(localStorage.getItem('premium_store_custom_apps') || '[]');
+    const idx = localApps.findIndex((a: AppItem) => a.id === appId);
+    if (idx >= 0) localApps[idx] = appToSave;
+    else localApps.unshift(appToSave);
+    localStorage.setItem('premium_store_custom_apps', JSON.stringify(localApps));
+    return 'local';
+  } catch (e) {
+    return false;
+  }
+}
+
+/** Admin PIN (SHA-256 hash bankar Firebase admin_config me rehta hai) */
+export async function sha256Hex(text: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+export async function getAdminPinHash(): Promise<string | null> {
+  if (!db) return null;
+  try {
+    const snap = await get(ref(db, 'admin_config/pinHash'));
+    const v = snap.val();
+    return typeof v === 'string' && v ? v : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+export async function setAdminPinHash(hash: string): Promise<boolean> {
+  if (!db) return false;
+  try {
+    await set(ref(db, 'admin_config/pinHash'), hash);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}

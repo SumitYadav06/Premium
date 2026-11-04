@@ -20,6 +20,7 @@ import { VerifiedBadge } from './VerifiedBadge';
 interface OwnerModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenAdmin?: () => void;
   ownerImg?: string;
   telegramLink?: string;
   telegramUsername?: string;
@@ -35,6 +36,7 @@ const stagger = (delay: number) => ({
 export const OwnerModal: React.FC<OwnerModalProps> = ({
   isOpen,
   onClose,
+  onOpenAdmin,
   ownerImg = STORE_CONFIG.OWNER_IMAGE,
   telegramLink = STORE_CONFIG.OWNER_TELEGRAM,
   telegramUsername = STORE_CONFIG.OWNER_TELEGRAM_USERNAME,
@@ -256,6 +258,19 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
               <Sparkles className="w-3 h-3 text-amber-400" />@{telegramUsername} • Daily Mod Updates
             </p>
           </motion.div>
+
+          {/* Admin Panel — sirf owner ke liye (PIN se khulta hai) */}
+          {onOpenAdmin && (
+            <motion.div {...stagger(0.46)} className="pt-4">
+              <button
+                onClick={onOpenAdmin}
+                className="w-full py-3.5 px-4 rounded-2xl font-black text-xs uppercase tracking-wider text-white bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 shadow-lg shadow-violet-600/30 active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer border border-white/20"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>Admin Panel — Apps Manage Karo</span>
+              </button>
+            </motion.div>
+          )}
 
           <motion.p {...stagger(0.5)} className="text-[11px] text-slate-400 flex items-center justify-center gap-1 mt-4">
             Made with <Heart className="w-3 h-3 text-red-500 fill-red-500 animate-pulse" /> for the community
