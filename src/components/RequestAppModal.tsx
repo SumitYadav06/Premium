@@ -25,6 +25,7 @@ export const RequestAppModal: React.FC<RequestAppModalProps> = ({
   const [note, setNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   if (!isOpen) return null;
 
@@ -41,7 +42,12 @@ export const RequestAppModal: React.FC<RequestAppModalProps> = ({
     });
 
     setIsSubmitting(false);
+    if (!success) {
+      setSubmitError('Request bhejne me dikkat aayi. Internet check karke dobara try karo.');
+      return;
+    }
     if (success) {
+      setSubmitError('');
       setSubmittedSuccess(true);
       setAppName('');
       setNote('');
@@ -153,6 +159,11 @@ export const RequestAppModal: React.FC<RequestAppModalProps> = ({
               </div>
 
               {/* Submit Button */}
+              {submitError && (
+                <p className="text-[11px] font-semibold text-rose-400 bg-rose-500/10 border border-rose-500/30 rounded-xl px-3 py-2">
+                  {submitError}
+                </p>
+              )}
               <button
                 type="submit"
                 disabled={isSubmitting}

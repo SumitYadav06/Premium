@@ -24,6 +24,7 @@ const BookmarksDrawer = React.lazy(() => import('./components/BookmarksDrawer').
 const InstallGuideModal = React.lazy(() => import('./components/InstallGuideModal').then((m) => ({ default: m.InstallGuideModal })));
 const OwnerModal = React.lazy(() => import('./components/OwnerModal').then((m) => ({ default: m.OwnerModal })));
 const AdminModal = React.lazy(() => import('./components/AdminModal').then((m) => ({ default: m.AdminModal })));
+const RequestAppModal = React.lazy(() => import('./components/RequestAppModal').then((m) => ({ default: m.RequestAppModal })));
 
 const ChunkLoader: React.FC = () => (
   <div className="min-h-[50vh] flex items-center justify-center">
@@ -246,6 +247,7 @@ export default function App() {
   const [isInstallGuideOpen, setIsInstallGuideOpen] = useState(false);
   const [isOwnerModalOpen, setIsOwnerModalOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [isRequestOpen, setIsRequestOpen] = useState(false);
 
   // Synchronized State References to avoid stale closures in event listeners
   const selectedAppRef = React.useRef<AppItem | null>(null);
@@ -268,6 +270,9 @@ export default function App() {
 
   const isAdminOpenRef = React.useRef(isAdminOpen);
   isAdminOpenRef.current = isAdminOpen;
+
+  const isRequestOpenRef = React.useRef(isRequestOpen);
+  isRequestOpenRef.current = isRequestOpen;
 
   // Recently Viewed (Local storage) — "Jump Back In" row ke liye
   const [recentIds, setRecentIds] = useState<string[]>(() => {
@@ -386,6 +391,22 @@ export default function App() {
     }
   };
 
+  const openRequest = () => {
+    setIsRequestOpen(true);
+    try {
+      window.history.pushState({ view: 'request' }, '');
+    } catch (e) {}
+  };
+
+  const closeRequest = () => {
+    setIsRequestOpen(false);
+    if (window.history.state?.view === 'request') {
+      try {
+        window.history.back();
+      } catch (e) {}
+    }
+  };
+
   const openDirectInstaller = (app: AppItem) => {
     setDirectInstallApp(app);
     try {
@@ -417,6 +438,7 @@ export default function App() {
       // Check if any sub-modal or detail view is currently open
       const hasOpenViews =
         isAdminOpenRef.current ||
+        isRequestOpenRef.current ||
         isInstallGuideOpenRef.current ||
         isOwnerModalOpenRef.current ||
         isBookmarksOpenRef.current ||
@@ -428,6 +450,8 @@ export default function App() {
         // Ek Back = sirf EK step: sabse upar wala view band karo
         if (isAdminOpenRef.current) {
           setIsAdminOpen(false);
+        } else if (isRequestOpenRef.current) {
+          setIsRequestOpen(false);
         } else if (isInstallGuideOpenRef.current) {
           setIsInstallGuideOpen(false);
         } else if (isOwnerModalOpenRef.current) {
@@ -1046,6 +1070,12 @@ export default function App() {
                       >
                         <span>View All Apps</span>
                       </button>
+                      <button
+                        onClick={openRequest}
+                        className="ml-2 px-4 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white text-xs font-bold transition shadow-lg shadow-fuchsia-600/30 cursor-pointer inline-flex items-center gap-1.5"
+                      >
+                        <span>Ye App Request Karo</span>
+                      </button>
                     </>
                   )}
                 </div>
@@ -1175,6 +1205,9 @@ export default function App() {
         storeStatus={storeStatus}
         theme={theme}
       />
+
+      {/* App Request Modal — users ki requests Admin Hub me jati hain */}
+      {isRequestOpen && <RequestAppModal isOpen={isRequestOpen} onClose={closeRequest} theme={theme} />}
       </React.Suspense>
     </div>
   );
