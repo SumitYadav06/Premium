@@ -526,6 +526,10 @@ jobs:
 
       # Har build ka APK ek hi fixed link par — purane users yahi se update honge
       # Fixed link: https://github.com/SumitYadav06/Premium/releases/download/store-latest/app-debug.apk
+      - name: Rename APK to Apna.Jugaad.apk
+        shell: bash
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/Apna.Jugaad.apk
+
       - name: Publish APK on fixed download link
         uses: softprops/action-gh-release@v2
         with:
@@ -534,4 +538,4 @@ jobs:
           body: |
             Hamesha ka sabse naya store APK. Ye link kabhi nahi badalta —
             website aur purana app isi link se update hota hai.
-          files: android/app/build/outputs/apk/debug/app-debug.apk
+          files: android/app/build/outputs/apk/debug/Apna.Jugaad.apk
