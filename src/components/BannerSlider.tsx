@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, Star, ShieldCheck, Play } from 'lucide-react';
 import { AppItem } from '../types';
-import { VerifiedBadge } from './AppDetailView';
+import { VerifiedBadge } from './VerifiedBadge';
 
 interface BannerSliderProps {
   apps: AppItem[];

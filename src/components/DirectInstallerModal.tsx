@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { AppItem, DownloadTask } from '../types';
 import { incrementAppDownload } from '../services/firebase';
-import { VerifiedBadge } from './AppDetailView';
+import { VerifiedBadge } from './VerifiedBadge';
 import { isNativeApp, isFilesystemAvailable, getDownloadMode, downloadApkInApp, openApkInstaller, findDownloadedApk } from '../services/nativeDownload';
 import { STORE_CONFIG } from '../config';
 

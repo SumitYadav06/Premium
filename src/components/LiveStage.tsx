@@ -14,7 +14,7 @@ import {
   Radio
 } from 'lucide-react';
 import { AppItem } from '../types';
-import { VerifiedBadge } from './AppDetailView';
+import { VerifiedBadge } from './VerifiedBadge';
 
 /* ================= LIVE BACKGROUND — video jaisa jeeta-jagta scene ================= */
 

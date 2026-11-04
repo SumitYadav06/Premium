@@ -8,7 +8,7 @@ import {
   Play
 } from 'lucide-react';
 import { AppItem } from '../types';
-import { VerifiedBadge } from './AppDetailView';
+import { VerifiedBadge } from './VerifiedBadge';
 
 interface AppCardProps {
   app: AppItem;

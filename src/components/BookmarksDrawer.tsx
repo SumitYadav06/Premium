@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Bookmark, Trash2, X, Download, Star, ChevronRight } from 'lucide-react';
 import { AppItem } from '../types';
-import { VerifiedBadge } from './AppDetailView';
+import { VerifiedBadge } from './VerifiedBadge';
 
 interface BookmarksDrawerProps {
   isOpen: boolean;

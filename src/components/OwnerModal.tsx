@@ -15,7 +15,7 @@ import {
   Users
 } from 'lucide-react';
 import { STORE_CONFIG } from '../config';
-import { VerifiedBadge } from './AppDetailView';
+import { VerifiedBadge } from './VerifiedBadge';
 
 interface OwnerModalProps {
   isOpen: boolean;
