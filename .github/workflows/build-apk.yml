@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
@@ -74,6 +76,80 @@ jobs:
         run: |
           rm -rf android
           npx cap add android
+
+      - name: Ask install permission at first app open
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          candidates = list(Path("android/app/src/main/java").rglob("MainActivity.kt"))
+          if not candidates:
+              print("MainActivity.kt nahi mili - skip")
+              raise SystemExit(0)
+          p = candidates[0]
+          s = p.read_text()
+
+          if "AJ_PERM_CHECK" in s:
+              print("Pehle se laga hai - skip")
+              raise SystemExit(0)
+
+          imports = (
+              "import android.content.Intent\n"
+              "import android.net.Uri\n"
+              "import android.provider.Settings\n"
+          )
+          lines = s.split("\n")
+          for i, ln in enumerate(lines):
+              if ln.startswith("package "):
+                  lines.insert(i + 1, imports)
+                  break
+          s = "\n".join(lines)
+          if "import android.os.Bundle" not in s:
+              s = s.replace("import android.provider.Settings", "import android.os.Bundle\nimport android.provider.Settings")
+
+          helper = '''
+              // AJ_PERM_CHECK: pehli baar app khulte hi install permission (sirf ek baar)
+              private fun ajAskInstallPermissionOnce() {
+                  try {
+                      if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                          if (!packageManager.canRequestPackageInstalls()) {
+                              val prefs = getSharedPreferences("aj_prefs", MODE_PRIVATE)
+                              if (!prefs.getBoolean("aj_perm_asked", false)) {
+                                  val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                                      data = Uri.parse("package:" + packageName)
+                                  }
+                                  startActivity(intent)
+                                  prefs.edit().putBoolean("aj_perm_asked", true).apply()
+                              }
+                          }
+                      }
+                  } catch (e: Exception) {
+                      // fail ho to chup - app crash nahi hona chahiye
+                  }
+              }
+          '''
+
+          if "super.onCreate(savedInstanceState)" in s:
+              s = s.replace(
+                  "super.onCreate(savedInstanceState)",
+                  "super.onCreate(savedInstanceState)\n        ajAskInstallPermissionOnce()",
+                  1,
+              )
+              idx = s.rstrip().rfind("}")
+              s = s[:idx] + helper + "}\n"
+          else:
+              idx = s.rstrip().rfind("}")
+              oncreate = '''
+              override fun onCreate(savedInstanceState: Bundle?) {
+                  super.onCreate(savedInstanceState)
+                  ajAskInstallPermissionOnce()
+              }
+          '''
+              s = s[:idx] + oncreate + helper + "}\n"
+
+          p.write_text(s)
+          print("MainActivity patch ho gaya:", p)
+          PY
 
       - name: Configure Android permissions
         run: |
@@ -447,3 +523,15 @@ jobs:
           name: Premium-App-Store-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+      # Har build ka APK ek hi fixed link par — purane users yahi se update honge
+      # Fixed link: https://github.com/SumitYadav06/Premium/releases/download/store-latest/app-debug.apk
+      - name: Publish APK on fixed download link
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: store-latest
+          name: Apna Jugaad Store - Latest APK
+          body: |
+            Hamesha ka sabse naya store APK. Ye link kabhi nahi badalta —
+            website aur purana app isi link se update hota hai.
+          files: android/app/build/outputs/apk/debug/app-debug.apk
