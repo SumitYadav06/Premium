@@ -34,8 +34,11 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
         return (
           <button
             key={cat}
-            onClick={() => onSelectCategory(cat)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all flex-shrink-0 active:scale-95 ${
+            onClick={(e) => {
+              onSelectCategory(cat);
+              e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-[11px] font-bold uppercase tracking-wide transition-all flex-shrink-0 active:scale-95 max-w-[168px] ${
               isSelected
                 ? 'btn-live bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 text-white shadow-lg shadow-fuchsia-500/40 ring-2 ring-fuchsia-400/60'
                 : theme === 'dark'
@@ -46,7 +49,7 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
             <span className={isSelected ? 'text-white' : 'text-fuchsia-500'}>
               {CAT_ICONS[cat] || <Sparkles className="w-3.5 h-3.5" />}
             </span>
-            <span>{cat}</span>
+            <span className="truncate">{cat}</span>
             <span
               className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
                 isSelected

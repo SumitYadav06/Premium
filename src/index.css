@@ -552,3 +552,9 @@ header button:hover svg {
     animation: none !important;
   }
 }
+
+
+/* Page kabhi side ki taraf bahar nahi jayega */
+html, body {
+  overflow-x: clip;
+}

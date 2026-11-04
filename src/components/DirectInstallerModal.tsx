@@ -19,7 +19,7 @@ import {
 import { AppItem, DownloadTask } from '../types';
 import { incrementAppDownload } from '../services/firebase';
 import { VerifiedBadge } from './AppDetailView';
-import { isNativeApp, isFilesystemAvailable, downloadApkInApp, openApkInstaller, findDownloadedApk } from '../services/nativeDownload';
+import { isNativeApp, isFilesystemAvailable, getDownloadMode, downloadApkInApp, openApkInstaller, findDownloadedApk } from '../services/nativeDownload';
 import { STORE_CONFIG } from '../config';
 
 interface DirectInstallerModalProps {
@@ -56,6 +56,11 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
       setHasTriggeredDownload(false);
       setNativePath(null);
       setErrorMsg('');
+      // Purana app hai to faltu steps mat dikhao — seedha update wala step
+      if (getDownloadMode() === 'old-apk') {
+        setStep('oldapk');
+        return;
+      }
       // File pehle se download hai to yaad kar lo — permission dekar wapas aane par
       // ya modal dobara khulne par DOBARA download nahi karna padega
       if (isNativeApp() && isFilesystemAvailable()) {
@@ -291,10 +296,10 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
                 </div>
                 <div>
                   <h4 className="font-semibold text-sm text-slate-100">
-                    Direct APK Package Installation
+                    Direct Download & Install
                   </h4>
                   <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                    To install this app directly onto your Android device or system, allow storage write access & APK download permission.
+                    App seedha tumhare phone me download aur install hoga — bas neeche wala button dabao.
                   </p>
                 </div>
               </div>
@@ -307,16 +312,6 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
               </div>
             </div>
 
-            {/* Android Permission Switcher Simulation */}
-            <div className="p-3 bg-fuchsia-500/10 border border-fuchsia-500/25 rounded-xl flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-medium text-fuchsia-200">
-                <Sparkles className="w-4 h-4 text-fuchsia-400" />
-                <span>One-Click Auto Install Mode</span>
-              </div>
-              <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">
-                Active
-              </span>
-            </div>
 
             {nativePath && (
               <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center gap-2 text-xs font-semibold text-emerald-300">
@@ -341,30 +336,6 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
               </button>
             </div>
 
-            {/* Direct Raw APK Download Option */}
-            <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
-              <a
-                href={app.link || 'https://archive.org/download/sample-apk-files/sample-app.apk'}
-                download={`${app.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_v${app.ver}.apk`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-fuchsia-400 hover:text-fuchsia-300 font-bold flex items-center gap-1 transition"
-              >
-                <ExternalLink className="w-3 h-3" />
-                <span>Direct Raw APK Link</span>
-              </a>
-
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(app.link || 'https://archive.org/download/sample-apk-files/sample-app.apk');
-                  alert('Direct APK Download URL copied to clipboard!');
-                }}
-                className="text-slate-400 hover:text-slate-200 flex items-center gap-1 transition"
-              >
-                <Copy className="w-3 h-3" />
-                <span>Copy APK URL</span>
-              </button>
-            </div>
           </div>
         )}
 
@@ -389,15 +360,6 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
               >
                 <Download className="w-4 h-4" />
                 <span>Naya Store APK Download Karo</span>
-              </button>
-              <button
-                onClick={() => {
-                  setStep('ready');
-                  triggerActualFileDownload();
-                }}
-                className="w-full py-2.5 text-xs text-slate-400 hover:text-white font-medium transition text-center cursor-pointer"
-              >
-                Abhi ke liye Chrome se download karo
               </button>
             </div>
           </div>
@@ -427,15 +389,6 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
               >
                 <RefreshCw className="w-4 h-4" />
                 <span>Phir Se Try Karo</span>
-              </button>
-              <button
-                onClick={() => {
-                  setStep('ready');
-                  triggerActualFileDownload();
-                }}
-                className="w-full py-2.5 text-xs text-slate-400 hover:text-white font-medium transition text-center cursor-pointer"
-              >
-                Chrome se download karo
               </button>
             </div>
           </div>

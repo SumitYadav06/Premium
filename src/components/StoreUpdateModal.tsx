@@ -62,9 +62,8 @@ export const StoreUpdateModal: React.FC = () => {
           </div>
           <h4 className="font-black text-xl text-white">App Purana Hai — Update Karo</h4>
           <p className="text-sm text-slate-300 leading-relaxed">
-            Tum purana wala app use kar rahe ho, isiliye downloads Chrome me ja rahe hain.
-            Ek baar <strong className="text-white">naya app</strong> laga lo — phir har download
-            aur install <strong className="text-white">isi app ke andar</strong> hoga, Chrome kabhi nahi khulega.
+            Ye purana app hai. Ek baar <strong className="text-white">naya app</strong> laga lo —
+            phir har download aur install <strong className="text-white">isi app ke andar</strong> hoga.
           </p>
         </div>
 
