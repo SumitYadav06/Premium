@@ -13,13 +13,22 @@ import { Navbar } from './components/Navbar';
 import { BannerSlider } from './components/BannerSlider';
 import { CategoryPills } from './components/CategoryPills';
 import { AppCard } from './components/AppCard';
-import { AppDetailView } from './components/AppDetailView';
-import { DirectInstallerModal } from './components/DirectInstallerModal';
 import { StoreUpdateModal } from './components/StoreUpdateModal';
-import { DownloadManagerDrawer } from './components/DownloadManagerDrawer';
-import { BookmarksDrawer } from './components/BookmarksDrawer';
-import { InstallGuideModal } from './components/InstallGuideModal';
-import { OwnerModal } from './components/OwnerModal';
+
+// Bade screens pehle load me NAHI aate — sirf tap karne par download hote hain.
+// Isse app ka pehla khulna bahut tez ho jata hai (halka pehla bundle).
+const AppDetailView = React.lazy(() => import('./components/AppDetailView').then((m) => ({ default: m.AppDetailView })));
+const DirectInstallerModal = React.lazy(() => import('./components/DirectInstallerModal').then((m) => ({ default: m.DirectInstallerModal })));
+const DownloadManagerDrawer = React.lazy(() => import('./components/DownloadManagerDrawer').then((m) => ({ default: m.DownloadManagerDrawer })));
+const BookmarksDrawer = React.lazy(() => import('./components/BookmarksDrawer').then((m) => ({ default: m.BookmarksDrawer })));
+const InstallGuideModal = React.lazy(() => import('./components/InstallGuideModal').then((m) => ({ default: m.InstallGuideModal })));
+const OwnerModal = React.lazy(() => import('./components/OwnerModal').then((m) => ({ default: m.OwnerModal })));
+
+const ChunkLoader: React.FC = () => (
+  <div className="min-h-[50vh] flex items-center justify-center">
+    <div className="w-10 h-10 rounded-full border-[3px] border-fuchsia-500/25 border-t-fuchsia-500 animate-spin" />
+  </div>
+);
 import { SplashView } from './components/SplashView';
 import { PwaInstallBanner } from './components/PwaInstallBanner';
 import {
@@ -462,7 +471,13 @@ export default function App() {
       }
     );
 
-    return () => unsub();
+    // Network slow ho to loading par atka mat rakho — 8 second me screen khol do,
+    // data jaise hi aayega, apps apne aap dikhne lagenge
+    const loadingTimer = setTimeout(() => setLoading(false), 8000);
+    return () => {
+      unsub();
+      clearTimeout(loadingTimer);
+    };
   }, []);
 
   // Save Bookmarks
@@ -660,6 +675,7 @@ export default function App() {
       {/* Main Content Area */}
       <main className="relative max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-28">
         {currentSelectedApp ? (
+          <React.Suspense fallback={<ChunkLoader />}>
           <AppDetailView
             app={currentSelectedApp}
             stats={stats[currentSelectedApp.id] || stats[getAppKey(currentSelectedApp.id)] || stats[getAppKey(currentSelectedApp.name)] || { views: 0 }}
@@ -672,6 +688,7 @@ export default function App() {
             onAddReview={(rev) => addAppReview(currentSelectedApp.id || currentSelectedApp.name, rev)}
             theme={theme}
           />
+          </React.Suspense>
         ) : (
           <div className="space-y-4 sm:space-y-6 stagger-list">
             {/* Top Official Store APK Direct Download Banner */}
@@ -942,6 +959,7 @@ export default function App() {
 
       {/* Direct One-Click Fast Installer Modal */}
       <StoreUpdateModal />
+      <React.Suspense fallback={null}>
       <DirectInstallerModal
         app={directInstallApp}
         isOpen={!!directInstallApp}
@@ -995,6 +1013,7 @@ export default function App() {
         onClose={closeOwnerModal}
         theme={theme}
       />
+      </React.Suspense>
     </div>
   );
 }
