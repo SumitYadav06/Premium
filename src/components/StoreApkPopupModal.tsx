@@ -29,11 +29,11 @@ export const StoreApkPopupModal: React.FC<StoreApkPopupModalProps> = ({
   const handleDownloadApk = () => {
     const apkUrl =
       STORE_CONFIG.STORE_APP_APK_URL ||
-      'https://github.com/SumitYadav06/Premium/releases/download/store-latest/app-debug.apk';
+      'https://github.com/SumitYadav06/Premium/releases/download/store-latest/Apna.Jugaad.apk';
 
     const link = document.createElement('a');
     link.href = apkUrl;
-    link.download = 'PremiumStore.apk';
+    link.download = 'Apna.Jugaad.apk';
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
     document.body.appendChild(link);

@@ -70,7 +70,7 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
   const handleDownloadStoreApk = () => {
     const link = document.createElement('a');
     link.href = storeApkUrl;
-    link.download = 'PremiumStore.apk';
+    link.download = 'Apna.Jugaad.apk';
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
     document.body.appendChild(link);
