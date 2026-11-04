@@ -410,7 +410,8 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
   };
 
   const getDirectApkLink = () => {
-    return app.link || (app as any).url || 'https://archive.org/download/sample-apk-files/sample-app.apk';
+    // Link na ho to KHALI rakho — kisi aur app ki sample file ka link kabhi mat bhejo
+    return app.link || (app as any).url || '';
   };
 
   const getShareText = () => {
@@ -419,7 +420,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
     return `🔥 *${app.name}* (v${app.ver}) - VIP MOD APK\n` +
       `⚡ Size: ${app.mb} MB | Category: ${app.cat}\n` +
       `🛡️ Status: 100% Virus-Free & Verified ✅\n\n` +
-      `📥 *Direct APK Download:*\n${apkLink}\n\n` +
+      (apkLink ? `📥 *Direct APK Download:*\n${apkLink}\n\n` : '') +
       `🌐 *Store Link:*\n${storeLink}\n\n` +
       `👑 Shared from *${STORE_CONFIG.OWNER_NAME}'s Premium Store*`;
   };

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { AppItem, AppStats, StoreStatus, DownloadTask } from './types';
-import { INITIAL_APPS } from './data/mockApps';
 import {
   subscribeToApps,
   addAppReview,
@@ -45,7 +44,11 @@ import {
   Mic,
   MicOff,
   X as XIcon,
-  Flame
+  Flame,
+  Megaphone,
+  ArrowUp,
+  RefreshCw,
+  Store
 } from 'lucide-react';
 
 export default function App() {
@@ -84,6 +87,13 @@ export default function App() {
     }
   });
   const [showSplash, setShowSplash] = useState(true);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 600);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   // UI Filters
   const [theme, setTheme] = useState<'dark' | 'light'>('light');
@@ -674,7 +684,36 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="relative max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-28">
-        {currentSelectedApp ? (
+        {!storeStatus.active ? (
+          <div className="min-h-[55vh] flex items-center justify-center py-10">
+            <div className={`max-w-md w-full text-center space-y-4 rounded-3xl border p-8 ${theme === 'dark' ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-xl'}`}>
+              <div className="w-16 h-16 rounded-3xl mx-auto flex items-center justify-center bg-gradient-to-br from-violet-600 via-fuchsia-500 to-orange-400 text-white shadow-lg shadow-fuchsia-600/30">
+                <Store className="w-8 h-8" />
+              </div>
+              <h2 className={`font-display text-xl font-black ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Store Abhi Band Hai</h2>
+              <p className="text-sm text-slate-400 leading-relaxed">
+                {storeStatus.msg || 'Store kuch der ke liye band hai. Thodi der baad phir try karo.'}
+              </p>
+              <div className="flex flex-col gap-2 pt-1">
+                {storeStatus.link && storeStatus.link.startsWith('http') && (
+                  <button
+                    onClick={() => window.open(storeStatus.link, '_blank')}
+                    className="btn-live w-full py-3 px-4 rounded-xl font-black text-sm uppercase tracking-wider text-white shadow-lg active:scale-95 transition cursor-pointer"
+                  >
+                    <span>Zaroori Link Kholo</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => window.location.reload()}
+                  className={`w-full py-3 px-4 rounded-xl font-black text-sm uppercase tracking-wider active:scale-95 transition cursor-pointer flex items-center justify-center gap-2 ${theme === 'dark' ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  <span>Dobara Check Karo</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : currentSelectedApp ? (
           <React.Suspense fallback={<ChunkLoader />}>
           <AppDetailView
             app={currentSelectedApp}
@@ -691,6 +730,20 @@ export default function App() {
           </React.Suspense>
         ) : (
           <div className="space-y-4 sm:space-y-6 stagger-list">
+            {/* Owner announcement (Firebase store_status se — sirf custom msg par dikhta hai) */}
+            {storeStatus.msg &&
+              !['Store is Active', 'Welcome to Premium Store'].includes(storeStatus.msg.trim()) && (
+                <button
+                  onClick={() => {
+                    if (storeStatus.link && storeStatus.link.startsWith('http')) window.open(storeStatus.link, '_blank');
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 text-white text-left shadow-lg shadow-fuchsia-600/25 active:scale-[0.99] transition cursor-pointer"
+                >
+                  <Megaphone className="w-5 h-5 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm font-bold leading-snug">{storeStatus.msg}</span>
+                </button>
+              )}
+
             {/* Top Official Store APK Direct Download Banner */}
             <PwaInstallBanner theme={theme} />
 
@@ -903,19 +956,37 @@ export default function App() {
                   <div className={`w-14 h-14 rounded-2xl mx-auto flex items-center justify-center ${theme === 'dark' ? 'bg-slate-800 text-slate-500' : 'bg-fuchsia-50 text-fuchsia-400'}`}>
                     <Package className="w-7 h-7" />
                   </div>
-                  <h3 className={`text-base font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>No Apps Found</h3>
-                  <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                    Try searching with another keyword or browse categories above.
-                  </p>
-                  <button
-                    onClick={() => {
-                      setSearchQuery('');
-                      setSelectedCategory('All');
-                    }}
-                    className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition shadow-lg shadow-amber-600/30 cursor-pointer inline-flex items-center gap-1.5"
-                  >
-                    <span>View All Apps</span>
-                  </button>
+                  {safeAppsList.length === 0 && !searchQuery ? (
+                    <>
+                      <h3 className={`text-base font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Store Load Nahi Hua</h3>
+                      <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                        Internet slow hai ya connection nahi hai. Data aate hi apps apne aap dikhne lagenge — ya abhi dobara try karo.
+                      </p>
+                      <button
+                        onClick={() => window.location.reload()}
+                        className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition shadow-lg shadow-amber-600/30 cursor-pointer inline-flex items-center gap-1.5"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        <span>Dobara Try Karo</span>
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <h3 className={`text-base font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>No Apps Found</h3>
+                      <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                        Try searching with another keyword or browse categories above.
+                      </p>
+                      <button
+                        onClick={() => {
+                          setSearchQuery('');
+                          setSelectedCategory('All');
+                        }}
+                        className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition shadow-lg shadow-amber-600/30 cursor-pointer inline-flex items-center gap-1.5"
+                      >
+                        <span>View All Apps</span>
+                      </button>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -941,7 +1012,7 @@ export default function App() {
       </main>
 
       {/* Floating Bottom Dock */}
-      {!currentSelectedApp && (
+      {!currentSelectedApp && storeStatus.active && (
         <BottomDock
           onHome={() => {
             closeAppDetail();
@@ -955,6 +1026,17 @@ export default function App() {
           bookmarksCount={bookmarkedIds.length}
           downloadsCount={downloadTasks.length}
         />
+      )}
+
+      {/* Scroll to top — lambi list me turant upar jaane ke liye */}
+      {showScrollTop && !currentSelectedApp && storeStatus.active && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-28 right-4 z-[6000] w-11 h-11 rounded-full bg-gradient-to-br from-violet-600 via-fuchsia-500 to-orange-400 text-white shadow-xl shadow-fuchsia-600/40 flex items-center justify-center active:scale-90 transition cursor-pointer"
+          title="Upar Jao"
+        >
+          <ArrowUp className="w-5 h-5" />
+        </button>
       )}
 
       {/* Direct One-Click Fast Installer Modal */}

@@ -81,11 +81,16 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
   const totalMb = typeof app.mb === 'string' ? parseFloat(app.mb) || 50 : app.mb || 50;
 
   const startNativeDownload = async () => {
+    // Link hi nahi hai to kisi aur app ki sample file download karna sabse badi galti hogi —
+    // saaf error dikhao taaki user ko asli wajah pata chale
+    if (!app.link || !app.link.startsWith('http')) {
+      setErrorMsg('Is app ka download link abhi available nahi hai. Creator ko bata do, wo jald iska link jod dega.');
+      setStep('error');
+      return;
+    }
     setStep('downloading');
 
-    const downloadUrl = app.link && app.link.startsWith('http')
-      ? app.link
-      : 'https://archive.org/download/sample-apk-files/sample-app.apk';
+    const downloadUrl = app.link;
     const fileName = `${app.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_v${app.ver}.apk`;
 
     const newTask: DownloadTask = {
@@ -141,6 +146,11 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
   };
 
   const startDownloadFlow = () => {
+    if (!app.link || !app.link.startsWith('http')) {
+      setErrorMsg('Is app ka download link abhi available nahi hai. Creator ko bata do, wo jald iska link jod dega.');
+      setStep('error');
+      return;
+    }
     setPermissionGranted(true);
 
     // Store APK ke andar ho to asli in-app download chalega (Chrome nahi khulega)
@@ -171,7 +181,7 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
       sizeMb: app.mb,
       progress: 0,
       status: 'downloading',
-      downloadUrl: app.link || 'https://archive.org/download/sample-apk-files/sample-app.apk',
+      downloadUrl: app.link,
       startedAt: Date.now()
     };
     onDownloadStarted?.(newTask);
@@ -221,9 +231,7 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
     setHasTriggeredDownload(true);
 
     try {
-      const downloadUrl = app.link && app.link.startsWith('http')
-        ? app.link
-        : `https://archive.org/download/sample-apk-files/sample-app.apk`;
+      const downloadUrl = app.link;
 
       // Create invisible iframe for seamless in-app download without blank page flash
       const iframe = document.createElement('iframe');

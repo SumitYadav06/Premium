@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Download, Sparkles, X, Smartphone, CheckCircle2 } from 'lucide-react';
 import { STORE_CONFIG } from '../config';
@@ -9,7 +9,6 @@ interface PwaInstallBannerProps {
 }
 
 export const PwaInstallBanner: React.FC<PwaInstallBannerProps> = ({ theme }) => {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isDismissed, setIsDismissed] = useState(() => {
     try {
       return localStorage.getItem('pwa_banner_dismissed') === 'true';
@@ -18,16 +17,6 @@ export const PwaInstallBanner: React.FC<PwaInstallBannerProps> = ({ theme }) => 
     }
   });
   const [installedSuccess, setInstalledSuccess] = useState(false);
-
-  useEffect(() => {
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
 
   const handleInstallClick = () => {
     // Direct APK Download using STORE_CONFIG.STORE_APP_APK_URL
@@ -103,7 +92,7 @@ export const PwaInstallBanner: React.FC<PwaInstallBannerProps> = ({ theme }) => 
               <div className="flex items-center gap-2 mb-0.5">
                 <h3 className="text-sm font-black tracking-tight">Download Premium Store App</h3>
                 <span className="text-[9px] font-black uppercase tracking-wider bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 px-2 py-0.5 rounded-full">
-                  4.8 MB APK
+                  Official APK
                 </span>
               </div>
               <p className="text-xs text-slate-400 font-medium max-w-md">
@@ -115,7 +104,7 @@ export const PwaInstallBanner: React.FC<PwaInstallBannerProps> = ({ theme }) => 
           <div className="flex items-center gap-2 w-full sm:w-auto">
             {installedSuccess ? (
               <div className="py-2.5 px-4 rounded-xl bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4" /> Download Started!
+                <CheckCircle2 className="w-4 h-4" /> Download Start Ho Raha Hai…
               </div>
             ) : (
               <button

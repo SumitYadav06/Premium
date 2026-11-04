@@ -45,35 +45,24 @@ export const HeartGlowOverlay: React.FC<{ enabled?: boolean }> = ({ enabled = tr
       }, 750);
     };
 
-    const handlePointerDown = (e: MouseEvent | TouchEvent) => {
+    const handlePointerDown = (e: PointerEvent) => {
       // Don't trigger on interactive input / text fields to avoid distraction
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT')) {
         return;
       }
 
-      let clientX = 0;
-      let clientY = 0;
-
-      if ('touches' in e && e.touches.length > 0) {
-        clientX = e.touches[0].clientX;
-        clientY = e.touches[0].clientY;
-      } else if ('clientX' in e) {
-        clientX = (e as MouseEvent).clientX;
-        clientY = (e as MouseEvent).clientY;
-      }
-
-      if (clientX && clientY) {
-        spawnHeart(clientX, clientY);
+      // Ek hi pointerdown listener — pehle mousedown + touchstart dono lage the,
+      // isliye ek tap par do hearts bann jate the
+      if (e.clientX && e.clientY) {
+        spawnHeart(e.clientX, e.clientY);
       }
     };
 
-    window.addEventListener('mousedown', handlePointerDown);
-    window.addEventListener('touchstart', handlePointerDown, { passive: true });
+    window.addEventListener('pointerdown', handlePointerDown);
 
     return () => {
-      window.removeEventListener('mousedown', handlePointerDown);
-      window.removeEventListener('touchstart', handlePointerDown);
+      window.removeEventListener('pointerdown', handlePointerDown);
     };
   }, [enabled]);
 

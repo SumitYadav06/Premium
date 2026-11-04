@@ -24,29 +24,41 @@ export const ReportLinkModal: React.FC<ReportLinkModalProps> = ({
   onClose,
   theme
 }) => {
-  const [reason, setReason] = useState('Link is broken or returns 404');
+  const [reason, setReason] = useState('Download link is broken or 404');
   const [extraDetails, setExtraDetails] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDone, setIsDone] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   if (!isOpen || !app) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSubmitError('');
 
-    const success = await submitBrokenLinkReport({
-      appName: app.name,
-      appId: app.id,
-      reason: `${reason}. ${extraDetails}`.trim()
-    });
+    try {
+      const success = await submitBrokenLinkReport({
+        appName: app.name,
+        appId: app.id,
+        reason: `${reason}. ${extraDetails}`.trim()
+      });
 
-    setIsSubmitting(false);
-    setIsDone(true);
-    setTimeout(() => {
-      setIsDone(false);
-      onClose();
-    }, 2500);
+      if (!success) {
+        setSubmitError('Report bhejni nahi ho payi. Internet check karke dobara try karo.');
+        return;
+      }
+
+      setIsDone(true);
+      setTimeout(() => {
+        setIsDone(false);
+        onClose();
+      }, 2500);
+    } catch {
+      setSubmitError('Report bhejni nahi ho payi. Internet check karke dobara try karo.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -106,7 +118,7 @@ export const ReportLinkModal: React.FC<ReportLinkModalProps> = ({
               <div className="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto">
                 <CheckCircle2 className="w-6 h-6" />
               </div>
-              <h3 className="text-sm font-bold text-white">Report Received!</h3>
+              <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Report Received!</h3>
               <p className="text-xs text-slate-400">
                 Our automated mirror re-fetcher and admins will update this download link shortly.
               </p>
@@ -158,6 +170,12 @@ export const ReportLinkModal: React.FC<ReportLinkModalProps> = ({
                   className="w-full bg-slate-800/80 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-500 resize-none"
                 />
               </div>
+
+              {submitError && (
+                <p className="text-[11px] font-semibold text-rose-400 bg-rose-500/10 border border-rose-500/30 rounded-xl px-3 py-2">
+                  {submitError}
+                </p>
+              )}
 
               <button
                 type="submit"

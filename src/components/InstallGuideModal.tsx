@@ -40,7 +40,7 @@ const GUIDE_ITEMS: GuideItem[] = [
       "https://raw.githubusercontent.com/SumitYadav06/Premium/main/public/guide/Playstre%20setting.png",
       "https://raw.githubusercontent.com/SumitYadav06/Premium/main/guide/Playstre%20setting.png",
       "https://raw.githubusercontent.com/SumitYadav06/Premium/main/Playstre%20setting.png",
-      "/guide/Playstre setting.png"
+      `${import.meta.env.BASE_URL}guide/Playstre setting.png`
     ]
   },
   {
@@ -53,7 +53,7 @@ const GUIDE_ITEMS: GuideItem[] = [
       "https://raw.githubusercontent.com/SumitYadav06/Premium/main/public/guide/Google-Play-Protect-Settings.png",
       "https://raw.githubusercontent.com/SumitYadav06/Premium/main/guide/Google-Play-Protect-Settings.png",
       "https://raw.githubusercontent.com/SumitYadav06/Premium/main/Google-Play-Protect-Settings.png",
-      "/guide/Google-Play-Protect-Settings.png"
+      `${import.meta.env.BASE_URL}guide/Google-Play-Protect-Settings.png`
     ]
   },
   {
@@ -66,7 +66,7 @@ const GUIDE_ITEMS: GuideItem[] = [
       "https://raw.githubusercontent.com/SumitYadav06/Premium/main/public/guide/Chromesetting.png",
       "https://raw.githubusercontent.com/SumitYadav06/Premium/main/guide/Chromesetting.png",
       "https://raw.githubusercontent.com/SumitYadav06/Premium/main/Chromesetting.png",
-      "/guide/Chromesetting.png"
+      `${import.meta.env.BASE_URL}guide/Chromesetting.png`
     ]
   },
   {
@@ -79,7 +79,7 @@ const GUIDE_ITEMS: GuideItem[] = [
       "https://raw.githubusercontent.com/SumitYadav06/Premium/main/public/guide/Chrome-Security-Protection-Settings.png",
       "https://raw.githubusercontent.com/SumitYadav06/Premium/main/guide/Chrome-Security-Protection-Settings.png",
       "https://raw.githubusercontent.com/SumitYadav06/Premium/main/Chrome-Security-Protection-Settings.png",
-      "/guide/Chrome-Security-Protection-Settings.png"
+      `${import.meta.env.BASE_URL}guide/Chrome-Security-Protection-Settings.png`
     ]
   }
 ];

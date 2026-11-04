@@ -27,11 +27,12 @@ export const BookmarksDrawer: React.FC<BookmarksDrawerProps> = ({
   const safeBookmarks = Array.isArray(bookmarkedApps) ? bookmarkedApps : [];
 
   return (
-    <div className="fixed inset-0 z-[8500] flex justify-end bg-black/70 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[8500] flex justify-end bg-black/70 backdrop-blur-sm" onClick={onClose}>
       <motion.div
         initial={{ x: '100%' }}
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
+        onClick={(e) => e.stopPropagation()}
         transition={{ type: 'spring', damping: 25, stiffness: 250 }}
         className={`w-full max-w-md h-full flex flex-col p-6 shadow-2xl border-l select-none ${
           theme === 'dark'
@@ -77,7 +78,7 @@ export const BookmarksDrawer: React.FC<BookmarksDrawerProps> = ({
             safeBookmarks.map((app, idx) => (
               <div
                 key={idx}
-                className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center gap-3 shadow-md group cursor-pointer hover:border-amber-500/40 transition"
+                className={`p-3.5 rounded-2xl border flex items-center gap-3 shadow-md group cursor-pointer hover:border-amber-500/40 transition ${theme === 'dark' ? 'bg-slate-900/90 border-slate-800' : 'bg-slate-50 border-slate-200'}`}
                 onClick={() => {
                   onSelectApp(app);
                   onClose();
@@ -90,7 +91,7 @@ export const BookmarksDrawer: React.FC<BookmarksDrawerProps> = ({
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1">
-                    <h4 className="font-bold text-xs text-white truncate group-hover:text-amber-300">
+                    <h4 className={`font-bold text-xs truncate ${theme === 'dark' ? 'text-white group-hover:text-amber-300' : 'text-slate-900 group-hover:text-amber-600'}`}>
                       {app.name}
                     </h4>
                     <VerifiedBadge size={14} />
@@ -124,7 +125,7 @@ export const BookmarksDrawer: React.FC<BookmarksDrawerProps> = ({
 
         {/* Footer */}
         {safeBookmarks.length > 0 && (
-          <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+          <div className={`pt-3 border-t flex items-center justify-between ${theme === 'dark' ? 'border-slate-800' : 'border-slate-200'}`}>
             <button
               onClick={onClearAll}
               className="text-xs text-slate-400 hover:text-red-400 flex items-center gap-1.5 transition font-medium"

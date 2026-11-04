@@ -35,11 +35,12 @@ export const DownloadManagerDrawer: React.FC<DownloadManagerDrawerProps> = ({
   const safeTasks = Array.isArray(tasks) ? tasks : [];
 
   return (
-    <div className="fixed inset-0 z-[8500] flex justify-end bg-black/70 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[8500] flex justify-end bg-black/70 backdrop-blur-sm" onClick={onClose}>
       <motion.div
         initial={{ x: '100%' }}
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
+        onClick={(e) => e.stopPropagation()}
         transition={{ type: 'spring', damping: 25, stiffness: 250 }}
         className={`w-full max-w-md h-full flex flex-col p-6 shadow-2xl border-l select-none ${
           theme === 'dark'
@@ -58,7 +59,7 @@ export const DownloadManagerDrawer: React.FC<DownloadManagerDrawerProps> = ({
                 Download Manager
               </h3>
               <p className="text-[11px] text-slate-400 mt-1">
-                {safeTasks.length} Saved Package{safeTasks.length === 1 ? '' : 's'}
+                {safeTasks.length} Package{safeTasks.length === 1 ? '' : 's'}
               </p>
             </div>
           </div>
@@ -91,7 +92,7 @@ export const DownloadManagerDrawer: React.FC<DownloadManagerDrawerProps> = ({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9, height: 0, marginBottom: 0, padding: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2.5 shadow-md group"
+                  className={`p-3.5 rounded-2xl border space-y-2.5 shadow-md group ${theme === 'dark' ? 'bg-slate-900/90 border-slate-800' : 'bg-slate-50 border-slate-200'}`}
                 >
                   <div className="flex items-center gap-3">
                     <img
@@ -100,13 +101,23 @@ export const DownloadManagerDrawer: React.FC<DownloadManagerDrawerProps> = ({
                       className="w-12 h-12 rounded-xl object-cover border border-amber-500/30 flex-shrink-0"
                     />
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-xs text-white truncate">{t.appName}</h4>
+                      <h4 className={`font-bold text-xs truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{t.appName}</h4>
                       <p className="text-[10px] text-amber-400 font-mono">
                         v{t.version} • {t.sizeMb} MB
                       </p>
-                      <span className="text-[9px] text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
-                        <CheckCircle2 className="w-3 h-3" /> Saved Package
-                      </span>
+                      {t.status === 'downloading' ? (
+                        <span className="text-[9px] text-amber-400 font-semibold flex items-center gap-1 mt-0.5">
+                          <Download className="w-3 h-3 animate-pulse" /> Downloading… {Math.round(t.progress || 0)}%
+                        </span>
+                      ) : t.status === 'error' || t.status === 'failed' ? (
+                        <span className="text-[9px] text-rose-400 font-semibold flex items-center gap-1 mt-0.5">
+                          <X className="w-3 h-3" /> Download Fail Hua Tha
+                        </span>
+                      ) : (
+                        <span className="text-[9px] text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
+                          <CheckCircle2 className="w-3 h-3" /> Saved Package
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -141,7 +152,7 @@ export const DownloadManagerDrawer: React.FC<DownloadManagerDrawerProps> = ({
 
         {/* Footer Actions */}
         {safeTasks.length > 0 && (
-          <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+          <div className={`pt-3 border-t flex items-center justify-between ${theme === 'dark' ? 'border-slate-800' : 'border-slate-200'}`}>
             <button
               onClick={onClearHistory}
               className="text-xs text-slate-400 hover:text-red-400 flex items-center gap-1.5 transition font-bold cursor-pointer py-1 px-2 rounded-lg hover:bg-red-500/10"

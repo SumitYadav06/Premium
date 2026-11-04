@@ -58,63 +58,6 @@ export const LiveBackground: React.FC = () => (
   </div>
 );
 
-/* ================= LIVE TICKER — news strip ================= */
-
-interface LiveTickerProps {
-  appsCount: number;
-  totalDownloads: number;
-  topNames: string[];
-  theme: 'dark' | 'light';
-}
-
-export const LiveTicker: React.FC<LiveTickerProps> = ({ appsCount, totalDownloads, topNames, theme }) => {
-  const items = useMemo(() => {
-    const base = [
-      `${appsCount} Premium Apps Live`,
-      `${totalDownloads.toLocaleString('en-IN')}+ Total Downloads`,
-      '100% Virus Scanned & Verified',
-      'New Mods Added Daily',
-      'Fast VIP Servers — No Waiting'
-    ];
-    const withNames = base.concat(topNames.slice(0, 4).map((n) => `Trending: ${n}`));
-    return withNames;
-  }, [appsCount, totalDownloads, topNames]);
-
-  const strip = (keyPrefix: string) => (
-    <div className="flex items-center shrink-0" key={keyPrefix}>
-      {items.map((t, i) => (
-        <span key={`${keyPrefix}-${i}`} className="flex items-center gap-2 px-4 text-[11px] font-bold whitespace-nowrap">
-          <Flame className="w-3 h-3 text-orange-400" />
-          <span className={theme === 'dark' ? 'text-slate-200' : 'text-slate-700'}>{t}</span>
-        </span>
-      ))}
-    </div>
-  );
-
-  return (
-    <div
-      className={`relative flex items-stretch rounded-2xl overflow-hidden border ${
-        theme === 'dark' ? 'bg-slate-900/80 border-fuchsia-500/25' : 'bg-white/85 border-fuchsia-200 shadow-sm'
-      } backdrop-blur-xl`}
-    >
-      <div className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-red-500 to-rose-500 text-white shrink-0 z-10">
-        <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-80" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
-        </span>
-        <span className="text-[10px] font-black tracking-[0.2em] flex items-center gap-1">
-          <Radio className="w-3 h-3" /> LIVE
-        </span>
-      </div>
-      <div className="overflow-hidden flex-1 flex items-center">
-        <div className="marquee-track">
-          {strip('a')}
-          {strip('b')}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 /* ================= TOP CHARTS RAIL — horizontal ranking ================= */
 
@@ -258,7 +201,7 @@ export const RecentlyViewedRow: React.FC<RecentlyViewedRowProps> = ({ apps, onSe
                 : 'bg-white border-slate-200 text-slate-700 shadow-sm hover:border-cyan-300'
             }`}
           >
-            <img loading="lazy" src={app.icon} alt={app.name} className="w-7 h-7 rounded-full object-cover bg-slate-900" />
+            <img loading="lazy" src={app.icon} alt={app.name} className="w-7 h-7 rounded-full object-cover bg-slate-900" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
             <span className="text-[11px] font-bold max-w-[110px] truncate">{app.name}</span>
             <Eye className="w-3 h-3 text-cyan-500" />
           </button>

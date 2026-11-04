@@ -19,7 +19,9 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
   onSelectApp
 }) => {
   const safeApps = Array.isArray(apps) ? apps : [];
-  const featuredApps = safeApps.filter((a) => a && (a.isFeatured || a.isHot)).slice(0, 6);
+  const flaggedApps = safeApps.filter((a) => a && (a.isFeatured || a.isHot));
+  // Koi app Featured/HOT flag na ho to hero gayab mat karo — pehle apps hi dikha do
+  const featuredApps = (flaggedApps.length > 0 ? flaggedApps : safeApps.filter((a) => a && a.name)).slice(0, 6);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState<number>(1);
   const [isPaused, setIsPaused] = useState(false);
@@ -39,6 +41,11 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
     setDirection(-1);
     setCurrentIndex((prev) => (prev - 1 + featuredApps.length) % featuredApps.length);
   }, [featuredApps.length]);
+
+  // Data refresh me list chhoti ho jaye to index ko hamesha range me rakho (counter "6 / 3" na bane)
+  useEffect(() => {
+    if (currentIndex >= featuredApps.length) setCurrentIndex(0);
+  }, [featuredApps.length, currentIndex]);
 
   useEffect(() => {
     if (featuredApps.length <= 1 || isPaused) return;
@@ -103,6 +110,15 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
               src={current.p1 || current.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80"}
               alt={current.name}
               className="kenburns w-full h-full object-cover opacity-70"
+              onError={(e) => {
+                const t = e.target as HTMLImageElement;
+                if (!t.dataset.fb) {
+                  t.dataset.fb = '1';
+                  t.src = current.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80";
+                } else {
+                  t.style.opacity = '0';
+                }
+              }}
             />
           </motion.div>
         </AnimatePresence>
@@ -134,6 +150,15 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
                 <img
                   src={current.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}
                   alt={current.name}
+                  onError={(e) => {
+                    const t = e.target as HTMLImageElement;
+                    if (!t.dataset.fb) {
+                      t.dataset.fb = '1';
+                      t.src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80";
+                    } else {
+                      t.style.opacity = '0';
+                    }
+                  }}
                   className="relative w-[74px] h-[74px] sm:w-24 sm:h-24 rounded-[22px] object-cover border-2 border-white/50 shadow-2xl cursor-pointer hover:scale-105 transition-transform"
                   onClick={(e) => {
                     e.stopPropagation();

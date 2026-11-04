@@ -27,7 +27,7 @@ export const SplashView: React.FC<SplashViewProps> = ({
   useEffect(() => {
     const iv = setInterval(() => {
       setPercent((p) => {
-        const next = p + Math.floor(Math.random() * 7) + 4;
+        const next = p + Math.floor(Math.random() * 5) + 7;
         if (next >= 100) {
           clearInterval(iv);
           return 100;

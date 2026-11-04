@@ -32,6 +32,10 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
   const touchStartPanRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const lastTapTimeRef = useRef<number>(0);
 
+  // Parent har render par naya array bana sakta hai — content-based key use karo,
+  // warna lightbox khule hote hi index/zoom beech me reset ho jata tha
+  const imagesKey = images.join('|');
+
   // Sync initial index and preload all screenshots immediately
   useEffect(() => {
     if (isOpen) {
@@ -50,7 +54,7 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
         }
       });
     }
-  }, [initialIndex, isOpen, images]);
+  }, [initialIndex, isOpen, imagesKey]);
 
   const handleResetZoom = useCallback(() => {
     setZoomLevel(1);
@@ -362,6 +366,15 @@ export const ScreenshotLightbox: React.FC<ScreenshotLightboxProps> = ({
                 className="w-full h-full object-cover"
                 loading="eager"
                 referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const t = e.target as HTMLImageElement;
+                  if (!t.dataset.fb) {
+                    t.dataset.fb = '1';
+                    t.src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80";
+                  } else {
+                    t.style.opacity = '0';
+                  }
+                }}
               />
             </button>
           ))}

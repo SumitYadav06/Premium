@@ -1,7 +1,6 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getDatabase, ref, onValue, set, get, Database, DatabaseReference, runTransaction, push } from 'firebase/database';
 import { AppItem, AppStats, ReviewItem, StoreStatus } from '../types';
-import { INITIAL_APPS } from '../data/mockApps';
 
 // Encrypted keys from user app
 const _k = [

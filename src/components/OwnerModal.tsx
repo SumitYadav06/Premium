@@ -46,7 +46,7 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
   if (!isOpen) return null;
 
   const websiteUrl = STORE_CONFIG.STORE_BASE_URL || "https://sumityadav06.github.io/Premium/";
-  const storeApkUrl = STORE_CONFIG.STORE_APP_APK_URL || "https://archive.org/download/sample-apk-files/sample-app.apk";
+  const storeApkUrl = STORE_CONFIG.STORE_APP_APK_URL;
 
   const handleOpenWebsite = () => {
     window.open(websiteUrl, '_blank', 'noopener,noreferrer');
@@ -106,11 +106,12 @@ export const OwnerModal: React.FC<OwnerModalProps> = ({
   const dark = theme === 'dark';
 
   return (
-    <div className="fixed inset-0 z-[8600] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md overflow-y-auto">
+    <div className="fixed inset-0 z-[8600] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md overflow-y-auto" onClick={onClose}>
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 26 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.92, y: 15 }}
+        onClick={(e) => e.stopPropagation()}
         transition={{ type: 'spring', stiffness: 240, damping: 22 }}
         className={`relative w-full max-w-md rounded-[2rem] shadow-2xl border overflow-hidden select-none my-8 ${
           dark ? 'bg-slate-950 text-white border-white/10' : 'bg-white text-slate-900 border-slate-200'
