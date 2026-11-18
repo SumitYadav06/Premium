@@ -1,5 +1,6 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getDatabase, ref, onValue, set, get, Database, DatabaseReference, runTransaction, push } from 'firebase/database';
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, User, Auth } from 'firebase/auth';
 import { AppItem, AppStats, ReviewItem, StoreStatus } from '../types';
 
 // Encrypted keys from user app
@@ -20,6 +21,10 @@ const dc = (v: string) => {
 
 let app: FirebaseApp | null = null;
 let db: Database | null = null;
+let auth: Auth | null = null;
+
+/** Sirf ye Google account Admin hai — Rules me bhi yahi email check hota hai. */
+export const ADMIN_EMAIL = 'a1mausy06@gmail.com';
 
 try {
   const firebaseConfig = {
@@ -35,8 +40,46 @@ try {
     app = getApps()[0];
   }
   db = getDatabase(app);
+  auth = getAuth(app);
 } catch (e) {
   console.warn("Firebase initialization skipped/fallback enabled:", e);
+}
+
+/** Admin Google sign-in — Admin Panel kholne ke liye. Sirf ADMIN_EMAIL wala account chalega. */
+export async function signInAdminWithGoogle(): Promise<boolean> {
+  if (!auth) return false;
+  try {
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    if (result.user?.email === ADMIN_EMAIL) return true;
+    // Galat Google account se sign-in hua — turant sign-out karo.
+    await signOut(auth).catch(() => {});
+    return false;
+  } catch (e) {
+    console.warn('Admin Google sign-in failed:', e);
+    return false;
+  }
+}
+
+export function getAdminUser(): User | null {
+  return auth?.currentUser || null;
+}
+
+export function isAdminSignedIn(): boolean {
+  return getAdminUser()?.email === ADMIN_EMAIL;
+}
+
+export function onAdminAuthChange(cb: (user: User | null) => void): () => void {
+  if (!auth) {
+    cb(null);
+    return () => {};
+  }
+  return onAuthStateChanged(auth, cb);
+}
+
+export async function signOutAdmin(): Promise<void> {
+  if (!auth) return;
+  await signOut(auth).catch(() => {});
 }
 
 export function getAppKey(appNameOrId: string): string {
@@ -200,6 +243,8 @@ export async function addAppReview(appNameOrId: string, review: { user: string; 
 
 export async function saveAppToStore(appItem: AppItem): Promise<boolean> {
   if (!appItem.name) return false;
+  // Admin-only: bina Admin Google sign-in ke Firebase me save nahi hoga.
+  if (!isAdminSignedIn()) return false;
   const appId = appItem.id || `app_${Date.now()}`;
   const appToSave: AppItem = {
     ...appItem,
@@ -237,6 +282,8 @@ export async function saveAppToStore(appItem: AppItem): Promise<boolean> {
 
 export async function deleteAppFromStore(appIdOrName: string): Promise<boolean> {
   if (!appIdOrName) return false;
+  // Admin-only: bina Admin Google sign-in ke Firebase se delete nahi hoga.
+  if (!isAdminSignedIn()) return false;
 
   if (db) {
     try {
@@ -333,6 +380,8 @@ export async function submitBrokenLinkReport(report: {
  *  'firebase' = server par gaya (sabko dikhega), 'local' = sirf is phone par, false = fail */
 export async function saveAppStrict(appItem: AppItem): Promise<'firebase' | 'local' | false> {
   if (!appItem.name) return false;
+  // Admin-only: bina Admin Google sign-in ke Firebase me save nahi hoga.
+  if (!isAdminSignedIn()) return false;
   const appId = appItem.id || `app_${Date.now()}`;
   const appToSave: AppItem = {
     ...appItem,
@@ -384,6 +433,8 @@ export async function getAdminPinHash(): Promise<string | null> {
 
 export async function setAdminPinHash(hash: string): Promise<boolean> {
   if (!db) return false;
+  // Admin-only: bina Admin Google sign-in ke PIN hash nahi badlega.
+  if (!isAdminSignedIn()) return false;
   try {
     await set(ref(db, 'admin_config/pinHash'), hash);
     return true;
@@ -395,6 +446,8 @@ export async function setAdminPinHash(hash: string): Promise<boolean> {
 /** Kill switch / announcement — Admin Panel se store_status badalna */
 export async function setStoreStatus(status: StoreStatus): Promise<boolean> {
   if (!db) return false;
+  // Admin-only: bina Admin Google sign-in ke store status nahi badlega.
+  if (!isAdminSignedIn()) return false;
   try {
     await set(ref(db, 'store_status'), status);
     return true;

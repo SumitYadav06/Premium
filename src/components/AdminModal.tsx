@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import {
   ShieldCheck,
@@ -22,10 +22,11 @@ import { AppItem } from '../types';
 import {
   saveAppStrict,
   deleteAppFromStore,
-  getAdminPinHash,
-  setAdminPinHash,
-  sha256Hex,
-  getAppKey
+  getAppKey,
+  signInAdminWithGoogle,
+  onAdminAuthChange,
+  signOutAdmin,
+  ADMIN_EMAIL
 } from '../services/firebase';
 import { fetchReleaseAssetInfo } from '../services/githubApps';
 
@@ -40,7 +41,7 @@ interface AdminModalProps {
   theme: 'dark' | 'light';
 }
 
-type Stage = 'checking' | 'setup' | 'locked' | 'unlocked';
+type Stage = 'checking' | 'locked' | 'unlocked';
 type Toast = { kind: 'ok' | 'warn' | 'err'; text: string } | null;
 
 const EMPTY_FORM = {
@@ -116,11 +117,9 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const dark = theme === 'dark';
   const [stage, setStage] = useState<Stage>('checking');
   const [view, setView] = useState<'list' | 'form'>('list');
-  const [pin, setPin] = useState('');
-  const [pinConfirm, setPinConfirm] = useState('');
-  const [pinError, setPinError] = useState('');
-  const [pinNote, setPinNote] = useState('');
-  const storedHash = useRef<string | null>(null);
+  const [authError, setAuthError] = useState('');
+  const [signingIn, setSigningIn] = useState(false);
+  const [adminEmail, setAdminEmail] = useState('');
 
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<AppItem | null>(null);
@@ -134,27 +133,26 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
 
-  // Modal khulte hi PIN ki sthiti check karo (server par hai ya pehli baar banana hai)
+  // Modal khulte hi Admin Google sign-in ki sthiti check karo.
+  // Sirf ADMIN_EMAIL (a1mausy06@gmail.com) wala Google account Admin hai — PIN ab nahi chalta.
   useEffect(() => {
     if (!isOpen) return;
     setStage('checking');
     setView('list');
     setToast(null);
-    setPin('');
-    setPinConfirm('');
-    setPinError('');
-    setPinNote('');
+    setAuthError('');
     setSearch('');
     setConfirmDeleteId(null);
-    (async () => {
-      const cloud = await getAdminPinHash().catch(() => null);
-      let local: string | null = null;
-      try {
-        local = localStorage.getItem('premium_store_admin_pin');
-      } catch (e) {}
-      storedHash.current = cloud || local;
-      setStage(storedHash.current ? 'locked' : 'setup');
-    })();
+    const unsub = onAdminAuthChange((user) => {
+      if (user?.email === ADMIN_EMAIL) {
+        setAdminEmail(user.email || '');
+        setStage('unlocked');
+      } else {
+        setAdminEmail('');
+        setStage('locked');
+      }
+    });
+    return () => unsub();
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -164,39 +162,21 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     setTimeout(() => setToast(null), 4200);
   };
 
-  const handleSetupPin = async () => {
-    if (pin.length < 4) {
-      setPinError('PIN kam se kam 4 number ka rakho.');
-      return;
-    }
-    if (pin !== pinConfirm) {
-      setPinError('Dono PIN ek jaise nahi hain.');
-      return;
-    }
-    const hash = await sha256Hex(pin);
-    const savedCloud = await setAdminPinHash(hash).catch(() => false);
-    if (savedCloud) {
-      storedHash.current = hash;
-      setPinNote('PIN server par save ho gaya — kisi bhi phone se chalega.');
-    } else {
-      try {
-        localStorage.setItem('premium_store_admin_pin', hash);
-      } catch (e) {}
-      storedHash.current = hash;
-      setPinNote('PIN sirf is phone par save hua hai.');
-    }
-    setPinError('');
-    setStage('unlocked');
-  };
-
-  const handleUnlock = async () => {
-    const hash = await sha256Hex(pin);
-    if (hash === storedHash.current) {
-      setPinError('');
+  const handleGoogleSignIn = async () => {
+    setSigningIn(true);
+    setAuthError('');
+    const ok = await signInAdminWithGoogle();
+    setSigningIn(false);
+    if (ok) {
       setStage('unlocked');
     } else {
-      setPinError('Galat PIN. Dobara try karo.');
+      setAuthError('Sirf Admin Google account (a1mausy06@gmail.com) se sign-in karo. Galat account ya sign-in fail hua.');
     }
+  };
+
+  const handleSignOut = async () => {
+    await signOutAdmin();
+    setStage('locked');
   };
 
   const openAdd = () => {
@@ -336,7 +316,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     } else if (result === 'local') {
       showToast(
         'warn',
-        'Server par save NAHI hua (permission band hai) — sirf is phone par save hai. Mujhe batao, mai iska pakka fix bhej dunga.'
+        'Server par save NAHI hua — sirf is phone par save hai. Google se dobara sign-in karke try karo.'
       );
     } else {
       showToast('err', 'Save fail ho gaya. Internet check karke dobara try karo.');
@@ -454,54 +434,41 @@ export const AdminModal: React.FC<AdminModalProps> = ({
             </div>
           )}
 
-          {(stage === 'setup' || stage === 'locked') && (
+          {stage === 'locked' && (
             <div className="py-6 space-y-4 max-w-xs mx-auto text-center">
               <div className="w-14 h-14 rounded-3xl mx-auto flex items-center justify-center bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white shadow-lg shadow-fuchsia-600/30">
                 <Lock className="w-7 h-7" />
               </div>
-              <h4 className="font-black text-sm">
-                {stage === 'setup' ? 'Pehli Baar — Apna Admin PIN Banao' : 'Admin PIN Daalo'}
-              </h4>
+              <h4 className="font-black text-sm">Admin — Google Se Sign In Karo</h4>
               <p className="text-[11px] text-slate-400 leading-relaxed">
-                {stage === 'setup'
-                  ? 'Ye PIN sirf tumhe yaad rakhna hai — Admin Panel isi se khulega.'
-                  : 'Panel kholne ke liye apna PIN daalo.'}
+                Sirf owner ka Google account chalega (a1mausy06@gmail.com). PIN ab band hai — Google sign-in hi asli
+                security hai.
               </p>
-              <input
-                type="password"
-                inputMode="numeric"
-                value={pin}
-                onChange={(e) => setPin(e.target.value)}
-                placeholder="PIN (kam se kam 4 number)"
-                className={`${inputCls} text-center tracking-[0.4em]`}
-              />
-              {stage === 'setup' && (
-                <input
-                  type="password"
-                  inputMode="numeric"
-                  value={pinConfirm}
-                  onChange={(e) => setPinConfirm(e.target.value)}
-                  placeholder="PIN dobara daalo"
-                  className={`${inputCls} text-center tracking-[0.4em]`}
-                />
-              )}
-              {pinError && <p className="text-[11px] font-semibold text-rose-400">{pinError}</p>}
+              {authError && <p className="text-[11px] font-semibold text-rose-400">{authError}</p>}
               <button
-                onClick={stage === 'setup' ? handleSetupPin : handleUnlock}
-                className="btn-live w-full py-3 px-4 rounded-xl font-black text-sm uppercase tracking-wider text-white shadow-lg active:scale-95 transition cursor-pointer"
+                onClick={handleGoogleSignIn}
+                disabled={signingIn}
+                className="btn-live w-full py-3 px-4 rounded-xl font-black text-sm uppercase tracking-wider text-white shadow-lg active:scale-95 transition cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
               >
-                <span>{stage === 'setup' ? 'PIN Set Karo' : 'Panel Kholo'}</span>
+                {signingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                <span>{signingIn ? 'Sign In Ho Raha Hai…' : 'Google Se Sign In Karo'}</span>
               </button>
             </div>
           )}
 
           {stage === 'unlocked' && view === 'list' && (
             <div className="space-y-3">
-              {pinNote && (
-                <p className="text-[11px] font-semibold text-sky-400 bg-sky-500/10 border border-sky-500/30 rounded-xl px-3 py-2">
-                  {pinNote}
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-3 py-2">
+                  Admin: {adminEmail || ADMIN_EMAIL}
                 </p>
-              )}
+                <button
+                  onClick={handleSignOut}
+                  className="text-[11px] font-bold text-slate-400 hover:text-white px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 transition cursor-pointer whitespace-nowrap"
+                >
+                  Sign Out
+                </button>
+              </div>
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
