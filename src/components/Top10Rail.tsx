@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Download } from 'lucide-react';
 import type { AppItem } from '../types';
 import { formatCount } from '../utils/screenshots';
+import { letterIconDataUri } from '../utils/letterIcon';
 
 interface RankedApp {
   app: AppItem;
@@ -102,6 +103,10 @@ export function Top10Rail({ ranked, onSelect }: Props) {
                   loading="lazy"
                   decoding="async"
                   className="w-14 h-14 rounded-xl object-cover bg-slate-800"
+                  onError={(e) => {
+                    const img = e.target as HTMLImageElement;
+                    if (!img.src.startsWith('data:image/svg+xml')) img.src = letterIconDataUri(app.name);
+                  }}
                 />
               ) : (
                 <span className="w-14 h-14 rounded-xl bg-violet-600/20 text-violet-300 flex items-center justify-center text-xl font-extrabold">

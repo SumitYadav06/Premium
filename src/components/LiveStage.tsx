@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { AppItem } from '../types';
 import { VerifiedBadge } from './VerifiedBadge';
+import { letterIconDataUri } from '../utils/letterIcon';
 
 /* ================= LIVE BACKGROUND — video jaisa jeeta-jagta scene ================= */
 
@@ -242,7 +243,7 @@ export const RecentlyViewedRow: React.FC<RecentlyViewedRowProps> = ({ apps, onSe
                 : 'bg-white border-slate-200 text-slate-700 shadow-sm hover:border-cyan-300'
             }`}
           >
-            <img loading="lazy" src={app.icon} alt={app.name} className="w-7 h-7 rounded-full object-cover bg-slate-900" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            <img loading="lazy" src={app.icon || letterIconDataUri(app.name)} alt={app.name} className="w-7 h-7 rounded-full object-cover bg-slate-900" onError={(e) => { const img = e.target as HTMLImageElement; if (!img.src.startsWith('data:image/svg+xml')) img.src = letterIconDataUri(app.name); }} />
             <span className="text-[11px] font-bold max-w-[110px] truncate">{app.name}</span>
             <Eye className="w-3 h-3 text-cyan-500" />
           </button>
