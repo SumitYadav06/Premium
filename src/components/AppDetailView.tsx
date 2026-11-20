@@ -304,9 +304,12 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
     }
   }
 
-  // If no screenshots provided, use app icon as fallback preview
-  const screenshots = uniqueScreenshots.length > 0 
-    ? uniqueScreenshots 
+  // If no screenshots provided, use app icon as fallback preview.
+  // hasRealScreenshots stays false so the store never pretends the icon
+  // is a screenshot — it shows the icon + description instead.
+  const hasRealScreenshots = uniqueScreenshots.length > 0;
+  const screenshots = uniqueScreenshots.length > 0
+    ? uniqueScreenshots
     : (app.icon ? [app.icon] : []);
 
   // Real views count directly from Firebase stats or app data (NO fake numbers)
@@ -701,8 +704,8 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
         </div>
       </div>
 
-      {/* Screenshots Showcase Carousel */}
-      {screenshots.length > 0 && (
+      {/* Screenshots Showcase Carousel — only when real screenshots exist */}
+      {hasRealScreenshots ? (
         <div className="space-y-3">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
@@ -733,6 +736,27 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
                 }}
               />
             ))}
+          </div>
+        </div>
+      ) : (
+        <div
+          className={`p-5 rounded-3xl border flex items-center gap-4 ${
+            theme === 'dark' ? 'bg-slate-900/60 border-slate-800/80' : 'bg-white border-slate-200'
+          }`}
+        >
+          <img
+            src={app.icon || 'https://placehold.co/160x160/111827/9333ea?text=App'}
+            alt={app.name}
+            className="w-16 h-16 rounded-2xl object-cover flex-shrink-0"
+          />
+          <div>
+            <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">
+              Preview & Screenshots
+            </h3>
+            <p className={`text-xs mt-1 leading-relaxed ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
+              Is app ke screenshots abhi upload nahi hue hain — neeche description padho, ya
+              Admin se Auto-fetch karke screenshots add karo.
+            </p>
           </div>
         </div>
       )}
