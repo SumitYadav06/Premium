@@ -109,6 +109,8 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
             <img
               src={current.p1 || current.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80"}
               alt={current.name}
+              fetchPriority="high"
+              decoding="async"
               className="kenburns w-full h-full object-cover opacity-70"
               onError={(e) => {
                 const t = e.target as HTMLImageElement;
@@ -150,6 +152,9 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
                 <img
                   src={current.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}
                   alt={current.name}
+                  decoding="async"
+                  width="96"
+                  height="96"
                   onError={(e) => {
                     const t = e.target as HTMLImageElement;
                     if (!t.dataset.fb) {

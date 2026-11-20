@@ -12,6 +12,23 @@ export default defineConfig(() => {
         '@': path.resolve(__dirname, '.'),
       },
     },
+    build: {
+      // Pehla bundle chhota + cacheable: vendor code alag chunks me,
+      // taaki har deploy par poora bundle dobara download na ho.
+      chunkSizeWarningLimit: 600,
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (!id.includes('node_modules')) return undefined;
+            if (id.includes('firebase')) return 'vendor-firebase';
+            if (id.includes('motion')) return 'vendor-motion';
+            if (id.includes('lucide-react') || id.includes('canvas-confetti')) return 'vendor-ui';
+            if (id.includes('/react-dom/') || id.includes('/react/') || id.includes('scheduler')) return 'vendor-react';
+            return 'vendor';
+          },
+        },
+      },
+    },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modify—file watching is disabled to prevent flickering during agent edits.

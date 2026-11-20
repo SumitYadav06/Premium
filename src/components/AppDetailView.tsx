@@ -69,7 +69,7 @@ const ScreenshotThumbnail: React.FC<{
       <img
         src={imgSrc}
         alt={`Preview ${idx + 1}`}
-        loading="eager"
+        loading={idx === 0 ? 'eager' : 'lazy'}
         decoding="async"
         referrerPolicy="no-referrer"
         onError={handleError}
@@ -582,6 +582,9 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
               <img
                 src={app.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}
                 alt={app.name}
+                decoding="async"
+                width="112"
+                height="112"
                 className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl sm:rounded-3xl object-cover bg-slate-950"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src =
@@ -948,6 +951,10 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
                 <img
                   src={rel.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}
                   alt={rel.name}
+                  loading="lazy"
+                  decoding="async"
+                  width="48"
+                  height="48"
                   className="w-12 h-12 rounded-xl object-cover border border-amber-500/20 group-hover:scale-105 transition"
                 />
                 <div className="min-w-0 flex-1">

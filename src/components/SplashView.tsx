@@ -109,6 +109,10 @@ export const SplashView: React.FC<SplashViewProps> = ({
                 <img
                   src={logoUrl || STORE_CONFIG.STORE_SPLASH_LOGO || STORE_CONFIG.STORE_APP_ICON}
                   alt={STORE_CONFIG.STORE_NAME}
+                  decoding="async"
+                  fetchPriority="high"
+                  width="192"
+                  height="192"
                   className="w-full h-full object-cover rounded-[2.1rem]"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;

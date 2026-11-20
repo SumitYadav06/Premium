@@ -542,10 +542,7 @@ export default function App() {
       },
       (loadedStats) => {
         setStats(loadedStats);
-      },
-      // Kill switch hata diya gaya hai — store_status ab ignore hota hai,
-      // store hamesha chalu rahega
-      () => {}
+      }
     );
 
     // Network slow ho to loading par atka mat rakho — 8 second me screen khol do,

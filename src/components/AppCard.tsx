@@ -79,6 +79,7 @@ export const AppCard: React.FC<AppCardProps> = ({
         <div className="absolute inset-0 overflow-hidden rounded-t-[1.6rem]">
           <img
             loading="lazy"
+            decoding="async"
             src={app.p1 || app.icon || FALLBACK_IMG}
             alt=""
             aria-hidden="true"
@@ -126,7 +127,11 @@ export const AppCard: React.FC<AppCardProps> = ({
             <img
               src={app.icon || FALLBACK_IMG}
               alt={app.name}
-              loading="lazy" className="relative w-[68px] h-[68px] rounded-[21px] object-cover bg-slate-950 block border-[2.5px] border-white shadow-xl group-hover:scale-[1.06] transition duration-300"
+              loading="lazy"
+              decoding="async"
+              width="68"
+              height="68"
+              className="relative w-[68px] h-[68px] rounded-[21px] object-cover bg-slate-950 block border-[2.5px] border-white shadow-xl group-hover:scale-[1.06] transition duration-300"
               onError={(e) => {
                 (e.target as HTMLImageElement).src = FALLBACK_IMG;
               }}

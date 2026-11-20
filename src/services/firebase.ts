@@ -89,8 +89,7 @@ export function getAppKey(appNameOrId: string): string {
 
 export function subscribeToApps(
   onApps: (apps: AppItem[]) => void,
-  onStats: (stats: Record<string, AppStats>) => void,
-  onStatus: (status: StoreStatus) => void
+  onStats: (stats: Record<string, AppStats>) => void
 ) {
   // 1. Immediately emit cached real apps to eliminate flash of dummy/empty apps
   try {
@@ -110,18 +109,15 @@ export function subscribeToApps(
         const parsed = JSON.parse(custom);
         if (Array.isArray(parsed) && parsed.length > 0) {
           onApps(parsed);
-          onStatus({ active: true, msg: "Store is Active", link: "#" });
           return () => {};
         }
       }
     } catch (e) {}
-    onStatus({ active: true, msg: "Store is Active", link: "#" });
     return () => {};
   }
 
   const appsRef = ref(db, 'apps_list');
   const statsRef = ref(db, 'stats');
-  const statusRef = ref(db, 'store_status');
 
   const unsubApps = onValue(
     appsRef,
@@ -157,25 +153,9 @@ export function subscribeToApps(
     }
   );
 
-  const unsubStatus = onValue(
-    statusRef,
-    (snapshot) => {
-      if (snapshot.exists()) {
-        onStatus(snapshot.val());
-      } else {
-        onStatus({ active: true, msg: "Welcome to Premium Store", link: "#" });
-      }
-    },
-    (err) => {
-      console.warn("Store status error:", err);
-      onStatus({ active: true, msg: "Welcome to Premium Store", link: "#" });
-    }
-  );
-
   return () => {
     unsubApps();
     unsubStats();
-    unsubStatus();
   };
 }
 

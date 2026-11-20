@@ -57,6 +57,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               <img
                 src={STORE_CONFIG.STORE_APP_ICON}
                 alt={STORE_CONFIG.STORE_NAME}
+                decoding="async"
+                fetchPriority="high"
+                width="44"
+                height="44"
                 className="w-full h-full object-cover rounded-[12px]"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
