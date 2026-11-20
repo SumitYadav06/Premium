@@ -95,6 +95,14 @@ export default function App() {
   // UI Filters
   const [theme, setTheme] = useState<'dark' | 'light'>('light');
   const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Search button / keyboard "Search" key par mobile keyboard band karo (YouTube jaisa).
+  // Instant search waise hi chalta hai — sirf keyboard dismiss hota hai.
+  const dismissSearchKeyboard = (e: React.FormEvent) => {
+    e.preventDefault();
+    searchInputRef.current?.blur();
+  };
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = React.useRef<any>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -857,13 +865,17 @@ export default function App() {
             {/* Search Input & Controls Bar */}
             <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
               {/* Search Bar */}
-              <div className="relative flex-1 search-live">
+              <form className="relative flex-1 search-live" onSubmit={dismissSearchKeyboard}>
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-400" />
                 <input
+                  ref={searchInputRef}
                   type="text"
+                  enterKeyHint="search"
+                  inputMode="search"
                   placeholder={isListening ? "Listening... Speak now..." : rotatingPlaceholder}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); searchInputRef.current?.blur(); } }}
                   className={`w-full pl-10 pr-20 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm font-medium transition focus:outline-none ${
                     isListening
                       ? 'border-amber-500 ring-2 ring-amber-500/30 animate-pulse'
@@ -879,6 +891,7 @@ export default function App() {
                 <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
                   {searchQuery && (
                     <button
+                      type="button"
                       onClick={() => setSearchQuery('')}
                       className="p-1 rounded-full text-slate-400 hover:text-white hover:bg-slate-800/60 transition cursor-pointer"
                       title="Clear Search"
@@ -906,7 +919,7 @@ export default function App() {
                     )}
                   </button>
                 </div>
-              </div>
+              </form>
 
               {/* High-Visibility Eye-Catching Guide Button & Sort Selector */}
               <div className="flex items-center gap-2 sm:gap-2.5">
