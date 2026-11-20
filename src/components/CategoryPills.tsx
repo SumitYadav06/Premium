@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Gamepad2, Wrench, Share2, Video, Music } from 'lucide-react';
+import { Sparkles, Gamepad2, Wrench, Share2, Video, Music, Clapperboard, Image, Popcorn, Dumbbell, GraduationCap } from 'lucide-react';
 
 interface CategoryPillsProps {
   categories: string[];
@@ -15,7 +15,12 @@ const CAT_ICONS: Record<string, React.ReactNode> = {
   Games: <Gamepad2 className="w-3.5 h-3.5" />,
   Social: <Share2 className="w-3.5 h-3.5" />,
   Video: <Video className="w-3.5 h-3.5" />,
-  Music: <Music className="w-3.5 h-3.5" />
+  Music: <Music className="w-3.5 h-3.5" />,
+  'Video Editing': <Clapperboard className="w-3.5 h-3.5" />,
+  'Photo Editing': <Image className="w-3.5 h-3.5" />,
+  Entertainment: <Popcorn className="w-3.5 h-3.5" />,
+  'Health & Fitness': <Dumbbell className="w-3.5 h-3.5" />,
+  Education: <GraduationCap className="w-3.5 h-3.5" />
 };
 
 export const CategoryPills: React.FC<CategoryPillsProps> = ({
