@@ -1240,10 +1240,6 @@ export default function App() {
       <OwnerModal
         isOpen={isOwnerModalOpen}
         onClose={closeOwnerModal}
-        onOpenAdmin={() => {
-          closeOwnerModal();
-          openAdmin();
-        }}
         theme={theme}
       />
 
