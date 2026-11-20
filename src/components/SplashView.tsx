@@ -93,17 +93,16 @@ export const SplashView: React.FC<SplashViewProps> = ({
           ))}
 
           <div className="relative flex flex-col items-center text-center z-10 max-w-sm w-full">
-            {/* Logo — do ghumte hue rings ke beech */}
+            {/* Logo — static gradient rings ke beech */}
             <motion.div
               initial={{ scale: 0.5, opacity: 0, rotate: -8 }}
               animate={{ scale: 1, opacity: 1, rotate: 0 }}
               transition={{ type: 'spring', stiffness: 160, damping: 15 }}
               className="relative mb-6"
             >
-              <div className="absolute -inset-3.5 rounded-[3rem] ring-conic opacity-80 blur-[3px]" aria-hidden="true" />
+              <div className="absolute -inset-3.5 rounded-[3rem] bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-orange-400 opacity-80 blur-[3px]" aria-hidden="true" />
               <div
-                className="absolute -inset-3.5 rounded-[3rem] ring-conic opacity-50"
-                style={{ animationDirection: 'reverse', animationDuration: '9s' }}
+                className="absolute -inset-3.5 rounded-[3rem] bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-orange-400 opacity-50"
                 aria-hidden="true"
               />
               <div className="anim-float relative w-40 h-40 sm:w-48 sm:h-48 rounded-[2.6rem] overflow-hidden bg-white border-[3px] border-white shadow-2xl shadow-fuchsia-300/60 p-1.5">

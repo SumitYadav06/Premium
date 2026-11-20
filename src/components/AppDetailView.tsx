@@ -577,7 +577,7 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
 
         <div className="flex items-center gap-4 sm:gap-6 relative z-10">
           <div className="relative flex-shrink-0">
-            <div className="absolute -inset-1 rounded-[26px] sm:rounded-[34px] ring-conic opacity-60 blur-[5px]" aria-hidden="true" />
+            <div className="absolute -inset-1 rounded-[26px] sm:rounded-[34px] bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-orange-400 opacity-60 blur-[5px]" aria-hidden="true" />
             <div className="anim-float relative p-0.5 rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-orange-400 shadow-lg">
               <img
                 src={app.icon || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}

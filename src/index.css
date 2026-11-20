@@ -323,13 +323,9 @@ html {
   animation: eqBounce 0.9s ease-in-out infinite;
 }
 
-/* Rotating conic ring — icon ke peeche ghumta hua rang */
-@keyframes spinSlow {
-  to { transform: rotate(360deg); }
-}
+/* Static conic ring — ghumta NAHI hai (pehle spinSlow se rotate karta tha, hata diya) */
 .ring-conic {
   background: conic-gradient(from 0deg, #f43f5e, #f59e0b, #84cc16, #06b6d4, #8b5cf6, #ec4899, #f43f5e);
-  animation: spinSlow 5s linear infinite;
 }
 
 /* Hero slide timeline — video progress bar */

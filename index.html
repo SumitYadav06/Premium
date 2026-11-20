@@ -97,21 +97,16 @@
           try { sessionStorage.removeItem('aj_boot_tries'); } catch (e) {}
           location.replace(location.origin + location.pathname + '?aj_boot=' + Date.now());
         };
+        // Auto-reload hata diya — slow phone par page khud reload nahi hoga.
+        // 9 second me boot na ho to sirf retry button dikhao.
         setTimeout(function () {
           if (window.__AJ_BOOTED) return;
-          var tries = 0;
-          try { tries = +(sessionStorage.getItem('aj_boot_tries') || 0); } catch (e) {}
-          if (tries < 2) {
-            try { sessionStorage.setItem('aj_boot_tries', String(tries + 1)); } catch (e) {}
-            location.replace(location.origin + location.pathname + '?aj_boot=' + Date.now());
-          } else {
-            var r = document.getElementById('aj-boot-retry');
-            var s = document.getElementById('aj-boot-spin');
-            var sub = document.getElementById('aj-boot-sub');
-            if (r) r.style.display = 'block';
-            if (s) s.style.display = 'none';
-            if (sub) sub.style.display = 'none';
-          }
+          var r = document.getElementById('aj-boot-retry');
+          var s = document.getElementById('aj-boot-spin');
+          var sub = document.getElementById('aj-boot-sub');
+          if (r) r.style.display = 'block';
+          if (s) s.style.display = 'none';
+          if (sub) sub.style.display = 'none';
         }, 9000);
       })();
     </script>
