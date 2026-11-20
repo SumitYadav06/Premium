@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Gamepad2, Wrench, Share2, Video, Music, Clapperboard, Image, Popcorn, Dumbbell, GraduationCap } from 'lucide-react';
+import { Sparkles, Gamepad2, Wrench, Share2, Video, Music, Clapperboard, Image, Popcorn, Dumbbell, GraduationCap, Wallet, ShoppingBag, UtensilsCrossed, Plane, MessageCircle, ListChecks, Palette, Heart, Trophy, Newspaper, Briefcase, HeartHandshake, BookOpen, CloudSun, Navigation, ShieldCheck, Lock, LayoutGrid, Keyboard, Paintbrush, Globe, Camera, Bot } from 'lucide-react';
 
 interface CategoryPillsProps {
   categories: string[];
@@ -20,7 +20,30 @@ const CAT_ICONS: Record<string, React.ReactNode> = {
   'Photo Editing': <Image className="w-3.5 h-3.5" />,
   Entertainment: <Popcorn className="w-3.5 h-3.5" />,
   'Health & Fitness': <Dumbbell className="w-3.5 h-3.5" />,
-  Education: <GraduationCap className="w-3.5 h-3.5" />
+  Education: <GraduationCap className="w-3.5 h-3.5" />,
+  Finance: <Wallet className="w-3.5 h-3.5" />,
+  Shopping: <ShoppingBag className="w-3.5 h-3.5" />,
+  'Food & Drink': <UtensilsCrossed className="w-3.5 h-3.5" />,
+  Travel: <Plane className="w-3.5 h-3.5" />,
+  Communication: <MessageCircle className="w-3.5 h-3.5" />,
+  Productivity: <ListChecks className="w-3.5 h-3.5" />,
+  Personalization: <Palette className="w-3.5 h-3.5" />,
+  Lifestyle: <Heart className="w-3.5 h-3.5" />,
+  Sports: <Trophy className="w-3.5 h-3.5" />,
+  News: <Newspaper className="w-3.5 h-3.5" />,
+  Business: <Briefcase className="w-3.5 h-3.5" />,
+  Dating: <HeartHandshake className="w-3.5 h-3.5" />,
+  Books: <BookOpen className="w-3.5 h-3.5" />,
+  Weather: <CloudSun className="w-3.5 h-3.5" />,
+  'Maps & Navigation': <Navigation className="w-3.5 h-3.5" />,
+  Security: <ShieldCheck className="w-3.5 h-3.5" />,
+  VPN: <Lock className="w-3.5 h-3.5" />,
+  Launcher: <LayoutGrid className="w-3.5 h-3.5" />,
+  Keyboard: <Keyboard className="w-3.5 h-3.5" />,
+  Wallpaper: <Paintbrush className="w-3.5 h-3.5" />,
+  Browser: <Globe className="w-3.5 h-3.5" />,
+  Camera: <Camera className="w-3.5 h-3.5" />,
+  'AI Tools': <Bot className="w-3.5 h-3.5" />
 };
 
 export const CategoryPills: React.FC<CategoryPillsProps> = ({
