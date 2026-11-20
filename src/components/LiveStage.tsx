@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { motion } from 'motion/react';
 import {
   Flame,
@@ -73,8 +73,41 @@ interface TopChartsRailProps {
 }
 
 export const TopChartsRail: React.FC<TopChartsRailProps> = ({ ranked, onSelect, theme }) => {
-  if (ranked.length === 0) return null;
   const top = ranked.slice(0, 10);
+
+  /* HORIZONTAL AUTO-SCROLL — bahut slow ping-pong (1 se 10, phir wapas).
+     ~0.35px/frame ≈ 21px/sec — slow motion, smooth. User chhu le / hover kare
+     to 2.5 sec ke liye rukta hai, phir khud chalne lagta hai. */
+  const railRef = useRef<HTMLDivElement | null>(null);
+  const dirRef = useRef<1 | -1>(1);
+  const hoverRef = useRef(false);
+  const lastTouchRef = useRef(0);
+
+  useEffect(() => {
+    const el = railRef.current;
+    if (!el) return;
+    // Reduce Motion on ho to auto-scroll band — user khud scroll karega
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let raf = 0;
+    const tick = () => {
+      const node = railRef.current;
+      if (node) {
+        const max = node.scrollWidth - node.clientWidth;
+        const idle = performance.now() - lastTouchRef.current > 2500;
+        if (!hoverRef.current && idle && max > 4) {
+          let next = node.scrollLeft + dirRef.current * 0.35;
+          if (next >= max) { next = max; dirRef.current = -1; }
+          else if (next <= 0) { next = 0; dirRef.current = 1; }
+          node.scrollLeft = next;
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  if (top.length === 0) return null;
 
   return (
     <div className="space-y-2.5 anim-fade-up">
@@ -99,7 +132,15 @@ export const TopChartsRail: React.FC<TopChartsRailProps> = ({ ranked, onSelect, 
         </span>
       </div>
 
-      <div className="flex gap-3 overflow-x-auto pb-2 pt-1 px-1 scrollbar-none snap-x snap-mandatory select-none">
+      <div
+        ref={railRef}
+        onPointerDown={() => { lastTouchRef.current = performance.now(); }}
+        onWheel={() => { lastTouchRef.current = performance.now(); }}
+        onTouchStart={() => { lastTouchRef.current = performance.now(); }}
+        onMouseEnter={() => { hoverRef.current = true; }}
+        onMouseLeave={() => { hoverRef.current = false; lastTouchRef.current = performance.now(); }}
+        className="flex gap-3 overflow-x-auto pb-2 pt-1 px-1 scrollbar-none select-none"
+      >
         {top.map(({ app, downloads }, idx) => (
           <motion.button
             key={app.id}
@@ -109,13 +150,13 @@ export const TopChartsRail: React.FC<TopChartsRailProps> = ({ ranked, onSelect, 
             whileTap={{ scale: 0.96 }}
             whileHover={{ y: -4, scale: 1.02 }}
             onClick={() => onSelect(app)}
-            className={`snap-start shrink-0 w-[228px] text-left rounded-3xl p-3 flex items-center gap-3 border cursor-pointer transition ${
+            className={`shrink-0 w-[228px] text-left rounded-3xl p-3 flex items-center gap-3 border cursor-pointer transition ${
               theme === 'dark'
                 ? 'bg-white/[0.05] border-white/10 hover:border-amber-400/50'
                 : 'bg-white border-slate-200/90 hover:border-amber-300 shadow-[0_10px_26px_-12px_rgba(245,158,11,0.35)]'
             }`}
           >
-            <span className="rank-num text-[42px] font-black leading-none w-11 text-center shrink-0">{idx + 1}</span>
+            <span className={`rank-num ${idx === 0 ? 'rank-1' : idx === 1 ? 'rank-2' : idx === 2 ? 'rank-3' : ''} text-[40px] font-black leading-none w-[52px] text-center shrink-0`}>{idx + 1}</span>
             <img
               src={app.icon}
               alt={app.name}
