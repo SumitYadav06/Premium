@@ -21,9 +21,10 @@ export interface AppItem {
   downloads?: number;
   rating?: number;
   changelog?: string;
+  architecture?: string;
   isHot?: boolean;
   isFeatured?: boolean;
-  [key: string]: unknown;
+  [key: string]: any;
 }
 
 export interface ReviewItem {
@@ -45,6 +46,22 @@ export interface StoreStatus {
   active: boolean;
   msg: string;
   link: string;
+}
+
+export interface DownloadTask {
+  appId: string;
+  appName: string;
+  appIcon: string;
+  version: string;
+  sizeMb: string | number;
+  progress: number;
+  status: 'pending' | 'downloading' | 'verifying' | 'ready' | 'installed' | 'failed';
+  downloadUrl: string;
+  speed?: string;
+  downloadedBytes?: number;
+  totalBytes?: number;
+  startedAt: number;
+  completedAt?: number;
 }
 
 export interface AppRequestItem {

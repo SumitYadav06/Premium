@@ -1,16 +1,9 @@
-import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
-import {
-  getDatabase,
-  ref,
-  onValue,
-  set,
-  runTransaction,
-  push,
-  type Database,
-} from 'firebase/database';
-import type { AppItem, AppStats, ReviewItem, StoreStatus } from '../types';
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { getDatabase, ref, onValue, set, get, Database, DatabaseReference, runTransaction, push } from 'firebase/database';
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, User, Auth } from 'firebase/auth';
+import { AppItem, AppStats, ReviewItem, StoreStatus } from '../types';
 
-// Firebase config — same project (premium-store-24880) as before, reused verbatim.
+// Encrypted keys from user app
 const _k = [
   "QUl6YVN5QWNObmx3RWZFUG55NnJTY3RMYVJET3N3ZlBlU05nR3NZ",
   "cHJlbWl1bS1zdG9yZS0yNDg4MC5maXJlYmFzZWFwcC5jb20=",
@@ -28,18 +21,65 @@ const dc = (v: string) => {
 
 let app: FirebaseApp | null = null;
 let db: Database | null = null;
+let auth: Auth | null = null;
+
+/** Sirf ye Google account Admin hai — Rules me bhi yahi email check hota hai. */
+export const ADMIN_EMAIL = 'a1mausy06@gmail.com';
 
 try {
   const firebaseConfig = {
     apiKey: dc(_k[0]),
     authDomain: dc(_k[1]),
     projectId: dc(_k[2]),
-    databaseURL: 'https://' + dc(_k[3]),
+    databaseURL: "https://" + dc(_k[3])
   };
-  app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+
+  if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    app = getApps()[0];
+  }
   db = getDatabase(app);
+  auth = getAuth(app);
 } catch (e) {
-  console.warn('Firebase initialization skipped:', e);
+  console.warn("Firebase initialization skipped/fallback enabled:", e);
+}
+
+/** Admin Google sign-in — Admin Panel kholne ke liye. Sirf ADMIN_EMAIL wala account chalega. */
+export async function signInAdminWithGoogle(): Promise<boolean> {
+  if (!auth) return false;
+  try {
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    if (result.user?.email === ADMIN_EMAIL) return true;
+    // Galat Google account se sign-in hua — turant sign-out karo.
+    await signOut(auth).catch(() => {});
+    return false;
+  } catch (e) {
+    console.warn('Admin Google sign-in failed:', e);
+    return false;
+  }
+}
+
+export function getAdminUser(): User | null {
+  return auth?.currentUser || null;
+}
+
+export function isAdminSignedIn(): boolean {
+  return getAdminUser()?.email === ADMIN_EMAIL;
+}
+
+export function onAdminAuthChange(cb: (user: User | null) => void): () => void {
+  if (!auth) {
+    cb(null);
+    return () => {};
+  }
+  return onAuthStateChanged(auth, cb);
+}
+
+export async function signOutAdmin(): Promise<void> {
+  if (!auth) return;
+  await signOut(auth).catch(() => {});
 }
 
 export function getAppKey(appNameOrId: string): string {
@@ -47,49 +87,70 @@ export function getAppKey(appNameOrId: string): string {
   return appNameOrId.trim().replace(/[\s./#$[\]]+/g, '-').toLowerCase();
 }
 
-/** Live subscription: `apps_list` + `stats`. Emits the cached list first so the store never flashes empty. */
 export function subscribeToApps(
   onApps: (apps: AppItem[]) => void,
-  onStats: (stats: Record<string, AppStats>) => void,
-): () => void {
+  onStats: (stats: Record<string, AppStats>) => void
+) {
+  // 1. Immediately emit cached real apps to eliminate flash of dummy/empty apps
   try {
     const cached = localStorage.getItem('premium_store_cached_apps');
     if (cached) {
       const parsed = JSON.parse(cached);
-      if (Array.isArray(parsed) && parsed.length > 0) onApps(parsed);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        onApps(parsed);
+      }
     }
-  } catch {
-    /* no cache — live data will arrive below */
+  } catch (e) {}
+
+  if (!db) {
+    try {
+      const custom = localStorage.getItem('premium_store_custom_apps');
+      if (custom) {
+        const parsed = JSON.parse(custom);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          onApps(parsed);
+          return () => {};
+        }
+      }
+    } catch (e) {}
+    return () => {};
   }
 
-  if (!db) return () => {};
+  const appsRef = ref(db, 'apps_list');
+  const statsRef = ref(db, 'stats');
 
   const unsubApps = onValue(
-    ref(db, 'apps_list'),
+    appsRef,
     (snapshot) => {
-      if (!snapshot.exists()) return;
-      const val = snapshot.val();
-      const list: AppItem[] = Array.isArray(val)
-        ? val.filter(Boolean)
-        : Object.keys(val).map((k) => ({ ...val[k], id: val[k].id || k }));
-      if (list.length > 0) {
-        onApps(list);
-        try {
-          localStorage.setItem('premium_store_cached_apps', JSON.stringify(list));
-        } catch {
-          /* storage full/blocked — ignore */
+      if (snapshot.exists()) {
+        const val = snapshot.val();
+        const list: AppItem[] = Array.isArray(val)
+          ? val.filter(Boolean)
+          : Object.keys(val).map((k) => ({ ...val[k], id: val[k].id || k }));
+        if (list.length > 0) {
+          onApps(list);
+          try {
+            localStorage.setItem('premium_store_cached_apps', JSON.stringify(list));
+          } catch (e) {}
         }
       }
     },
-    (err) => console.warn('Apps read fallback:', err),
+    (err) => {
+      console.warn("Apps read fallback:", err);
+    }
   );
 
   const unsubStats = onValue(
-    ref(db, 'stats'),
+    statsRef,
     (snapshot) => {
-      if (snapshot.exists()) onStats(snapshot.val() || {});
+      if (snapshot.exists()) {
+        const rawStats = snapshot.val() || {};
+        onStats(rawStats);
+      }
     },
-    (err) => console.warn('Stats read error:', err),
+    (err) => {
+      console.warn("Stats read error:", err);
+    }
   );
 
   return () => {
@@ -98,127 +159,189 @@ export function subscribeToApps(
   };
 }
 
-/** Live subscription: `store_status` (kill switch / announcement). */
-export function subscribeToStoreStatus(onStatus: (s: StoreStatus | null) => void): () => void {
-  if (!db) return () => {};
-  return onValue(
-    ref(db, 'store_status'),
-    (snapshot) => {
-      onStatus(snapshot.exists() ? (snapshot.val() as StoreStatus) : null);
-    },
-    () => onStatus(null),
-  );
-}
-
-export async function incrementAppView(appNameOrId: string): Promise<void> {
-  if (!appNameOrId || !db) return;
-  try {
-    await runTransaction(ref(db, `stats/${getAppKey(appNameOrId)}/views`), (c) => (c || 0) + 1);
-  } catch (e) {
-    console.warn('View increment fallback:', e);
+export async function incrementAppView(appNameOrId: string) {
+  if (!appNameOrId) return;
+  const key = getAppKey(appNameOrId);
+  
+  if (db) {
+    try {
+      const viewRef = ref(db, `stats/${key}/views`);
+      await runTransaction(viewRef, (current) => (current || 0) + 1);
+    } catch (e) {
+      console.warn("View increment fallback", e);
+    }
   }
 }
 
-export async function incrementAppDownload(appNameOrId: string): Promise<void> {
-  if (!appNameOrId || !db) return;
-  try {
-    await runTransaction(ref(db, `stats/${getAppKey(appNameOrId)}/downloads`), (c) => (c || 0) + 1);
-  } catch (e) {
-    console.warn('Download increment fallback:', e);
+export async function incrementAppDownload(appNameOrId: string) {
+  if (!appNameOrId) return;
+  const key = getAppKey(appNameOrId);
+  
+  if (db) {
+    try {
+      const dlRef = ref(db, `stats/${key}/downloads`);
+      await runTransaction(dlRef, (current) => (current || 0) + 1);
+    } catch (e) {
+      console.warn("Download increment fallback", e);
+    }
   }
 }
 
-/** Review -> `stats/<slug>/comments` (push). Returns false only when the input is invalid. */
-export async function addAppReview(
-  appNameOrId: string,
-  review: { user: string; text: string; rating: number },
-): Promise<boolean> {
+export async function addAppReview(appNameOrId: string, review: { user: string; text: string; rating: number }) {
   if (!appNameOrId || !review.user || !review.text) return false;
   const key = getAppKey(appNameOrId);
+
   const newReview: ReviewItem = {
     user: review.user.trim(),
     text: review.text.trim(),
     rating: review.rating || 5,
     time: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-    verified: true,
+    verified: true
   };
 
   if (db) {
     try {
-      await push(ref(db, `stats/${key}/comments`), newReview);
+      const commentsRef = ref(db, `stats/${key}/comments`);
+      await push(commentsRef, newReview);
     } catch (e) {
-      console.warn('Firebase post review failed:', e);
+      console.warn("Firebase post review failed:", e);
     }
   }
 
-  // Local backup so the review shows instantly on this device.
+  // Local storage backup for instant local feedback
   try {
     const localKey = `reviews_${key}`;
-    const stored: ReviewItem[] = JSON.parse(localStorage.getItem(localKey) || '[]');
+    const stored = JSON.parse(localStorage.getItem(localKey) || '[]');
     stored.unshift(newReview);
     localStorage.setItem(localKey, JSON.stringify(stored));
-  } catch {
-    /* ignore */
+    return true;
+  } catch (e) {
+    console.error("Local review store error:", e);
+    return true;
   }
-  return true;
 }
 
-/** App request -> `requests` collection. */
+export async function saveAppToStore(appItem: AppItem): Promise<boolean> {
+  if (!appItem.name) return false;
+  // Admin-only: bina Admin Google sign-in ke Firebase me save nahi hoga.
+  if (!isAdminSignedIn()) return false;
+  const appId = appItem.id || `app_${Date.now()}`;
+  const appToSave: AppItem = {
+    ...appItem,
+    id: appId,
+    downloads: appItem.downloads || 1200,
+    rating: appItem.rating || 4.9
+  };
+
+  if (db) {
+    try {
+      const appRef = ref(db, `apps_list/${appId}`);
+      await set(appRef, appToSave);
+      return true;
+    } catch (e) {
+      console.warn("Firebase save app failed:", e);
+    }
+  }
+
+  // Local fallback
+  try {
+    const localApps = JSON.parse(localStorage.getItem('premium_store_custom_apps') || '[]');
+    const existingIndex = localApps.findIndex((a: AppItem) => a.id === appId || a.name === appToSave.name);
+    if (existingIndex >= 0) {
+      localApps[existingIndex] = appToSave;
+    } else {
+      localApps.unshift(appToSave);
+    }
+    localStorage.setItem('premium_store_custom_apps', JSON.stringify(localApps));
+    return true;
+  } catch (e) {
+    console.error("Local save app error:", e);
+    return false;
+  }
+}
+
+export async function deleteAppFromStore(appIdOrName: string): Promise<boolean> {
+  if (!appIdOrName) return false;
+  // Admin-only: bina Admin Google sign-in ke Firebase se delete nahi hoga.
+  if (!isAdminSignedIn()) return false;
+
+  if (db) {
+    try {
+      const appRef = ref(db, `apps_list/${appIdOrName}`);
+      await set(appRef, null);
+    } catch (e) {
+      console.warn("Firebase delete app error:", e);
+    }
+  }
+
+  // Local fallback
+  try {
+    const localApps = JSON.parse(localStorage.getItem('premium_store_custom_apps') || '[]');
+    const filtered = localApps.filter((a: AppItem) => a.id !== appIdOrName && a.name !== appIdOrName);
+    localStorage.setItem('premium_store_custom_apps', JSON.stringify(filtered));
+    return true;
+  } catch (e) {
+    console.error("Local delete app error:", e);
+    return false;
+  }
+}
+
 export async function submitAppRequest(request: {
   appName: string;
   category?: string;
   note?: string;
   requesterName?: string;
 }): Promise<boolean> {
-  if (!request.appName?.trim()) return false;
+  if (!request.appName) return false;
   const newReq = {
     ...request,
-    appName: request.appName.trim(),
     id: `req_${Date.now()}`,
     createdAt: Date.now(),
     votes: 1,
-    status: 'pending' as const,
+    status: 'pending'
   };
 
   if (db) {
     try {
-      await set(ref(db, `requests/${newReq.id}`), newReq);
+      const reqRef = ref(db, `requests/${newReq.id}`);
+      await set(reqRef, newReq);
       return true;
     } catch (e) {
-      console.warn('Firebase submit request error:', e);
+      console.warn("Firebase submit request error:", e);
     }
   }
 
+  // Local storage fallback
   try {
     const list = JSON.parse(localStorage.getItem('premium_store_user_requests') || '[]');
     list.unshift(newReq);
     localStorage.setItem('premium_store_user_requests', JSON.stringify(list));
     return true;
-  } catch {
+  } catch (e) {
+    console.error("Local request submit error:", e);
     return false;
   }
 }
 
-/** Broken-link report -> `broken_reports` collection. */
 export async function submitBrokenLinkReport(report: {
   appName: string;
   appId?: string;
   reason?: string;
 }): Promise<boolean> {
-  if (!report.appName?.trim()) return false;
+  if (!report.appName) return false;
   const newReport = {
     ...report,
-    appName: report.appName.trim(),
     id: `report_${Date.now()}`,
-    reportedAt: Date.now(),
+    reportedAt: Date.now()
   };
 
   if (db) {
     try {
-      await set(ref(db, `broken_reports/${newReport.id}`), newReport);
+      const repRef = ref(db, `broken_reports/${newReport.id}`);
+      await set(repRef, newReport);
       return true;
     } catch (e) {
-      console.warn('Firebase broken report error:', e);
+      console.warn("Firebase broken report error:", e);
     }
   }
 
@@ -227,7 +350,89 @@ export async function submitBrokenLinkReport(report: {
     list.unshift(newReport);
     localStorage.setItem('premium_store_broken_reports', JSON.stringify(list));
     return true;
-  } catch {
+  } catch (e) {
+    return false;
+  }
+}
+
+
+/** Admin save — purane saveAppToStore se alag, ye sach batata hai ki save kahan hua:
+ *  'firebase' = server par gaya (sabko dikhega), 'local' = sirf is phone par, false = fail */
+export async function saveAppStrict(appItem: AppItem): Promise<'firebase' | 'local' | false> {
+  if (!appItem.name) return false;
+  // Admin-only: bina Admin Google sign-in ke Firebase me save nahi hoga.
+  if (!isAdminSignedIn()) return false;
+  const appId = appItem.id || `app_${Date.now()}`;
+  const appToSave: AppItem = {
+    ...appItem,
+    id: appId,
+    downloads: appItem.downloads || 0,
+    rating: appItem.rating || 4.8
+  };
+
+  if (db) {
+    try {
+      const appRef = ref(db, `apps_list/${appId}`);
+      await set(appRef, appToSave);
+      return 'firebase';
+    } catch (e) {
+      console.warn('Firebase strict save failed:', e);
+    }
+  }
+
+  try {
+    const localApps = JSON.parse(localStorage.getItem('premium_store_custom_apps') || '[]');
+    const idx = localApps.findIndex((a: AppItem) => a.id === appId);
+    if (idx >= 0) localApps[idx] = appToSave;
+    else localApps.unshift(appToSave);
+    localStorage.setItem('premium_store_custom_apps', JSON.stringify(localApps));
+    return 'local';
+  } catch (e) {
+    return false;
+  }
+}
+
+/** Admin PIN (SHA-256 hash bankar Firebase admin_config me rehta hai) */
+export async function sha256Hex(text: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+export async function getAdminPinHash(): Promise<string | null> {
+  if (!db) return null;
+  try {
+    const snap = await get(ref(db, 'admin_config/pinHash'));
+    const v = snap.val();
+    return typeof v === 'string' && v ? v : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+export async function setAdminPinHash(hash: string): Promise<boolean> {
+  if (!db) return false;
+  // Admin-only: bina Admin Google sign-in ke PIN hash nahi badlega.
+  if (!isAdminSignedIn()) return false;
+  try {
+    await set(ref(db, 'admin_config/pinHash'), hash);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+/** Kill switch / announcement — Admin Panel se store_status badalna */
+export async function setStoreStatus(status: StoreStatus): Promise<boolean> {
+  if (!db) return false;
+  // Admin-only: bina Admin Google sign-in ke store status nahi badlega.
+  if (!isAdminSignedIn()) return false;
+  try {
+    await set(ref(db, 'store_status'), status);
+    return true;
+  } catch (e) {
+    console.error('Store status save failed:', e);
     return false;
   }
 }
