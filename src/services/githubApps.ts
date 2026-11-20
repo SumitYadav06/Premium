@@ -1,15 +1,14 @@
-import { AppItem } from '../types';
+import type { AppItem } from '../types';
 
 // GitHub Releases auto-listing:
 // Owner saare apps Premium repo ke Releases par upload karta hai (ek release me kai APK).
 // Ye service un releases ko padhkar store ke liye app entries bana deti hai —
 // naam, version aur size asset se apne aap aata hai. Firebase me pehle se maujud
-// (same link wali) entries ko App.tsx merge ke samay in par tarjeeh deta hai,
-// isliye Admin Panel se edit karte hi release wali copy gayab ho jati hai.
+// (same link wali) entries ko App.tsx merge ke samay in par tarjeeh deta hai.
 const OWNER = 'SumitYadav06';
 const REPO = 'Premium';
 
-// Store ka apna APK jin releases/assets me hai, wo app bankar list nahi honge
+// Store ka apna APK jin releases/assets me hai, wo app bankar list nahi honge.
 const EXCLUDE_TAGS = new Set(['store-latest']);
 const EXCLUDE_ASSET_EXACT = new Set(['apna.jugaad.apk', 'app-debug.apk']);
 
@@ -106,10 +105,12 @@ export async function fetchReleaseApps(): Promise<AppItem[]> {
         return parsed.apps;
       }
     }
-  } catch (e) {}
+  } catch {
+    /* ignore */
+  }
 
   const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/releases?per_page=50`, {
-    headers: { Accept: 'application/vnd.github+json' }
+    headers: { Accept: 'application/vnd.github+json' },
   });
   if (!res.ok) throw new Error(`GitHub releases fetch failed: ${res.status}`);
   const releases: GhRelease[] = await res.json();
@@ -121,13 +122,13 @@ export async function fetchReleaseApps(): Promise<AppItem[]> {
 
     const assets = Array.isArray(rel.assets) ? rel.assets : [];
     const imgAsset = assets.find(
-      (a) => /\.(png|jpe?g|webp)$/i.test(a.name) && /icon|poster|logo|cover/i.test(a.name)
+      (a) => /\.(png|jpe?g|webp)$/i.test(a.name) && /icon|poster|logo|cover/i.test(a.name),
     );
     const bodyImg = firstBodyImage(rel.body);
     const icon = (imgAsset && imgAsset.browser_download_url) || bodyImg || '';
 
     const apkAssets = assets.filter(
-      (a) => a.name.toLowerCase().endsWith('.apk') && !isStoreAsset(a.name)
+      (a) => a.name.toLowerCase().endsWith('.apk') && !isStoreAsset(a.name),
     );
 
     for (const asset of apkAssets) {
@@ -145,40 +146,16 @@ export async function fetchReleaseApps(): Promise<AppItem[]> {
         desc: cleanDesc(rel.body, name),
         screenshots: bodyImg ? [bodyImg] : undefined,
         downloads: 0,
-        rating: 4.8
+        rating: 4.8,
       });
     }
   }
 
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), apps }));
-  } catch (e) {}
+  } catch {
+    /* ignore */
+  }
 
   return apps;
-}
-
-/** Admin form ke liye: ek GitHub release APK link se naam/size/version apne aap bharna */
-export async function fetchReleaseAssetInfo(
-  url: string
-): Promise<{ name: string; ver: string; mb: number } | null> {
-  const m = url.match(/github\.com\/([^/]+)\/([^/]+)\/releases\/download\/([^/]+)\/(.+)$/);
-  if (!m) return null;
-  const [, owner, repo, tag, assetNameRaw] = m;
-  const assetName = decodeURIComponent(assetNameRaw);
-
-  const res = await fetch(
-    `https://api.github.com/repos/${owner}/${repo}/releases/tags/${encodeURIComponent(tag)}`,
-    { headers: { Accept: 'application/vnd.github+json' } }
-  );
-  if (!res.ok) return null;
-  const rel: GhRelease = await res.json();
-  const asset = (rel.assets || []).find((a) => a.name === assetName);
-  if (!asset) return null;
-
-  const parsed = parseApkFileName(asset.name);
-  return {
-    name: parsed.name,
-    ver: parsed.ver || (rel.tag_name || '').replace(/^v/i, ''),
-    mb: parseFloat((asset.size / (1024 * 1024)).toFixed(1))
-  };
 }

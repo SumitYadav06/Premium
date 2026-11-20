@@ -1,142 +1,26 @@
 @import "tailwindcss";
 
-@layer utilities {
-  .rainbow-text {
-    background: linear-gradient(
-      to right,
-      #f43f5e,
-      #f59e0b,
-      #84cc16,
-      #06b6d4,
-      #8b5cf6,
-      #ec4899,
-      #f43f5e
-    );
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  .rainbow-bg {
-    background: linear-gradient(135deg, #f43f5e, #f59e0b, #8b5cf6, #06b6d4, #f43f5e);
-    background-size: 200% auto;
-  }
-
-  .rainbow-mask-fill {
-    background: linear-gradient(
-      135deg,
-      #ff2d55,
-      #ff9500,
-      #ffcc00,
-      #34c759,
-      #00c7be,
-      #32ade6,
-      #5856d6,
-      #af52de,
-      #ff2d55
-    );
-    background-size: 300% 300%;
-  }
-
-  .scrollbar-none::-webkit-scrollbar {
-    display: none;
-  }
-  .scrollbar-none {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-}
-
-@keyframes rainbow_anim {
-  0% {
-    background-position: 0% center;
-  }
-  100% {
-    background-position: 200% center;
-  }
-}
-
-
-.heart-particle {
-  position: fixed;
-  pointer-events: none;
-  z-index: 99999;
-  transform: translate(-50%, -50%);
-  animation: heartParticleFly 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-}
-
-@keyframes heartParticleFly {
-  0% {
-    transform: translate(-50%, -50%) scale(0.4) rotate(0deg);
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.9;
-  }
-  100% {
-    transform: translate(-50%, -130px) scale(1.6) rotate(var(--rot, 15deg));
-    opacity: 0;
-  }
-}
-
-html, body {
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* ===== Premium Motion Pack ===== */
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(18px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-
-
-.anim-float {
-}
-
-.anim-fade-up {
-  animation: fadeUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-
-.gold-text {
-  background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.premium-card {
-  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.35s ease;
-}
-
-.premium-card:hover {
-  transform: translateY(-4px) scale(1.01);
-  box-shadow: 0 18px 40px -12px rgba(168, 85, 247, 0.35), 0 8px 18px -8px rgba(0, 0, 0, 0.5);
-}
-
-.tg-glow {
-  /* static — pehle glowPulse infinite tha */
-}
-
-/* ===== NOIR GOLD — Million Dollar Pack ===== */
-body {
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-}
-
-.font-display {
-  font-family: 'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif;
-  letter-spacing: -0.01em;
-}
-
-::selection {
-  background: #a855f7;
-  color: #ffffff;
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 html {
   scroll-behavior: smooth;
+}
+
+html,
+body {
+  overflow-x: clip;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: #8b5cf6;
+  color: #ffffff;
 }
 
 ::-webkit-scrollbar {
@@ -144,138 +28,24 @@ html {
   height: 9px;
 }
 ::-webkit-scrollbar-track {
-  background: #0a0a0c;
+  background: #020617;
 }
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #ec4899, #8b5cf6, #06b6d4);
+  background: #475569;
   border-radius: 99px;
-  border: 2px solid #0a0a0c;
+  border: 2px solid #020617;
 }
 
-
-.aurora-layer {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
-.aurora-layer::before,
-.aurora-layer::after {
-  content: "";
-  position: absolute;
-  width: 55vmax;
-  height: 55vmax;
-  border-radius: 9999px;
-  opacity: 0.22;
-}
-.aurora-layer::before {
-  background: radial-gradient(circle at 30% 30%, #e879f9, transparent 65%);
-  top: -16vmax;
-  left: -10vmax;
-}
-.aurora-layer::after {
-  background: radial-gradient(circle at 70% 70%, #38bdf8, transparent 65%);
-  bottom: -18vmax;
-  right: -12vmax;
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-.glass {
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(168, 85, 247, 0.20);
-}
-
-.btn-shine {
-  position: relative;
-  overflow: hidden;
-}
-.btn-shine::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(115deg, transparent 32%, rgba(255, 255, 255, 0.35) 50%, transparent 66%);
-  transform: translateX(-130%);
-  transition: transform 0.9s ease;
-  pointer-events: none;
-}
-.btn-shine:hover::after {
-  transform: translateX(130%);
-}
-
-.premium-card:hover {
-  box-shadow: 0 22px 44px -14px rgba(217, 70, 239, 0.35), 0 0 0 1px rgba(217, 70, 239, 0.30), 0 8px 18px -8px rgba(109, 40, 217, 0.25);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .anim-float, .anim-fade-up, .aurora-layer::before, .aurora-layer::after, .rainbow-text, .rainbow-bg {
-    animation: none !important;
-  }
-}
-
-/* ===== CINEMA LIVE — Video-Jaisa Live Effect Pack ===== */
-
-/* Ken Burns: photo/video dheere zoom-pan — live video feel */
-.kenburns {
-  /* Static — pehle 16s infinite zoom tha; har card par bhari padta tha */
-  transform: scale(1.02);
-}
-
-/* Upar uthte hue floating orbs — live background particles */
-.live-orb {
-  position: absolute;
-  bottom: -6vh;
-  border-radius: 9999px;
-  filter: blur(2px);
-}
-
-/* Light beam sweep — stage light jaise */
-.live-beam {
-  position: absolute;
-  top: -25%;
-  height: 160%;
-  width: 22vmax;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
-  filter: blur(28px);
-}
-
-/* Live ticker marquee — news channel strip */
-.marquee-track {
-  display: flex;
-  width: max-content;
-}
-.marquee-track:hover {
-  animation-play-state: paused;
-}
-
-/* Music/video equalizer bars */
-.eq-bar {
-  transform-origin: bottom;
-}
-
-/* Static conic ring — ghumta NAHI hai (pehle spinSlow se rotate karta tha, hata diya) */
-.ring-conic {
-  background: conic-gradient(from 0deg, #f43f5e, #f59e0b, #84cc16, #06b6d4, #8b5cf6, #ec4899, #f43f5e);
-}
-
-/* Hero slide timeline — video progress bar */
-@keyframes slideProgress {
-  from { width: 0%; }
-  to { width: 100%; }
-}
-.slide-progress {
-  animation: slideProgress 4.5s linear forwards;
-}
-.slide-progress.paused {
-  animation-play-state: paused;
-}
-
-/* Bade rank number — solid gradient, saaf aur bade.
-   Pehle outline-only (transparent fill + halki purple stroke) tha — halka/feeka
-   lagta tha, khaas taur par light theme me. Ab solid gradient fill hai. */
+/* Top 10 rank numbers — solid gradient fill, no outline text. */
 .rank-num {
-  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
   background: linear-gradient(180deg, #c4b5fd 0%, #8b5cf6 55%, #5b21b6 100%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -283,7 +53,7 @@ html {
   color: transparent;
   filter: drop-shadow(0 2px 6px rgba(139, 92, 246, 0.45));
 }
-/* Top 1 — gold, Top 2 — DARK silver (gehra slate, halke background par bhi saaf), Top 3 — bronze */
+/* Top 1 — gold */
 .rank-1 {
   background: linear-gradient(180deg, #fef08a 0%, #f59e0b 55%, #b45309 100%);
   -webkit-background-clip: text;
@@ -291,6 +61,7 @@ html {
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(0 2px 8px rgba(245, 158, 11, 0.5));
 }
+/* Top 2 — dark slate silver */
 .rank-2 {
   background: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 50%, #1e293b 100%);
   -webkit-background-clip: text;
@@ -298,6 +69,7 @@ html {
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(0 2px 8px rgba(30, 41, 59, 0.6));
 }
+/* Top 3 — bronze */
 .rank-3 {
   background: linear-gradient(180deg, #fed7aa 0%, #ea580c 55%, #9a3412 100%);
   -webkit-background-clip: text;
@@ -306,167 +78,8 @@ html {
   filter: drop-shadow(0 2px 8px rgba(234, 88, 12, 0.45));
 }
 
-/* Floating bottom dock */
-.dock-glass {
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(20px) saturate(1.5);
-  -webkit-backdrop-filter: blur(20px) saturate(1.5);
-  border: 1px solid rgba(217, 70, 239, 0.25);
-  box-shadow: 0 18px 44px -12px rgba(109, 40, 217, 0.35), 0 4px 14px -6px rgba(0, 0, 0, 0.12);
-}
-.dark .dock-glass {
-  background: rgba(15, 10, 30, 0.82);
-}
-
-/* Poster card artwork zone shimmer */
-.poster-glow {
-  opacity: 0.7;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .kenburns, .live-orb, .live-beam, .marquee-track, .eq-bar, .ring-conic, .slide-progress, .poster-glow {
-    animation: none !important;
+  html {
+    scroll-behavior: auto;
   }
-}
-
-/* ===== BRAND TEXT — Apna Jugaad naam, sabse attractive ===== */
-.brand-text {
-  line-height: 1.3;
-  padding-bottom: 0.1em;
-  background: linear-gradient(
-    to right,
-    #f43f5e, #f59e0b, #facc15, #22c55e, #06b6d4, #8b5cf6, #ec4899, #f43f5e
-  );
-  background-size: 250% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: rainbow_anim 3.2s linear infinite;
-  filter: drop-shadow(0 2px 10px rgba(217, 70, 239, 0.35)) drop-shadow(0 1px 2px rgba(245, 158, 11, 0.25));
-}
-
-.brand-glow {
-  filter: drop-shadow(0 4px 18px rgba(217, 70, 239, 0.45)) drop-shadow(0 2px 4px rgba(245, 158, 11, 0.30));
-}
-
-/* Bade CTA buttons — rang dheere-dheere ghulta-milta hai, koi line nahi, koi jhatka nahi */
-.btn-live {
-  /* static */
-}
-
-/* (chip-live sweep hata diya gaya — saaf dikhti line owner ko pasand nahi) */
-
-/* Download button — pulsing ring, sabki nazar yahin jaye */
-.dl-pulse {
-  /* static */
-}
-
-/* Dock — halki si saans leti hui shadow */
-.dock-glass {
-  /* static — pehle dockPulse infinite tha */
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .chip-live::after, .dock-glass {
-    animation: none !important;
-  }
-}
-
-/* Card ke icons — halka sa hamesha dolta hua */
-.icon-bob {
-  /* static — pehle iconBob infinite tha */
-}
-
-/* Download button — sticker/GIF ki tarah upar-neeche hota hua + chamakti ring + ghulta rang */
-.dl-live {
-  /* static */
-}
-
-/* ===== VFX MAX — har cheez zinda, har jagah motion ===== */
-
-/* Behta hua rang wala text — headings ke liye */
-.text-flow {
-  background: linear-gradient(90deg, #7c3aed, #db2777, #ea580c, #ca8a04, #7c3aed);
-  background-size: 250% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* Dheere zoom-in/zoom-out saans leti hui images */
-.zoom-breath {
-  /* static */
-}
-
-/* Search bar — ghumta hua rang glow */
-.search-live {
-  box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.18), 0 10px 30px -12px rgba(217, 70, 239, 0.35);
-  border-radius: 1rem;
-}
-
-/* Icons hover par halka sa wiggle */
-@keyframes wiggle {
-  0%, 100% { transform: rotate(0deg) scale(1); }
-  25% { transform: rotate(-8deg) scale(1.12); }
-  75% { transform: rotate(8deg) scale(1.12); }
-}
-.dock-glass button:hover svg,
-header button:hover svg {
-  animation: wiggle 0.45s ease-in-out;
-}
-
-/* Bada ghumta hua rang gola — background VFX */
-.vfx-disc {
-  background: conic-gradient(from 0deg, rgba(244,63,94,0.20), rgba(245,158,11,0.20), rgba(34,197,94,0.18), rgba(6,182,212,0.20), rgba(139,92,246,0.20), rgba(244,63,94,0.20));
-  -webkit-mask-image: radial-gradient(closest-side, black 25%, transparent 72%);
-  mask-image: radial-gradient(closest-side, black 25%, transparent 72%);
-  border-radius: 9999px;
-}
-
-/* Card hover — rang badalti hui roshni */
-.premium-card:hover {
-  box-shadow: 0 22px 44px -14px rgba(217, 70, 239, 0.40);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .text-flow, .zoom-breath, .search-live, .vfx-disc, .premium-card:hover {
-    animation: none !important;
-  }
-}
-
-/* ===== STAGGER — sections ek-ek karke animate hokar aate hain ===== */
-.detail-root > *:nth-child(-n+8) {
-  animation: fadeUp 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-.detail-root > *:nth-child(2) { animation-delay: 0.07s; }
-.detail-root > *:nth-child(3) { animation-delay: 0.14s; }
-.detail-root > *:nth-child(4) { animation-delay: 0.21s; }
-.detail-root > *:nth-child(5) { animation-delay: 0.28s; }
-.detail-root > *:nth-child(6) { animation-delay: 0.35s; }
-.detail-root > *:nth-child(7) { animation-delay: 0.42s; }
-.detail-root > *:nth-child(8) { animation-delay: 0.49s; }
-
-.stagger-list > * {
-  animation: fadeUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-.stagger-list > *:nth-child(2) { animation-delay: 0.06s; }
-.stagger-list > *:nth-child(3) { animation-delay: 0.12s; }
-.stagger-list > *:nth-child(4) { animation-delay: 0.18s; }
-.stagger-list > *:nth-child(5) { animation-delay: 0.24s; }
-.stagger-list > *:nth-child(6) { animation-delay: 0.30s; }
-.stagger-list > *:nth-child(7) { animation-delay: 0.36s; }
-.stagger-list > *:nth-child(8) { animation-delay: 0.42s; }
-.stagger-list > *:nth-child(9) { animation-delay: 0.48s; }
-.stagger-list > *:nth-child(10) { animation-delay: 0.54s; }
-
-@media (prefers-reduced-motion: reduce) {
-  .detail-root > *, .stagger-list > * {
-    animation: none !important;
-  }
-}
-
-
-/* Page kabhi side ki taraf bahar nahi jayega */
-html, body {
-  overflow-x: clip;
 }
