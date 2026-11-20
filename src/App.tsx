@@ -9,7 +9,6 @@ import {
 } from './services/firebase';
 import { STORE_CONFIG } from './config';
 import { fetchReleaseApps } from './services/githubApps';
-import { normalizeAppName } from './utils/letterIcon';
 import { Navbar } from './components/Navbar';
 import { BannerSlider } from './components/BannerSlider';
 import { CategoryPills } from './components/CategoryPills';
@@ -645,29 +644,16 @@ export default function App() {
     } catch (e) {}
   }, [hiddenLinks]);
 
-  // Safe Apps Array: Firebase apps + GitHub Release auto apps.
-  // Same link dono jagah ho to Firebase wala jeetega (Admin Panel ka edit pakka ho jata hai);
-  // SAME NAAM dono jagah ho to bhi Firebase wala jeetega — release wali
-  // copy do-do baar dikhne ka sabse bada kaaran yahi tha (Gaana, YT Music
-  // Pro, InShot, Picsart, Remini, TeraBox... — release ka link GitHub ka
-  // hota hai, Firebase ka Telegram ka, isliye sirf link se dedupe nahi hota tha).
-  // Hide kiye hue release apps is phone par nahi dikhte. Dummy apps kabhi nahi dikhte.
+  // Safe Apps Array: SIRF Firebase apps (Admin Panel wale).
+  // GitHub Release wale apps jo Admin me nahi hain (jaise Worms Zone,
+  // Raat Raani) ab bilkul nahi dikhenge — Admin hi ek source of truth hai.
+  // (Pehle release-only apps "ghosts" bankar list me aa jate the — wahi
+  // Worms Zone dikhta tha; refresh par pehle Firebase load hota tha isliye
+  // ek pal ke liye gayab hokar phir aa jata tha.)
   const safeAppsList = useMemo(() => {
     const base = Array.isArray(apps) ? apps : [];
-    const fbLinks = new Set(base.map((a) => a?.link).filter(Boolean));
-    const fbNames = new Set(
-      base.map((a) => normalizeAppName(a?.name)).filter(Boolean)
-    );
-    const ghosts = releaseApps.filter(
-      (g) =>
-        g &&
-        g.link &&
-        !fbLinks.has(g.link) &&
-        !fbNames.has(normalizeAppName(g.name)) &&
-        !hiddenLinks.includes(g.link)
-    );
-    return [...base, ...ghosts];
-  }, [apps, releaseApps, hiddenLinks]);
+    return base;
+  }, [apps]);
 
   // Categories list
   const categories = useMemo(() => {
