@@ -5,6 +5,7 @@ import {
   addAppReview,
   incrementAppDownload,
   incrementAppView,
+  recordDailyVisit,
   getAppKey
 } from './services/firebase';
 import { STORE_CONFIG } from './config';
@@ -90,6 +91,11 @@ export default function App() {
     const onScroll = () => setShowScrollTop(window.scrollY > 600);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Roz ka visitor ping — ek device se ek din me sirf ek baar (weekly/monthly users ke liye)
+  useEffect(() => {
+    recordDailyVisit();
   }, []);
 
   // UI Filters

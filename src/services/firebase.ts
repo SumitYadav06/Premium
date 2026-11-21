@@ -159,15 +159,72 @@ export function subscribeToApps(
   };
 }
 
+// ---- Unique device + unique counting ----
+// Har device (phone/browser) ki ek stable ID — localStorage me ek baar banti hai, phir wahi rehti hai.
+// Views/downloads isi se ek device = ek count hote hain. Koi login ya personal data nahi liya jata.
+export function getDeviceId(): string {
+  try {
+    let id = localStorage.getItem('aj_device_id');
+    if (!id) {
+      const c = (window as any).crypto;
+      id = c && c.randomUUID ? c.randomUUID() : 'aj-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+      localStorage.setItem('aj_device_id', id);
+    }
+    return id;
+  } catch {
+    return 'unknown';
+  }
+}
+
+// Is session me pehle se gina ja chuka flag (double-tap se double count rokne ke liye)
+const countedFlags = new Set<string>();
+
+function alreadyCounted(flag: string): boolean {
+  if (countedFlags.has(flag)) return true;
+  countedFlags.add(flag);
+  try {
+    return !!localStorage.getItem(flag);
+  } catch {
+    return false;
+  }
+}
+
+function markCounted(flag: string) {
+  try {
+    localStorage.setItem(flag, '1');
+  } catch {}
+}
+
+// Roz ka visitor ping — ek device se ek din me sirf ek baar.
+// Isse Admin me dikhta hai: aaj / pichhle 7 din / pichhle 30 din me kitne alag log aaye.
+export async function recordDailyVisit() {
+  if (!db) return;
+  try {
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    if (localStorage.getItem(`aj_visit_${today}`)) return;
+    localStorage.setItem(`aj_visit_${today}`, '1');
+    await set(ref(db, `visitors/${today}/${getDeviceId()}`), Date.now());
+  } catch (e) {
+    console.warn('Visit ping failed', e);
+  }
+}
+
 export async function incrementAppView(appNameOrId: string) {
   if (!appNameOrId) return;
   const key = getAppKey(appNameOrId);
-  
+
+  // Ek device se ek app ka view sirf EK baar gina jata hai — baar-baar open karne par nahi badhta.
+  const flag = `aj_viewed_${key}`;
+  if (alreadyCounted(flag)) return;
+
   if (db) {
     try {
       const viewRef = ref(db, `stats/${key}/views`);
       await runTransaction(viewRef, (current) => (current || 0) + 1);
+      markCounted(flag);
     } catch (e) {
+      countedFlags.delete(flag);
       console.warn("View increment fallback", e);
     }
   }
@@ -176,12 +233,18 @@ export async function incrementAppView(appNameOrId: string) {
 export async function incrementAppDownload(appNameOrId: string) {
   if (!appNameOrId) return;
   const key = getAppKey(appNameOrId);
-  
+
+  // Ek device se ek app ka download sirf EK baar gina jata hai — dobara download karne par nahi badhta.
+  const flag = `aj_dl_${key}`;
+  if (alreadyCounted(flag)) return;
+
   if (db) {
     try {
       const dlRef = ref(db, `stats/${key}/downloads`);
       await runTransaction(dlRef, (current) => (current || 0) + 1);
+      markCounted(flag);
     } catch (e) {
+      countedFlags.delete(flag);
       console.warn("Download increment fallback", e);
     }
   }
