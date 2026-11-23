@@ -210,6 +210,28 @@ export async function recordDailyVisit() {
   }
 }
 
+// App ke screenshots alag node me hain (app_shots/<key>) — list halki rahe,
+// detail khulne par hi screenshots load hote hain. Isse store turant khulta hai.
+export async function getAppShots(appNameOrId: string): Promise<string[]> {
+  if (!appNameOrId || !db) return [];
+  try {
+    const snap = await get(ref(db, `app_shots/${getAppKey(appNameOrId)}`));
+    const val = snap.val();
+    if (!val || typeof val !== 'object') return [];
+    const out: string[] = [];
+    Object.keys(val)
+      .filter((k) => /^p_?\d+$/i.test(k))
+      .sort((a, b) => (parseInt(a.replace(/\D/g, ''), 10) || 0) - (parseInt(b.replace(/\D/g, ''), 10) || 0))
+      .forEach((k) => {
+        if (typeof val[k] === 'string' && val[k]) out.push(val[k]);
+      });
+    return out;
+  } catch (e) {
+    console.warn('App shots fetch failed', e);
+    return [];
+  }
+}
+
 export async function incrementAppView(appNameOrId: string) {
   if (!appNameOrId) return;
   const key = getAppKey(appNameOrId);

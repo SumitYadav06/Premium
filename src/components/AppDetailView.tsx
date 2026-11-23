@@ -20,7 +20,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { AppItem, AppStats, ReviewItem } from '../types';
-import { addAppReview } from '../services/firebase';
+import { addAppReview, getAppShots } from '../services/firebase';
 import { ScreenshotLightbox } from './ScreenshotLightbox';
 import { ReportLinkModal } from './ReportLinkModal';
 import { InstallGuideModal } from './InstallGuideModal';
@@ -122,6 +122,19 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
   const [reviewContent, setReviewContent] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Screenshots alag se load hote hain (app_shots node) — list halki rehti hai
+  const [remoteShots, setRemoteShots] = useState<string[] | null>(null);
+  useEffect(() => {
+    let alive = true;
+    setRemoteShots(null);
+    getAppShots(app.id || app.name).then((shots) => {
+      if (alive && shots.length > 0) setRemoteShots(shots);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [app.id]);
 
   // Extract unlimited screenshots dynamically supporting all schemas, formats, and keys (p1...p100, screenshots array/objects/strings, gallery, images, pics, previews, etc.)
   const rawScreenshots: string[] = [];
@@ -286,6 +299,11 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
       addValidScreenshot((app as any)[key]);
     }
   });
+
+  // Alag node se aaye screenshots (detail khulne par load hue)
+  if (remoteShots) {
+    remoteShots.forEach((s) => addValidScreenshot(s));
+  }
 
   // Filter valid image URLs
   const validScreenshots = rawScreenshots.filter((url) => {
