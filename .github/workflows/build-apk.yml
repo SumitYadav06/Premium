@@ -218,46 +218,61 @@ jobs:
           mkdir -p "$RES/drawable-nodpi"
           mkdir -p "$RES/mipmap-anydpi-v26"
 
-          # Legacy icons — art at 72% of the canvas on a transparent
-          # background, Lanczos filter (sharpest downscale). Full-bleed
-          # art loses 21.5% of its pixels to a circle mask; at 72% the
-          # whole logo stays visible under any launcher mask.
-          convert app-icon.png -filter Lanczos -resize 35x35 -background none -gravity center -extent 48x48 \
-            "$RES/mipmap-mdpi/ic_launcher.png"
+          # --------------------------------------------------
+          # COLOURFUL GRADIENT BACKGROUND
+          # The old transparent background made the dark shopping-bag
+          # art look black/empty on dark surfaces (file manager, app
+          # info popup). The icon tile is now a vivid diagonal gradient
+          # (violet -> blue -> cyan) filling the whole canvas, so the
+          # icon reads as colourful everywhere. Generated with Pillow
+          # (deterministic, no ImageMagick version quirks).
+          # --------------------------------------------------
+          python3 -c "import PIL" 2>/dev/null || python3 -m pip install -q --break-system-packages pillow
 
-          convert app-icon.png -filter Lanczos -resize 52x52 -background none -gravity center -extent 72x72 \
-            "$RES/mipmap-hdpi/ic_launcher.png"
+          python3 - <<'PY'
+          from PIL import Image
+          # 3-stop diagonal gradient: violet -> blue -> cyan
+          stops = [(0.0, (124, 58, 237)), (0.5, (37, 99, 235)), (1.0, (6, 182, 212))]
+          def lerp(a, b, t):
+              return tuple(round(a[i] + (b[i] - a[i]) * t) for i in range(3))
+          def colour(t):
+              for i in range(len(stops) - 1):
+                  t0, c0 = stops[i]; t1, c1 = stops[i + 1]
+                  if t0 <= t <= t1:
+                      return lerp(c0, c1, (t - t0) / (t1 - t0))
+              return stops[-1][1]
+          n = 432
+          img = Image.new("RGB", (n, n))
+          px = img.load()
+          for y in range(n):
+              for x in range(n):
+                  px[x, y] = colour((x + y) / (2 * (n - 1)))
+          img.save("icon_bg_432.png")
+          print("gradient background written: icon_bg_432.png")
+          PY
 
-          convert app-icon.png -filter Lanczos -resize 69x69 -background none -gravity center -extent 96x96 \
-            "$RES/mipmap-xhdpi/ic_launcher.png"
+          # Adaptive background = the full gradient tile
+          cp icon_bg_432.png "$RES/drawable-nodpi/ic_launcher_background.png"
 
-          convert app-icon.png -filter Lanczos -resize 104x104 -background none -gravity center -extent 144x144 \
-            "$RES/mipmap-xxhdpi/ic_launcher.png"
-
-          convert app-icon.png -filter Lanczos -resize 138x138 -background none -gravity center -extent 192x192 \
-            "$RES/mipmap-xxxhdpi/ic_launcher.png"
-
-          cp "$RES/mipmap-mdpi/ic_launcher.png" \
-             "$RES/mipmap-mdpi/ic_launcher_round.png"
-
-          cp "$RES/mipmap-hdpi/ic_launcher.png" \
-             "$RES/mipmap-hdpi/ic_launcher_round.png"
-
-          cp "$RES/mipmap-xhdpi/ic_launcher.png" \
-             "$RES/mipmap-xhdpi/ic_launcher_round.png"
-
-          cp "$RES/mipmap-xxhdpi/ic_launcher.png" \
-             "$RES/mipmap-xxhdpi/ic_launcher_round.png"
-
-          cp "$RES/mipmap-xxxhdpi/ic_launcher.png" \
-             "$RES/mipmap-xxxhdpi/ic_launcher_round.png"
+          # Legacy icons — gradient background + art at 72% centred
+          # (same safe-zone size as the adaptive foreground, so the
+          # logo is never cut by circle/round masks).
+          for spec in "48 35 mdpi" "72 52 hdpi" "96 69 xhdpi" "144 104 xxhdpi" "192 138 xxxhdpi"; do
+            set -- $spec
+            convert icon_bg_432.png -filter Lanczos -resize "$1x$1" \
+              \( app-icon.png -filter Lanczos -resize "$2x$2" \) \
+              -gravity center -composite \
+              "$RES/mipmap-$3/ic_launcher.png"
+            cp "$RES/mipmap-$3/ic_launcher.png" "$RES/mipmap-$3/ic_launcher_round.png"
+          done
 
           # --------------------------------------------------
           # ADAPTIVE ICON
-          # Art at 72% of the 432 canvas (311x311). The earlier 384px
-          # foreground still lost 11.6% of the art to a circle mask
-          # (corner mini-icons cut off); at 311px the whole logo stays
-          # visible under circle and squircle masks.
+          # Foreground: art at 72% of the 432 canvas (311x311) on a
+          # transparent canvas, centred. The earlier 384px foreground
+          # lost 11.6% of the art to a circle mask; at 311px the whole
+          # logo stays visible under circle and squircle masks.
+          # Background: the gradient tile above.
           # --------------------------------------------------
 
           # Transparent 432x432 canvas
@@ -276,10 +291,7 @@ jobs:
             "$RES/drawable-nodpi/ic_launcher_foreground.png" \
             "$RES/drawable-nodpi/ic_launcher_foreground.png"
 
-          # Transparent background.
-          # The actual complete logo is in the foreground.
-          convert -size 432x432 xc:none \
-            "$RES/drawable-nodpi/ic_launcher_background.png"
+          rm -f icon_bg_432.png "$RES/drawable-nodpi/icon_center.png"
 
           # Adaptive icon
           cat > "$RES/mipmap-anydpi-v26/ic_launcher.xml" <<'EOF'
