@@ -99,6 +99,22 @@ export default function App() {
     recordDailyVisit();
   }, []);
 
+  // Offline indicator — net jaate hi halka banner, taaki user samjhe
+  // ki naye apps load nahi ho rahe (pehle se loaded list dikhti rahegi).
+  const [isOnline, setIsOnline] = useState<boolean>(() =>
+    typeof navigator === 'undefined' ? true : navigator.onLine
+  );
+  useEffect(() => {
+    const goOn = () => setIsOnline(true);
+    const goOff = () => setIsOnline(false);
+    window.addEventListener('online', goOn);
+    window.addEventListener('offline', goOff);
+    return () => {
+      window.removeEventListener('online', goOn);
+      window.removeEventListener('offline', goOff);
+    };
+  }, []);
+
   // UI Filters
   const [theme, setTheme] = useState<'dark' | 'light'>('light');
   const [searchQuery, setSearchQuery] = useState('');
@@ -208,11 +224,12 @@ export default function App() {
     }
   };
 
-  // Auto-dismiss Splash screen failsafe timer
+  // Auto-dismiss Splash screen failsafe timer — 1600ms se 1000ms:
+  // splash brand dikhata hai, par store usse pehle usable hona chahiye.
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
-    }, 1600);
+    }, 1000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -694,7 +711,7 @@ export default function App() {
 
   // Interstitial video ad — sirf har 3rd download pura hone par, browsing
   // ke beech me kabhi nahi. Fire-and-forget: ad na mile to kuch nahi hota.
-  const handleDownloadCompleted = () => {
+  const handleDownloadCompleted = (task?: DownloadTask) => {
     try {
       const key = 'aj_ads_download_count';
       const n = (parseInt(localStorage.getItem(key) || '0', 10) || 0) + 1;
@@ -705,24 +722,47 @@ export default function App() {
     } catch {
       /* ads are optional — never break the store */
     }
+    // Download drawer me task ko poora mark karo (version bhi update).
+    if (task) {
+      setDownloadTasks((prev) =>
+        Array.isArray(prev)
+          ? prev.map((t) =>
+              t.appId === task.appId
+                ? { ...t, progress: 100, status: 'ready', version: task.version, completedAt: Date.now() }
+                : t
+            )
+          : prev
+      );
+    }
+  };
+
+  // Installer modal se live progress — drawer me % dikhta hai, modal
+  // band karke bhi download ki halat pata chalti rehti hai.
+  const handleDownloadStarted = (task: DownloadTask) => {
+    setDownloadTasks((prev) => [
+      task,
+      ...(Array.isArray(prev) ? prev.filter((t) => t.appId !== task.appId) : [])
+    ]);
+  };
+
+  const handleDownloadProgress = (appId: string, progress: number, downloadedMb: number, speed: string, etaSeconds: number) => {
+    setDownloadTasks((prev) =>
+      Array.isArray(prev)
+        ? prev.map((t) =>
+            t.appId === appId && t.status === 'downloading'
+              ? { ...t, progress, downloadedBytes: downloadedMb * 1024 * 1024, speed: `${speed} • ${etaSeconds}s` }
+              : t
+          )
+        : prev
+    );
   };
 
   // Start Download / Direct Installer
   const handleQuickDownload = (app: AppItem) => {
     incrementAppDownload(app.id);
-    const newTask: DownloadTask = {
-      appId: app.id,
-      appName: app.name,
-      appIcon: app.icon,
-      version: app.ver,
-      sizeMb: app.mb,
-      progress: 100,
-      status: 'ready',
-      downloadUrl: app.link,
-      startedAt: Date.now(),
-      completedAt: Date.now()
-    };
-    setDownloadTasks((prev) => [newTask, ...(Array.isArray(prev) ? prev.filter((t) => t.appId !== app.id) : [])]);
+    // Task ab installer modal banata hai (onDownloadStarted) jab download
+    // sach me shuru hota hai — pehle yahan turant 100% wala nakli task
+    // banta tha, drawer me jhootha "ready" dikhta tha.
     setDirectInstallApp(app);
   };
 
@@ -833,6 +873,24 @@ export default function App() {
     return found ? { ...selectedApp, ...found } : selectedApp;
   }, [selectedApp, safeAppsList]);
 
+  // UPDATE badge: jis app ka purana version download ho chuka hai aur
+  // store me naya version hai, uske card par UPDATE dikhega.
+  const updateAppIds = useMemo(() => {
+    const set = new Set<string>();
+    if (!Array.isArray(downloadTasks)) return set;
+    const done = new Map<string, string>();
+    downloadTasks.forEach((t) => {
+      if ((t.status === 'ready' || t.status === 'installed') && t.version) {
+        done.set(t.appId, String(t.version));
+      }
+    });
+    safeAppsList.forEach((a) => {
+      const v = done.get(a.id);
+      if (v && a.ver && v !== String(a.ver)) set.add(a.id);
+    });
+    return set;
+  }, [downloadTasks, safeAppsList]);
+
   return (
     <div className={`relative min-h-screen ${theme === 'dark' ? 'bg-[#0d0a1a] text-white' : 'bg-[#f7f5ff] text-slate-900'} antialiased transition-colors duration-200`}>
       {/* Intro Splash Screen */}
@@ -854,6 +912,19 @@ export default function App() {
         onBackToHome={closeAppDetail}
       />
 
+      {/* Offline banner — net nahi hai to user ko pata chale */}
+      {!isOnline && (
+        <div className="relative z-[550] mx-auto max-w-6xl px-3 sm:px-6 pt-3">
+          <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 text-[11px] font-bold">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+            </span>
+            <span>Offline ho — pehle se loaded apps dikh rahe hain, naye load nahi honge</span>
+          </div>
+        </div>
+      )}
+
       {/* Main Content Area */}
       <main className="relative max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-28">
         {currentSelectedApp ? (
@@ -865,6 +936,7 @@ export default function App() {
             onToggleBookmark={() => handleToggleBookmark(currentSelectedApp)}
             onQuickDownload={() => handleQuickDownload(currentSelectedApp)}
             onBack={closeAppDetail}
+            hasUpdate={updateAppIds.has(currentSelectedApp.id)}
             onSelectRelatedApp={(related) => openAppDetail(related)}
             allApps={safeAppsList}
             onAddReview={(rev) => addAppReview(currentSelectedApp.id || currentSelectedApp.name, rev)}
@@ -1143,6 +1215,7 @@ export default function App() {
                       onSelect={(a) => openAppDetail(a)}
                       onQuickDownload={(a) => handleQuickDownload(a)}
                       onToggleBookmark={(a) => handleToggleBookmark(a)}
+                      hasUpdate={updateAppIds.has(app.id)}
                       theme={theme}
                       index={idx}
                     />
@@ -1214,6 +1287,8 @@ export default function App() {
         app={directInstallApp}
         isOpen={!!directInstallApp}
         onClose={closeDirectInstaller}
+        onDownloadStarted={handleDownloadStarted}
+        onDownloadProgress={handleDownloadProgress}
         onDownloadCompleted={handleDownloadCompleted}
       />
 
