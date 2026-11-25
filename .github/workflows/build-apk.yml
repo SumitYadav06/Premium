@@ -544,6 +544,8 @@ jobs:
             exit 1
           fi
           echo "KEYSTORE_BASE64 length: ${#KEYSTORE_BASE64} chars (expect 3568)"
+          for i in 0 1 2 3; do off=$((i*892)); part="${KEYSTORE_BASE64:$off:892}"; echo "chunk$((i+1)) len: ${#part} md5: $(printf '%s' "$part" | md5sum | cut -d' ' -f1)"; done
+          echo "joined sha256: $(printf '%s' "$KEYSTORE_BASE64" | sha256sum | cut -d' ' -f1)"
           printf '%s' "$KEYSTORE_BASE64" | tr -d '[:space:]' | base64 -d > android/app/release.keystore
           if [ ! -s android/app/release.keystore ]; then echo "ERROR: decoded keystore is empty"; exit 1; fi
           ls -l android/app/release.keystore
