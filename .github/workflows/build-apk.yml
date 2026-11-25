@@ -165,7 +165,9 @@ jobs:
               "android.permission.ACCESS_NETWORK_STATE",
               "android.permission.RECORD_AUDIO",
               "android.permission.MODIFY_AUDIO_SETTINGS",
-              "android.permission.REQUEST_INSTALL_PACKAGES"
+              "android.permission.REQUEST_INSTALL_PACKAGES",
+              # Android 13+: DownloadManager ki download notification (shade me %) dikhane ke liye
+              "android.permission.POST_NOTIFICATIONS"
           ]
 
           for perm in permissions:
@@ -334,7 +336,13 @@ jobs:
 
               @Override
               public void onCreate(Bundle savedInstanceState) {{
+                  // BackgroundDownload plugin — bridge banne (super.onCreate)
+                  // SE PEHLE register karna zaroori hai, warna WebView ko dikhta nahi.
+                  registerPlugin(BackgroundDownloadPlugin.class);
                   super.onCreate(savedInstanceState);
+
+                  // Background download ki notification (Android 13+) — sirf ek baar poocho
+                  ajAskNotificationPermissionOnce();
 
                   if (android.os.Build.VERSION.SDK_INT >= 23 &&
                       checkSelfPermission(Manifest.permission.RECORD_AUDIO)
@@ -383,9 +391,11 @@ jobs:
                                   request.setAllowedOverMetered(true);
                                   request.setAllowedOverRoaming(true);
 
+                                  // VISIBILITY_VISIBLE = download chalte hue shade me live %
+                                  // dikhe (Play Store jaisa), pura hote hi complete notification.
                                   request.setNotificationVisibility(
                                       DownloadManager.Request
-                                          .VISIBILITY_VISIBLE_NOTIFY_COMPLETED
+                                          .VISIBILITY_VISIBLE
                                   );
 
                                   request.setVisibleInDownloadsUi(true);
@@ -438,6 +448,29 @@ jobs:
                       }});
                   }}
               }}
+
+              // AJ_NOTIF_PERM: Android 13+ par DownloadManager ki notification
+              // (download % shade me) dikhane ke liye ek baar permission maango.
+              // User mana kare to bhi download chalta hai — sirf notification nahi dikhega.
+              private void ajAskNotificationPermissionOnce() {{
+                  try {{
+                      if (android.os.Build.VERSION.SDK_INT >= 33) {{
+                          if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                                  != PackageManager.PERMISSION_GRANTED) {{
+                              android.content.SharedPreferences prefs =
+                                      getSharedPreferences("aj_prefs", MODE_PRIVATE);
+                              if (!prefs.getBoolean("aj_notif_asked", false)) {{
+                                  requestPermissions(
+                                          new String[]{{ android.Manifest.permission.POST_NOTIFICATIONS }},
+                                          1002);
+                                  prefs.edit().putBoolean("aj_notif_asked", true).apply();
+                              }}
+                          }}
+                      }}
+                  }} catch (Exception e) {{
+                      // fail ho to chup - app crash nahi hona chahiye
+                  }}
+              }}
           }}
           '''
 
@@ -445,6 +478,32 @@ jobs:
           print("Microphone + native download configured.")
           PY
           
+
+      # Background download (DownloadManager) plugin — native/BackgroundDownloadPlugin.java
+      # repo me hai; android/ CI me generate hota hai, isliye yahan copy hota hai.
+      # MainActivity me registerPlugin() pehle wale step ke template me hai.
+      - name: Add background download plugin
+        run: |
+          set -e
+          SRC="native/BackgroundDownloadPlugin.java"
+          if [ ! -f "$SRC" ]; then
+            echo "ERROR: $SRC not found in repo!"
+            exit 1
+          fi
+          MAIN=$(find android/app/src/main/java -name "MainActivity.java" | head -n 1)
+          if [ -z "$MAIN" ]; then
+            echo "ERROR: MainActivity.java not found"
+            exit 1
+          fi
+          DEST_DIR=$(dirname "$MAIN")
+          cp "$SRC" "$DEST_DIR/BackgroundDownloadPlugin.java"
+          PKG=$(grep -m1 '^package ' "$MAIN" | sed 's/package //; s/;//; s/ *//g')
+          sed -i "s/^package .*;/package $PKG;/" "$DEST_DIR/BackgroundDownloadPlugin.java"
+          grep -q "registerPlugin(BackgroundDownloadPlugin.class)" "$MAIN" || {
+            echo "ERROR: MainActivity.java does not register BackgroundDownloadPlugin!"
+            exit 1
+          }
+          echo "BackgroundDownloadPlugin installed in $DEST_DIR (package $PKG)."
 
       - name: Sync Capacitor
         run: |
@@ -518,6 +577,19 @@ jobs:
               -o -name "ic_launcher_foreground.png" \
             \) \
             -print
+
+          echo "================================"
+          echo "BACKGROUND DOWNLOAD PLUGIN"
+          echo "================================"
+
+          find android/app/src/main/java \
+            -name "BackgroundDownloadPlugin.java" -print || true
+
+          grep -rn "registerPlugin(BackgroundDownloadPlugin.class)" \
+            android/app/src/main/java || true
+
+          grep -n "POST_NOTIFICATIONS" \
+            android/app/src/main/AndroidManifest.xml || true
 
       # ============================================================
       # RELEASE SIGNING — one permanent keystore for every build
