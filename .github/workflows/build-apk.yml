@@ -218,21 +218,23 @@ jobs:
           mkdir -p "$RES/drawable-nodpi"
           mkdir -p "$RES/mipmap-anydpi-v26"
 
-          # Legacy icons — poori art, Lanczos filter se (sabse saaf
-          # downscale; bina filter ke icon halka dhundhla padta tha).
-          convert app-icon.png -filter Lanczos -resize 48x48 \
+          # Legacy icons — art at 72% of the canvas on a transparent
+          # background, Lanczos filter (sharpest downscale). Full-bleed
+          # art loses 21.5% of its pixels to a circle mask; at 72% the
+          # whole logo stays visible under any launcher mask.
+          convert app-icon.png -filter Lanczos -resize 35x35 -background none -gravity center -extent 48x48 \
             "$RES/mipmap-mdpi/ic_launcher.png"
 
-          convert app-icon.png -filter Lanczos -resize 72x72 \
+          convert app-icon.png -filter Lanczos -resize 52x52 -background none -gravity center -extent 72x72 \
             "$RES/mipmap-hdpi/ic_launcher.png"
 
-          convert app-icon.png -filter Lanczos -resize 96x96 \
+          convert app-icon.png -filter Lanczos -resize 69x69 -background none -gravity center -extent 96x96 \
             "$RES/mipmap-xhdpi/ic_launcher.png"
 
-          convert app-icon.png -filter Lanczos -resize 144x144 \
+          convert app-icon.png -filter Lanczos -resize 104x104 -background none -gravity center -extent 144x144 \
             "$RES/mipmap-xxhdpi/ic_launcher.png"
 
-          convert app-icon.png -filter Lanczos -resize 192x192 \
+          convert app-icon.png -filter Lanczos -resize 138x138 -background none -gravity center -extent 192x192 \
             "$RES/mipmap-xxxhdpi/ic_launcher.png"
 
           cp "$RES/mipmap-mdpi/ic_launcher.png" \
@@ -252,21 +254,20 @@ jobs:
 
           # --------------------------------------------------
           # ADAPTIVE ICON
-          # Pehle art sirf 280x280 tha — launcher par chhota /
-          # tairta hua lagta tha. Ab 384x384: art bada dikhta hai,
-          # beech wala hissa (Android + bag) safe zone ke andar
-          # rehta hai; kinare wale chhote icons circle mask me
-          # halke se kat sakte hain — yehi trade-off hai.
+          # Art at 72% of the 432 canvas (311x311). The earlier 384px
+          # foreground still lost 11.6% of the art to a circle mask
+          # (corner mini-icons cut off); at 311px the whole logo stays
+          # visible under circle and squircle masks.
           # --------------------------------------------------
 
           # Transparent 432x432 canvas
           convert -size 432x432 xc:none \
             "$RES/drawable-nodpi/ic_launcher_foreground.png"
 
-          # Put the complete original icon at 384x384
+          # Put the complete original icon at 311x311
           # in the exact center.
           convert app-icon.png \
-            -filter Lanczos -resize 384x384 \
+            -filter Lanczos -resize 311x311 \
             "$RES/drawable-nodpi/icon_center.png"
 
           composite \
