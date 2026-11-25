@@ -2,6 +2,16 @@ import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+import { initAds, showAppOpenOnce } from './ads';
+
+// AdMob (APK only — on the website initAds() is a silent no-op).
+// Never blocks boot: init runs in the background, App Open shows once
+// per cold start a few seconds after the store is usable.
+void initAds().then(() => {
+  window.setTimeout(() => {
+    void showAppOpenOnce();
+  }, 4000);
+});
 
 // Boot success signal for the inline watchdog in index.html:
 // the JS bundle has loaded and is executing, so dismiss the boot

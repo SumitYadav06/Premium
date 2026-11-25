@@ -9,6 +9,7 @@ import {
   getAppKey
 } from './services/firebase';
 import { STORE_CONFIG } from './config';
+import { showInterstitialAd } from './ads';
 import { fetchReleaseApps } from './services/githubApps';
 import { Navbar } from './components/Navbar';
 import { BannerSlider } from './components/BannerSlider';
@@ -691,6 +692,21 @@ export default function App() {
     );
   };
 
+  // Interstitial video ad — sirf har 3rd download pura hone par, browsing
+  // ke beech me kabhi nahi. Fire-and-forget: ad na mile to kuch nahi hota.
+  const handleDownloadCompleted = () => {
+    try {
+      const key = 'aj_ads_download_count';
+      const n = (parseInt(localStorage.getItem(key) || '0', 10) || 0) + 1;
+      localStorage.setItem(key, String(n));
+      if (n % 3 === 0) {
+        void showInterstitialAd();
+      }
+    } catch {
+      /* ads are optional — never break the store */
+    }
+  };
+
   // Start Download / Direct Installer
   const handleQuickDownload = (app: AppItem) => {
     incrementAppDownload(app.id);
@@ -1198,6 +1214,7 @@ export default function App() {
         app={directInstallApp}
         isOpen={!!directInstallApp}
         onClose={closeDirectInstaller}
+        onDownloadCompleted={handleDownloadCompleted}
       />
 
       {/* Bookmarks Drawer */}
