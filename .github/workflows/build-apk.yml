@@ -218,20 +218,21 @@ jobs:
           mkdir -p "$RES/drawable-nodpi"
           mkdir -p "$RES/mipmap-anydpi-v26"
 
-          # Legacy icons
-          convert app-icon.png -resize 48x48 \
+          # Legacy icons — poori art, Lanczos filter se (sabse saaf
+          # downscale; bina filter ke icon halka dhundhla padta tha).
+          convert app-icon.png -filter Lanczos -resize 48x48 \
             "$RES/mipmap-mdpi/ic_launcher.png"
 
-          convert app-icon.png -resize 72x72 \
+          convert app-icon.png -filter Lanczos -resize 72x72 \
             "$RES/mipmap-hdpi/ic_launcher.png"
 
-          convert app-icon.png -resize 96x96 \
+          convert app-icon.png -filter Lanczos -resize 96x96 \
             "$RES/mipmap-xhdpi/ic_launcher.png"
 
-          convert app-icon.png -resize 144x144 \
+          convert app-icon.png -filter Lanczos -resize 144x144 \
             "$RES/mipmap-xxhdpi/ic_launcher.png"
 
-          convert app-icon.png -resize 192x192 \
+          convert app-icon.png -filter Lanczos -resize 192x192 \
             "$RES/mipmap-xxxhdpi/ic_launcher.png"
 
           cp "$RES/mipmap-mdpi/ic_launcher.png" \
@@ -251,17 +252,21 @@ jobs:
 
           # --------------------------------------------------
           # ADAPTIVE ICON
-          # Keep the complete logo inside Android safe area.
+          # Pehle art sirf 280x280 tha — launcher par chhota /
+          # tairta hua lagta tha. Ab 384x384: art bada dikhta hai,
+          # beech wala hissa (Android + bag) safe zone ke andar
+          # rehta hai; kinare wale chhote icons circle mask me
+          # halke se kat sakte hain — yehi trade-off hai.
           # --------------------------------------------------
 
           # Transparent 432x432 canvas
           convert -size 432x432 xc:none \
             "$RES/drawable-nodpi/ic_launcher_foreground.png"
 
-          # Put the complete original icon at 280x280
+          # Put the complete original icon at 384x384
           # in the exact center.
           convert app-icon.png \
-            -resize 280x280 \
+            -filter Lanczos -resize 384x384 \
             "$RES/drawable-nodpi/icon_center.png"
 
           composite \
