@@ -376,6 +376,8 @@ export async function submitAppRequest(request: {
   category?: string;
   note?: string;
   requesterName?: string;
+  // Rewarded video ad dekhkar boost ki gayi request (opt-in, admin ko dikhega).
+  boosted?: boolean;
 }): Promise<boolean> {
   if (!request.appName) return false;
   const newReq = {
