@@ -5,7 +5,8 @@ import {
   Bookmark,
   Sparkles,
   Download,
-  Play
+  Play,
+  Share2
 } from 'lucide-react';
 import { AppItem } from '../types';
 import { VerifiedBadge } from './VerifiedBadge';
@@ -18,6 +19,7 @@ interface AppCardProps {
   onSelect: (app: AppItem) => void;
   onQuickDownload: (app: AppItem) => void;
   onToggleBookmark: (app: AppItem) => void;
+  onShare?: (app: AppItem) => void;
   theme: 'dark' | 'light';
   index?: number;
   /** Purana version download ho chuka hai, store me naya hai. */
@@ -55,6 +57,7 @@ export const AppCard: React.FC<AppCardProps> = ({
   isBookmarked,
   onSelect,
   onToggleBookmark,
+  onShare,
   theme,
   index = 0,
   hasUpdate = false
@@ -111,6 +114,18 @@ export const AppCard: React.FC<AppCardProps> = ({
             Update
           </span>
         )}
+
+        {/* Share — native share sheet, fallback clipboard copy */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onShare) onShare(app);
+          }}
+          className="absolute top-2 right-11 z-20 p-1.5 rounded-full border backdrop-blur transition active:scale-90 bg-black/25 border-white/30 text-white hover:bg-black/40"
+          title="Share karo"
+        >
+          <Share2 className="w-3.5 h-3.5" />
+        </button>
 
         {/* Bookmark */}
         <button
