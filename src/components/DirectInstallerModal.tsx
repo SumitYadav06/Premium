@@ -20,6 +20,15 @@ import { AppItem, DownloadTask } from '../types';
 import { incrementAppDownload } from '../services/firebase';
 import { VerifiedBadge } from './VerifiedBadge';
 import { isNativeApp, isFilesystemAvailable, getDownloadMode, downloadApkInApp, openApkInstaller, findDownloadedApk } from '../services/nativeDownload';
+import {
+  isBackgroundDownloadAvailable,
+  startBackgroundDownload,
+  findBackgroundDownload,
+  openBackgroundDownload,
+  cancelBackgroundDownload,
+  pollBackgroundDownload,
+  bgFailureReason,
+} from '../services/backgroundDownload';
 import { STORE_CONFIG } from '../config';
 
 interface DirectInstallerModalProps {
@@ -54,6 +63,10 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
   const [hasTriggeredDownload, setHasTriggeredDownload] = useState(false);
   const [nativePath, setNativePath] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
+  // Background (DownloadManager) download ka id — installer isi se khulta hai
+  const [bgDownloadId, setBgDownloadId] = useState<number | null>(null);
+  const [usedBackgroundDownload, setUsedBackgroundDownload] = useState(false);
+  const bgPollStopRef = React.useRef<(() => void) | null>(null);
   const completedNotifiedRef = React.useRef(false);
 
   // Download pura hua — sirf ek baar parent ko batana (interstitial ke liye).
@@ -76,6 +89,10 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
       setHasTriggeredDownload(false);
       setNativePath(null);
       setErrorMsg('');
+      try { bgPollStopRef.current?.(); } catch { /* ignore */ }
+      bgPollStopRef.current = null;
+      setBgDownloadId(null);
+      setUsedBackgroundDownload(false);
       completedNotifiedRef.current = false;
       // Purana app hai to faltu steps mat dikhao — seedha update wala step
       if (getDownloadMode() === 'old-apk') {
@@ -90,6 +107,14 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
         findDownloadedApk(fileName).then((p) => {
           if (!cancelled && p) setNativePath(p);
         });
+        // DownloadManager me pehle se pura download hai to wahi use karo
+        if (isBackgroundDownloadAvailable()) {
+          findBackgroundDownload(fileName).then((f) => {
+            if (!cancelled && f.found && f.status === 'successful' && f.downloadId != null) {
+              setBgDownloadId(f.downloadId);
+            }
+          });
+        }
         return () => {
           cancelled = true;
         };
@@ -97,9 +122,53 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
     }
   }, [isOpen, app]);
 
+  // Modal band / unmount ho to polling band karo — download DownloadManager
+  // me chalta rehta hai, system notification % dikhati rehti hai.
+  useEffect(() => {
+    return () => {
+      try { bgPollStopRef.current?.(); } catch { /* ignore */ }
+      bgPollStopRef.current = null;
+    };
+  }, []);
+
   if (!isOpen || !app) return null;
 
   const totalMb = typeof app.mb === 'string' ? parseFloat(app.mb) || 50 : app.mb || 50;
+
+  // Background (DownloadManager) download se judo — modal + drawer me live %,
+  // app band ho to system notification % dikhati hai.
+  const attachBgPoll = (downloadId: number, task: DownloadTask) => {
+    try { bgPollStopRef.current?.(); } catch { /* ignore */ }
+    setUsedBackgroundDownload(true);
+    bgPollStopRef.current = pollBackgroundDownload(downloadId, (s) => {
+      setProgress(s.pct);
+      setDownloadedMb(parseFloat(s.downloadedMb.toFixed(1)));
+      setDownloadSpeed(`${s.speedMbps.toFixed(1)} MB/s`);
+      setEtaSeconds(s.etaSeconds);
+      try {
+        onDownloadProgress?.(app!.id || app!.name, s.pct, s.downloadedMb, `${s.speedMbps.toFixed(1)} MB/s`, s.etaSeconds);
+      } catch {
+        /* progress is cosmetic — never break the download */
+      }
+      if (s.status === 'successful') {
+        try { bgPollStopRef.current?.(); } catch { /* ignore */ }
+        bgPollStopRef.current = null;
+        setProgress(100);
+        setDownloadedMb(totalMb);
+        setStep('verifying');
+        setTimeout(() => {
+          setStep('ready');
+          notifyDownloadCompleted(task);
+          openBackgroundDownload(downloadId).catch(() => {});
+        }, 800);
+      } else if (s.status === 'failed') {
+        try { bgPollStopRef.current?.(); } catch { /* ignore */ }
+        bgPollStopRef.current = null;
+        setErrorMsg(bgFailureReason(s.reason));
+        setStep('error');
+      }
+    });
+  };
 
   const startNativeDownload = async () => {
     // Link hi nahi hai to kisi aur app ki sample file download karna sabse badi galti hogi —
@@ -141,6 +210,53 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
         openApkInstaller(existing).catch(() => {});
       }, 500);
       return;
+    }
+
+    // BACKGROUND DOWNLOAD (naya APK): DownloadManager se — app band ho to bhi
+    // chalta hai, notification shade me live % dikhta hai. Na mile to neeche
+    // wala purana Filesystem rasta chalta hai.
+    if (isBackgroundDownloadAvailable()) {
+      try {
+        const existingBg = await findBackgroundDownload(fileName);
+        if (existingBg.found && existingBg.downloadId != null) {
+          const existingId = existingBg.downloadId as number;
+          if (existingBg.status === 'successful') {
+            setBgDownloadId(existingId);
+            setProgress(100);
+            setDownloadedMb(totalMb);
+            setStep('verifying');
+            setTimeout(() => {
+              setStep('ready');
+              notifyDownloadCompleted(newTask);
+              openBackgroundDownload(existingId).catch(() => {});
+            }, 500);
+            return;
+          }
+          if (existingBg.status === 'running' || existingBg.status === 'pending' || existingBg.status === 'paused') {
+            // Pehle se chal raha hai — dobara shuru mat karo, usi se jud jao
+            setBgDownloadId(existingId);
+            newTask.downloadId = existingId;
+            setStep('downloading');
+            attachBgPoll(existingId, newTask);
+            return;
+          }
+          // Fail hua purana entry hatao, phir naya download shuru karo
+          await cancelBackgroundDownload(existingId);
+        }
+        const downloadId = await startBackgroundDownload(
+          downloadUrl,
+          fileName,
+          `${app.name} v${app.ver}`
+        );
+        setBgDownloadId(downloadId);
+        newTask.downloadId = downloadId;
+        setStep('downloading');
+        attachBgPoll(downloadId, newTask);
+        return;
+      } catch (bgErr) {
+        // Background download nahi shuru hua — purane raste se try karo
+        console.warn('Background download failed, Filesystem fallback:', bgErr);
+      }
     }
 
     try {
@@ -192,6 +308,11 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
       if (nativePath) {
         setStep('ready');
         openApkInstaller(nativePath).catch(() => {});
+        return;
+      }
+      if (bgDownloadId != null) {
+        setStep('ready');
+        openBackgroundDownload(bgDownloadId).catch(() => {});
         return;
       }
       startNativeDownload();
@@ -271,6 +392,10 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
     // App ke andar download hui file ka installer kholo
     if (nativePath) {
       openApkInstaller(nativePath).catch(() => {});
+      return;
+    }
+    if (bgDownloadId != null) {
+      openBackgroundDownload(bgDownloadId).catch(() => {});
       return;
     }
     if (hasTriggeredDownload) return;
@@ -485,6 +610,11 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
             <p className="text-center text-[11px] text-slate-400 italic">
               Establishing encrypted connection with ultra-fast CDN node...
             </p>
+            {usedBackgroundDownload && (
+              <p className="text-center text-[11px] text-emerald-400/90">
+                App band karne par bhi download chalta rahega — notification me % dikhega.
+              </p>
+            )}
           </div>
         )}
 
