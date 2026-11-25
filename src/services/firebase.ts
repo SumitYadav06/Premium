@@ -1,6 +1,6 @@
-import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
-import { getDatabase, ref, onValue, set, get, Database, DatabaseReference, runTransaction, push } from 'firebase/database';
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, User, Auth } from 'firebase/auth';
+import type { FirebaseApp } from 'firebase/app';
+import type { Database } from 'firebase/database';
+import type { Auth, User } from 'firebase/auth';
 import { AppItem, AppStats, ReviewItem, StoreStatus } from '../types';
 
 // Encrypted keys from user app
@@ -19,41 +19,72 @@ const dc = (v: string) => {
   }
 };
 
-let app: FirebaseApp | null = null;
-let db: Database | null = null;
-let auth: Auth | null = null;
+// Firebase LAZY load: firebase/app + database + auth (~338 kB, 72 kB gzip)
+// pehle paint se pehle NAHI aate. Pehla bundle ab sirf app + React +
+// motion hai; Firebase pehli zaroorat par (subscribe / tap) background
+// me load hota hai. Isse store pehli baar turant khulta hai.
+interface FbHandles {
+  app: FirebaseApp;
+  db: Database;
+  auth: Auth;
+  dbFns: typeof import('firebase/database');
+  authFns: typeof import('firebase/auth');
+}
+
+let fbPromise: Promise<FbHandles | null> | null = null;
+
+function ensureFirebase(): Promise<FbHandles | null> {
+  if (fbPromise) return fbPromise;
+  fbPromise = (async (): Promise<FbHandles | null> => {
+    try {
+      const appMod = await import('firebase/app');
+      const dbMod = await import('firebase/database');
+      const authMod = await import('firebase/auth');
+      const firebaseConfig = {
+        apiKey: dc(_k[0]),
+        authDomain: dc(_k[1]),
+        projectId: dc(_k[2]),
+        databaseURL: 'https://' + dc(_k[3])
+      };
+      const app: FirebaseApp = appMod.getApps().length
+        ? appMod.getApps()[0]
+        : appMod.initializeApp(firebaseConfig);
+      const handles: FbHandles = {
+        app,
+        db: dbMod.getDatabase(app),
+        auth: authMod.getAuth(app),
+        dbFns: dbMod,
+        authFns: authMod
+      };
+      cachedAuth = handles.auth;
+      return handles;
+    } catch (e) {
+      console.warn('Firebase initialization skipped/fallback enabled:', e);
+      return null;
+    }
+  })();
+  return fbPromise;
+}
+
+// Admin sign-in ke liye auth handle — lazy, isliye sync getter null de
+// sakta hai jab tak Firebase load na hua ho (AdminModal lazy chunk hai,
+// uske khulne tak Firebase hamesha load ho chuka hota hai).
+let cachedAuth: Auth | null = null;
 
 /** Sirf ye Google account Admin hai — Rules me bhi yahi email check hota hai. */
 export const ADMIN_EMAIL = 'a1mausy06@gmail.com';
 
-try {
-  const firebaseConfig = {
-    apiKey: dc(_k[0]),
-    authDomain: dc(_k[1]),
-    projectId: dc(_k[2]),
-    databaseURL: "https://" + dc(_k[3])
-  };
-
-  if (!getApps().length) {
-    app = initializeApp(firebaseConfig);
-  } else {
-    app = getApps()[0];
-  }
-  db = getDatabase(app);
-  auth = getAuth(app);
-} catch (e) {
-  console.warn("Firebase initialization skipped/fallback enabled:", e);
-}
-
 /** Admin Google sign-in — Admin Panel kholne ke liye. Sirf ADMIN_EMAIL wala account chalega. */
 export async function signInAdminWithGoogle(): Promise<boolean> {
-  if (!auth) return false;
+  const fb = await ensureFirebase();
+  if (!fb) return false;
+  const auth = fb.auth;
   try {
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
+    const provider = new fb.authFns.GoogleAuthProvider();
+    const result = await fb.authFns.signInWithPopup(auth, provider);
     if (result.user?.email === ADMIN_EMAIL) return true;
     // Galat Google account se sign-in hua — turant sign-out karo.
-    await signOut(auth).catch(() => {});
+    await fb.authFns.signOut(auth).catch(() => {});
     return false;
   } catch (e) {
     console.warn('Admin Google sign-in failed:', e);
@@ -62,7 +93,7 @@ export async function signInAdminWithGoogle(): Promise<boolean> {
 }
 
 export function getAdminUser(): User | null {
-  return auth?.currentUser || null;
+  return cachedAuth?.currentUser || null;
 }
 
 export function isAdminSignedIn(): boolean {
@@ -70,21 +101,52 @@ export function isAdminSignedIn(): boolean {
 }
 
 export function onAdminAuthChange(cb: (user: User | null) => void): () => void {
-  if (!auth) {
-    cb(null);
-    return () => {};
-  }
-  return onAuthStateChanged(auth, cb);
+  let cancelled = false;
+  let unsub: (() => void) | null = null;
+  void ensureFirebase().then((fb) => {
+    if (cancelled || !fb) {
+      if (!cancelled && !fb) cb(null);
+      return;
+    }
+    unsub = fb.authFns.onAuthStateChanged(fb.auth, cb);
+  });
+  return () => {
+    cancelled = true;
+    if (unsub) unsub();
+  };
 }
 
 export async function signOutAdmin(): Promise<void> {
-  if (!auth) return;
-  await signOut(auth).catch(() => {});
+  const fb = await ensureFirebase();
+  if (!fb) return;
+  await fb.authFns.signOut(fb.auth).catch(() => {});
 }
 
 export function getAppKey(appNameOrId: string): string {
   if (!appNameOrId) return '';
   return appNameOrId.trim().replace(/[\s./#$[\]]+/g, '-').toLowerCase();
+}
+
+/** Lazy Firebase database handles — har async function isse shuru hoti
+ *  hai, taaki Firebase tabhi load ho jab uski zaroorat ho. */
+async function dbHandles(): Promise<{
+  db: Database;
+  ref: typeof import('firebase/database').ref;
+  set: typeof import('firebase/database').set;
+  get: typeof import('firebase/database').get;
+  runTransaction: typeof import('firebase/database').runTransaction;
+  push: typeof import('firebase/database').push;
+} | null> {
+  const fb = await ensureFirebase();
+  if (!fb) return null;
+  return {
+    db: fb.db,
+    ref: fb.dbFns.ref,
+    set: fb.dbFns.set,
+    get: fb.dbFns.get,
+    runTransaction: fb.dbFns.runTransaction,
+    push: fb.dbFns.push
+  };
 }
 
 export function subscribeToApps(
@@ -102,60 +164,80 @@ export function subscribeToApps(
     }
   } catch (e) {}
 
-  if (!db) {
-    try {
-      const custom = localStorage.getItem('premium_store_custom_apps');
-      if (custom) {
-        const parsed = JSON.parse(custom);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          onApps(parsed);
-          return () => {};
+  let cancelled = false;
+  let unsubApps: (() => void) | null = null;
+  let unsubStats: (() => void) | null = null;
+
+  void ensureFirebase().then((fb) => {
+    if (cancelled) return;
+    if (!fb) {
+      try {
+        const custom = localStorage.getItem('premium_store_custom_apps');
+        if (custom) {
+          const parsed = JSON.parse(custom);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            onApps(parsed);
+          }
         }
-      }
-    } catch (e) {}
-    return () => {};
-  }
+      } catch (e) {}
+      return;
+    }
+    const { db, dbFns } = fb;
+    const { ref, onValue } = dbFns;
+    const appsRef = ref(db, 'apps_list');
+    const statsRef = ref(db, 'stats');
 
-  const appsRef = ref(db, 'apps_list');
-  const statsRef = ref(db, 'stats');
-
-  const unsubApps = onValue(
-    appsRef,
-    (snapshot) => {
-      if (snapshot.exists()) {
-        const val = snapshot.val();
-        const list: AppItem[] = Array.isArray(val)
-          ? val.filter(Boolean)
-          : Object.keys(val).map((k) => ({ ...val[k], id: val[k].id || k }));
-        if (list.length > 0) {
-          onApps(list);
-          try {
-            localStorage.setItem('premium_store_cached_apps', JSON.stringify(list));
-          } catch (e) {}
+    unsubApps = onValue(
+      appsRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const val = snapshot.val();
+          const list: AppItem[] = Array.isArray(val)
+            ? val.filter(Boolean)
+            : Object.keys(val).map((k) => ({ ...val[k], id: val[k].id || k }));
+          if (list.length > 0) {
+            onApps(list);
+            try {
+              localStorage.setItem('premium_store_cached_apps', JSON.stringify(list));
+            } catch (e) {}
+          }
         }
+      },
+      (err) => {
+        console.warn("Apps read fallback:", err);
       }
-    },
-    (err) => {
-      console.warn("Apps read fallback:", err);
-    }
-  );
+    );
 
-  const unsubStats = onValue(
-    statsRef,
-    (snapshot) => {
-      if (snapshot.exists()) {
-        const rawStats = snapshot.val() || {};
-        onStats(rawStats);
+    // Stats har chhote change (ek view/download) par poora snapshot
+    // dobara bhejte hain — har baar poora grid re-render hota tha.
+    // Ab zyada se zyada 800ms me ek baar update (trailing) — UI
+    // utna hi fresh, par re-render bahut kam.
+    let statsTimer: ReturnType<typeof setTimeout> | null = null;
+    let pendingStats: Record<string, AppStats> | null = null;
+    unsubStats = onValue(
+      statsRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          pendingStats = snapshot.val() || {};
+          if (!statsTimer) {
+            statsTimer = setTimeout(() => {
+              statsTimer = null;
+              if (pendingStats) onStats(pendingStats);
+              pendingStats = null;
+            }, 800);
+          }
+        }
+      },
+      (err) => {
+        console.warn("Stats read error:", err);
       }
-    },
-    (err) => {
-      console.warn("Stats read error:", err);
-    }
-  );
+    );
+  });
 
   return () => {
-    unsubApps();
-    unsubStats();
+    cancelled = true;
+    if (unsubApps) unsubApps();
+    if (unsubStats) unsubStats();
   };
 }
 
@@ -198,7 +280,9 @@ function markCounted(flag: string) {
 // Roz ka visitor ping — ek device se ek din me sirf ek baar.
 // Isse Admin me dikhta hai: aaj / pichhle 7 din / pichhle 30 din me kitne alag log aaye.
 export async function recordDailyVisit() {
-  if (!db) return;
+  const h = await dbHandles();
+  if (!h) return;
+  const { db, ref, set } = h;
   try {
     const d = new Date();
     const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -213,7 +297,10 @@ export async function recordDailyVisit() {
 // App ke screenshots alag node me hain (app_shots/<key>) — list halki rahe,
 // detail khulne par hi screenshots load hote hain. Isse store turant khulta hai.
 export async function getAppShots(appNameOrId: string): Promise<string[]> {
-  if (!appNameOrId || !db) return [];
+  if (!appNameOrId) return [];
+  const h = await dbHandles();
+  if (!h) return [];
+  const { db, ref, get } = h;
   try {
     const snap = await get(ref(db, `app_shots/${getAppKey(appNameOrId)}`));
     const val = snap.val();
@@ -240,7 +327,9 @@ export async function incrementAppView(appNameOrId: string) {
   const flag = `aj_viewed_${key}`;
   if (alreadyCounted(flag)) return;
 
-  if (db) {
+  const h = await dbHandles();
+  if (h) {
+    const { db, ref, runTransaction } = h;
     try {
       const viewRef = ref(db, `stats/${key}/views`);
       await runTransaction(viewRef, (current) => (current || 0) + 1);
@@ -260,7 +349,9 @@ export async function incrementAppDownload(appNameOrId: string) {
   const flag = `aj_dl_${key}`;
   if (alreadyCounted(flag)) return;
 
-  if (db) {
+  const h = await dbHandles();
+  if (h) {
+    const { db, ref, runTransaction } = h;
     try {
       const dlRef = ref(db, `stats/${key}/downloads`);
       await runTransaction(dlRef, (current) => (current || 0) + 1);
@@ -284,7 +375,9 @@ export async function addAppReview(appNameOrId: string, review: { user: string; 
     verified: true
   };
 
-  if (db) {
+  const h = await dbHandles();
+  if (h) {
+    const { db, ref, push } = h;
     try {
       const commentsRef = ref(db, `stats/${key}/comments`);
       await push(commentsRef, newReview);
@@ -318,7 +411,9 @@ export async function saveAppToStore(appItem: AppItem): Promise<boolean> {
     rating: appItem.rating || 4.9
   };
 
-  if (db) {
+  const h = await dbHandles();
+  if (h) {
+    const { db, ref, set } = h;
     try {
       const appRef = ref(db, `apps_list/${appId}`);
       await set(appRef, appToSave);
@@ -350,7 +445,9 @@ export async function deleteAppFromStore(appIdOrName: string): Promise<boolean> 
   // Admin-only: bina Admin Google sign-in ke Firebase se delete nahi hoga.
   if (!isAdminSignedIn()) return false;
 
-  if (db) {
+  const h = await dbHandles();
+  if (h) {
+    const { db, ref, set } = h;
     try {
       const appRef = ref(db, `apps_list/${appIdOrName}`);
       await set(appRef, null);
@@ -388,7 +485,9 @@ export async function submitAppRequest(request: {
     status: 'pending'
   };
 
-  if (db) {
+  const h = await dbHandles();
+  if (h) {
+    const { db, ref, set } = h;
     try {
       const reqRef = ref(db, `requests/${newReq.id}`);
       await set(reqRef, newReq);
@@ -422,7 +521,9 @@ export async function submitBrokenLinkReport(report: {
     reportedAt: Date.now()
   };
 
-  if (db) {
+  const h = await dbHandles();
+  if (h) {
+    const { db, ref, set } = h;
     try {
       const repRef = ref(db, `broken_reports/${newReport.id}`);
       await set(repRef, newReport);
@@ -457,7 +558,9 @@ export async function saveAppStrict(appItem: AppItem): Promise<'firebase' | 'loc
     rating: appItem.rating || 4.8
   };
 
-  if (db) {
+  const h = await dbHandles();
+  if (h) {
+    const { db, ref, set } = h;
     try {
       const appRef = ref(db, `apps_list/${appId}`);
       await set(appRef, appToSave);
@@ -488,7 +591,9 @@ export async function sha256Hex(text: string): Promise<string> {
 }
 
 export async function getAdminPinHash(): Promise<string | null> {
-  if (!db) return null;
+  const h = await dbHandles();
+  if (!h) return null;
+  const { db, ref, get } = h;
   try {
     const snap = await get(ref(db, 'admin_config/pinHash'));
     const v = snap.val();
@@ -499,9 +604,11 @@ export async function getAdminPinHash(): Promise<string | null> {
 }
 
 export async function setAdminPinHash(hash: string): Promise<boolean> {
-  if (!db) return false;
   // Admin-only: bina Admin Google sign-in ke PIN hash nahi badlega.
   if (!isAdminSignedIn()) return false;
+  const h = await dbHandles();
+  if (!h) return false;
+  const { db, ref, set } = h;
   try {
     await set(ref(db, 'admin_config/pinHash'), hash);
     return true;
@@ -512,9 +619,11 @@ export async function setAdminPinHash(hash: string): Promise<boolean> {
 
 /** Kill switch / announcement — Admin Panel se store_status badalna */
 export async function setStoreStatus(status: StoreStatus): Promise<boolean> {
-  if (!db) return false;
   // Admin-only: bina Admin Google sign-in ke store status nahi badlega.
   if (!isAdminSignedIn()) return false;
+  const h = await dbHandles();
+  if (!h) return false;
+  const { db, ref, set } = h;
   try {
     await set(ref(db, 'store_status'), status);
     return true;
