@@ -223,16 +223,17 @@ jobs:
           # The old transparent background made the dark shopping-bag
           # art look black/empty on dark surfaces (file manager, app
           # info popup). The icon tile is now a vivid diagonal gradient
-          # (violet -> blue -> cyan) filling the whole canvas, so the
-          # icon reads as colourful everywhere. Generated with Pillow
-          # (deterministic, no ImageMagick version quirks).
+          # (amber -> orange -> pink, NO blue) filling the whole
+          # canvas, so the icon reads as colourful everywhere.
+          # Generated with Pillow (deterministic, no ImageMagick
+          # version quirks).
           # --------------------------------------------------
           python3 -c "import PIL" 2>/dev/null || python3 -m pip install -q --break-system-packages pillow
 
           python3 - <<'PY'
           from PIL import Image
-          # 3-stop diagonal gradient: violet -> blue -> cyan
-          stops = [(0.0, (124, 58, 237)), (0.5, (37, 99, 235)), (1.0, (6, 182, 212))]
+          # 3-stop diagonal gradient: amber -> orange -> pink (no blue)
+          stops = [(0.0, (245, 158, 11)), (0.5, (234, 88, 12)), (1.0, (219, 39, 119))]
           def lerp(a, b, t):
               return tuple(round(a[i] + (b[i] - a[i]) * t) for i in range(3))
           def colour(t):
