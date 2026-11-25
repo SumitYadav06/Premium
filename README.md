@@ -92,3 +92,30 @@ publishing).
   `window.Capacitor.Plugins.AdMob` is NOT a valid check because
   `registerPlugin` creates that proxy everywhere. See
   `src/utils/forceUpdate.ts` and `src/components/ForceUpdateBlocker.tsx`.
+
+## Background downloads (DownloadManager, 2026-11-25 night)
+
+- **Problem:** APK downloads used `Filesystem.downloadFile` inside the
+  app — closing the app / pressing Home stopped the download, and the
+  notification shade showed nothing.
+- **Fix:** new native Capacitor plugin `BackgroundDownload`
+  (`native/BackgroundDownloadPlugin.java`, methods `download`,
+  `getStatus`, `findByFileName`, `openFile`, `cancel`) wrapping
+  Android's system `DownloadManager`. The workflow copies it into the
+  generated `android/` project and `MainActivity` registers it with
+  `registerPlugin()` **before** `super.onCreate()` (after that the
+  bridge never sees it). TS side: `src/services/backgroundDownload.ts`;
+  the installer modal (`DirectInstallerModal.tsx`) uses it first and
+  falls back to the old Filesystem path when the plugin is absent
+  (old APK / website), so nothing breaks.
+- **What the user sees:** download starts → a system notification
+  appears in the shade with the app name and live % (Play Store style),
+  and it keeps running when the app is closed. On completion, tapping
+  the notification opens the installer; returning to the store, the
+  modal/drawer re-attaches to the running (or finished) download
+  instead of starting over. Files land in the public Downloads folder.
+- **Android 13+ note:** `POST_NOTIFICATIONS` is declared and asked
+  once at first app open (MainActivity, `ajAskNotificationPermissionOnce`).
+  If the user denies it, downloads still work in the background — only
+  the shade notification stays hidden. Install still needs the
+  once-asked "Install unknown apps" permission, unchanged.
