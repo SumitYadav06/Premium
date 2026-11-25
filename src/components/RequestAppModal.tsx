@@ -9,6 +9,7 @@ import {
   Info
 } from 'lucide-react';
 import { submitAppRequest } from '../services/firebase';
+import { showRewardedAd } from '../ads';
 
 interface RequestAppModalProps {
   isOpen: boolean;
@@ -26,6 +27,8 @@ export const RequestAppModal: React.FC<RequestAppModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [isBoosting, setIsBoosting] = useState(false);
+  const [boosted, setBoosted] = useState(false);
 
   if (!isOpen) return null;
 
@@ -38,7 +41,8 @@ export const RequestAppModal: React.FC<RequestAppModalProps> = ({
       appName: appName.trim(),
       category: 'User Request',
       note: note.trim() || 'Fast User Request',
-      requesterName: 'VIP Member'
+      requesterName: 'VIP Member',
+      boosted
     });
 
     setIsSubmitting(false);
@@ -51,10 +55,25 @@ export const RequestAppModal: React.FC<RequestAppModalProps> = ({
       setSubmittedSuccess(true);
       setAppName('');
       setNote('');
+      setBoosted(false);
       setTimeout(() => {
         setSubmittedSuccess(false);
         onClose();
       }, 2000);
+    }
+  };
+
+  // Boost (opt-in): user khud tap kare to ek video ad dikhega; reward
+  // milne par hi request "boosted" mark hogi. Ad na mile / ad beech me
+  // band ho to kuch nahi hota — request normal hi bhej sakte hain.
+  const handleBoost = async () => {
+    if (isBoosting || boosted || !appName.trim()) return;
+    setIsBoosting(true);
+    try {
+      const earned = await showRewardedAd();
+      if (earned) setBoosted(true);
+    } finally {
+      setIsBoosting(false);
     }
   };
 
@@ -172,6 +191,24 @@ export const RequestAppModal: React.FC<RequestAppModalProps> = ({
                 <Send className="w-3.5 h-3.5" />
                 <span>{isSubmitting ? 'Sending Request...' : 'Send Request Now'}</span>
               </button>
+
+              {/* Boost — opt-in video ad: reward mile tabhi request boosted */}
+              {!boosted && (
+                <button
+                  type="button"
+                  onClick={handleBoost}
+                  disabled={isBoosting || isSubmitting || !appName.trim()}
+                  className="w-full py-2.5 px-4 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-fuchsia-500/30 text-fuchsia-300 font-bold text-[11px] uppercase tracking-wider active:scale-98 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>{isBoosting ? 'Ad chal raha hai...' : 'Boost Request — Video Ad Dekho'}</span>
+                </button>
+              )}
+              {boosted && (
+                <p className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-3 py-2 text-center">
+                  Boosted — aapki request priority par jayegi.
+                </p>
+              )}
             </form>
           )}
         </motion.div>

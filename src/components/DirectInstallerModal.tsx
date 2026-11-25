@@ -27,6 +27,9 @@ interface DirectInstallerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onDownloadStarted?: (task: DownloadTask) => void;
+  // Fired once when a download actually completes (file ready / installer
+  // opening). Used only for the post-download interstitial — no UI change.
+  onDownloadCompleted?: (task: DownloadTask) => void;
 }
 
 type InstallStep = 'permission' | 'downloading' | 'verifying' | 'ready' | 'guide' | 'oldapk' | 'error';
@@ -35,7 +38,8 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
   app,
   isOpen,
   onClose,
-  onDownloadStarted
+  onDownloadStarted,
+  onDownloadCompleted
 }) => {
   const [step, setStep] = useState<InstallStep>('permission');
   const [permissionGranted, setPermissionGranted] = useState(false);
@@ -46,6 +50,18 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
   const [hasTriggeredDownload, setHasTriggeredDownload] = useState(false);
   const [nativePath, setNativePath] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const completedNotifiedRef = React.useRef(false);
+
+  // Download pura hua — sirf ek baar parent ko batana (interstitial ke liye).
+  const notifyDownloadCompleted = (task: DownloadTask) => {
+    if (completedNotifiedRef.current) return;
+    completedNotifiedRef.current = true;
+    try {
+      onDownloadCompleted?.(task);
+    } catch {
+      /* ads are optional — never break the installer */
+    }
+  };
 
   // Reset state when app opens
   useEffect(() => {
@@ -56,6 +72,7 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
       setHasTriggeredDownload(false);
       setNativePath(null);
       setErrorMsg('');
+      completedNotifiedRef.current = false;
       // Purana app hai to faltu steps mat dikhao — seedha update wala step
       if (getDownloadMode() === 'old-apk') {
         setStep('oldapk');
@@ -116,6 +133,7 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
       setStep('verifying');
       setTimeout(() => {
         setStep('ready');
+        notifyDownloadCompleted(newTask);
         openApkInstaller(existing).catch(() => {});
       }, 500);
       return;
@@ -134,6 +152,7 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
       setStep('verifying');
       setTimeout(() => {
         setStep('ready');
+        notifyDownloadCompleted(newTask);
         // Download pura hote hi installer apne aap khul jayega
         openApkInstaller(path).catch(() => {});
       }, 800);
@@ -222,6 +241,19 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
   };
 
   const triggerActualFileDownload = () => {
+    // Web path: file download shuru hote hi download pura mana jata hai.
+    notifyDownloadCompleted({
+      appId: app.id || app.name,
+      appName: app.name,
+      appIcon: app.icon,
+      version: app.ver,
+      sizeMb: app.mb,
+      progress: 100,
+      status: 'ready',
+      downloadUrl: app.link,
+      startedAt: Date.now(),
+      completedAt: Date.now()
+    });
     // App ke andar download hui file ka installer kholo
     if (nativePath) {
       openApkInstaller(nativePath).catch(() => {});
