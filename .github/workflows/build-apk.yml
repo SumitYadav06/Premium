@@ -219,45 +219,46 @@ jobs:
           mkdir -p "$RES/mipmap-anydpi-v26"
 
           # --------------------------------------------------
-          # LAUNCHER ICON — EXACTLY AS THE USER'S LOGO, FULL SIZE
-          # User (2026-11-25): "yahi logo ho, etna ho, aise hi ho" —
-          # the logo must be this big, exactly as sent. So NO padding,
-          # NO gradient background: the art fills the whole tile.
-          # Background is the art's own edge colour (#0E347F, sampled
-          # from app-icon.png) so the transparent corners blend
+          # LAUNCHER ICON — USER'S LOGO, ZOOMED OUT TO 85%
+          # User (2026-11-25): full-size 100% was TOO zoomed, "zoom
+          # out karo". 85% keeps the logo big while the whole logo
+          # (incl. corner mini-icons) stays visible under circle and
+          # squircle masks. Background is the art's own edge colour
+          # (#0E347F, sampled from app-icon.png) so the padding blends
           # seamlessly with the art's dark background.
           # --------------------------------------------------
           convert -size 432x432 xc:"#0E347F" \
             "$RES/drawable-nodpi/ic_launcher_background.png"
 
-          # Legacy icons — the art itself, full square, Lanczos
-          convert app-icon.png -filter Lanczos -resize 48x48 \
-            "$RES/mipmap-mdpi/ic_launcher.png"
-          convert app-icon.png -filter Lanczos -resize 72x72 \
-            "$RES/mipmap-hdpi/ic_launcher.png"
-          convert app-icon.png -filter Lanczos -resize 96x96 \
-            "$RES/mipmap-xhdpi/ic_launcher.png"
-          convert app-icon.png -filter Lanczos -resize 144x144 \
-            "$RES/mipmap-xxhdpi/ic_launcher.png"
-          convert app-icon.png -filter Lanczos -resize 192x192 \
-            "$RES/mipmap-xxxhdpi/ic_launcher.png"
-
-          cp "$RES/mipmap-mdpi/ic_launcher.png" \
-             "$RES/mipmap-mdpi/ic_launcher_round.png"
-          cp "$RES/mipmap-hdpi/ic_launcher.png" \
-             "$RES/mipmap-hdpi/ic_launcher_round.png"
-          cp "$RES/mipmap-xhdpi/ic_launcher.png" \
-             "$RES/mipmap-xhdpi/ic_launcher_round.png"
-          cp "$RES/mipmap-xxhdpi/ic_launcher.png" \
-             "$RES/mipmap-xxhdpi/ic_launcher_round.png"
-          cp "$RES/mipmap-xxxhdpi/ic_launcher.png" \
-             "$RES/mipmap-xxxhdpi/ic_launcher_round.png"
+          # Legacy icons — art at 85% centred on the edge-colour
+          # background (so they match the launcher icon everywhere)
+          for spec in "48 41 mdpi" "72 61 hdpi" "96 82 xhdpi" "144 122 xxhdpi" "192 163 xxxhdpi"; do
+            set -- $spec
+            convert -size "$1x$1" xc:"#0E347F" \
+              \( app-icon.png -filter Lanczos -resize "$2x$2" \) \
+              -gravity center -composite \
+              "$RES/mipmap-$3/ic_launcher.png"
+            cp "$RES/mipmap-$3/ic_launcher.png" "$RES/mipmap-$3/ic_launcher_round.png"
+          done
 
           # --------------------------------------------------
-          # ADAPTIVE ICON — foreground is the art at full 432x432
+          # ADAPTIVE ICON — foreground is the art at 85% (368x368)
+          # centred on a transparent canvas; background above shows
+          # through the padding.
           # --------------------------------------------------
-          convert app-icon.png -filter Lanczos -resize 432x432 \
+          convert -size 432x432 xc:none \
             "$RES/drawable-nodpi/ic_launcher_foreground.png"
+
+          convert app-icon.png -filter Lanczos -resize 368x368 \
+            "$RES/drawable-nodpi/icon_center.png"
+
+          composite \
+            -gravity center \
+            "$RES/drawable-nodpi/icon_center.png" \
+            "$RES/drawable-nodpi/ic_launcher_foreground.png" \
+            "$RES/drawable-nodpi/ic_launcher_foreground.png"
+
+          rm -f "$RES/drawable-nodpi/icon_center.png"
 
           # Adaptive icon
           cat > "$RES/mipmap-anydpi-v26/ic_launcher.xml" <<'EOF'
@@ -519,6 +520,70 @@ jobs:
             -print
 
       # ============================================================
+      # RELEASE SIGNING — one permanent keystore for every build
+      # ============================================================
+      # Same keystore -> same certificate -> Android accepts the new APK
+      # as an update over the old one (no uninstall needed).
+      # The keystore itself lives ONLY in GitHub secrets; no secret
+      # value appears anywhere in this file.
+      - name: Configure release signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "ERROR: GitHub secret KEYSTORE_BASE64 is not set for this repo."
+            echo "Add secrets KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS and KEY_PASSWORD"
+            echo "in repo Settings > Secrets and variables > Actions, then re-run this workflow."
+            exit 1
+          fi
+          if [ -z "$KEYSTORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
+            echo "ERROR: one of KEYSTORE_PASSWORD / KEY_ALIAS / KEY_PASSWORD is not set."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
+          ls -l android/app/release.keystore
+          python3 - << 'EOF'
+          import os, re, pathlib
+          p = pathlib.Path('android/app/build.gradle')
+          s = p.read_text()
+          run_number = os.environ['GITHUB_RUN_NUMBER']
+          # 1. signingConfigs.release right after "android {"
+          if 'signingConfigs' not in s:
+              block = (
+                  '    signingConfigs {\n'
+                  '        release {\n'
+                  '            storeFile file("release.keystore")\n'
+                  '            storePassword System.getenv("KEYSTORE_PASSWORD")\n'
+                  '            keyAlias System.getenv("KEY_ALIAS")\n'
+                  '            keyPassword System.getenv("KEY_PASSWORD")\n'
+                  '        }\n'
+                  '    }\n'
+              )
+              s, n = re.subn(r'(?m)^([ \t]*android[ \t]*\{[ \t]*)$', r'\1\n' + block, s, count=1)
+              assert n == 1, 'android { block not found'
+          # 2. versionCode = run number (must always increase for updates)
+          s, n = re.subn(r'versionCode\s+\d+', 'versionCode ' + run_number, s, count=1)
+          assert n == 1, 'versionCode not found'
+          # 3. versionName stays 1.0
+          s, n = re.subn(r'versionName\s+"[^"]*"', 'versionName "1.0"', s, count=1)
+          assert n == 1, 'versionName not found'
+          # 4. wire the release build type to the signing config
+          if 'signingConfig signingConfigs.release' not in s:
+              m = re.search(r'(?m)^(.*buildTypes[ \t]*\{[ \t]*)$', s)
+              assert m, 'buildTypes block not found'
+              m2 = re.search(r'(?m)^([ \t]*)release[ \t]*\{[ \t]*$', s[m.end():])
+              assert m2, 'release block not found'
+              indent = m2.group(1) + '    '
+              pos = m.end() + m2.end()
+              s = s[:pos] + '\n' + indent + 'signingConfig signingConfigs.release' + s[pos:]
+          p.write_text(s)
+          print('release signing configured, versionCode =', run_number)
+          EOF
+
+      # ============================================================
       # BUILD APK
       # ============================================================
 
@@ -527,20 +592,20 @@ jobs:
           cd android
           chmod +x gradlew
           ./gradlew clean
-          ./gradlew assembleDebug
+          ./gradlew assembleRelease
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Premium-App-Store-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
 
       # Har build ka APK ek hi fixed link par — purane users yahi se update honge
-      # Fixed link: https://github.com/SumitYadav06/Premium/releases/download/store-latest/app-debug.apk
+      # Fixed link: https://github.com/SumitYadav06/Premium/releases/download/store-latest/Apna.Jugaad.apk
       - name: Rename APK to Apna.Jugaad.apk
         shell: bash
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/Apna.Jugaad.apk
+        run: cp android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/apk/release/Apna.Jugaad.apk
 
       - name: Publish APK on fixed download link
         uses: softprops/action-gh-release@v2
@@ -550,4 +615,4 @@ jobs:
           body: |
             Hamesha ka sabse naya store APK. Ye link kabhi nahi badalta —
             website aur purana app isi link se update hota hai.
-          files: android/app/build/outputs/apk/debug/Apna.Jugaad.apk
+          files: android/app/build/outputs/apk/release/Apna.Jugaad.apk
