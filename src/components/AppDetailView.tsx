@@ -17,7 +17,8 @@ import {
   Copy,
   Check,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  RefreshCw
 } from 'lucide-react';
 import { AppItem, AppStats, ReviewItem } from '../types';
 import { addAppReview, getAppShots } from '../services/firebase';
@@ -96,6 +97,8 @@ interface AppDetailViewProps {
   onAddReview?: (review: { user: string; text: string; rating: number }) => Promise<boolean>;
   allApps?: AppItem[];
   theme: 'dark' | 'light';
+  /** Purana version download ho chuka hai, store me naya hai. */
+  hasUpdate?: boolean;
 }
 
 export const AppDetailView: React.FC<AppDetailViewProps> = ({
@@ -109,7 +112,8 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
   onSelectRelatedApp = (_app: AppItem) => {},
   onAddReview,
   allApps = [],
-  theme
+  theme,
+  hasUpdate = false
 }) => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -661,6 +665,12 @@ export const AppDetailView: React.FC<AppDetailViewProps> = ({
 
       {/* Primary Direct Download & Installation Action Button */}
       <div className="space-y-3">
+        {hasUpdate && (
+          <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 text-[11px] font-bold">
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Naya version aaya hai — v{app.ver} download karo</span>
+          </div>
+        )}
         <button
           onClick={() => (onDirectInstall ? onDirectInstall(app) : onQuickDownload ? onQuickDownload(app) : window.open(app.link, '_blank'))}
           className="btn-live dl-live w-full py-4 px-6 rounded-2xl font-black uppercase text-sm tracking-wider text-white bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 hover:from-violet-500 hover:via-fuchsia-400 hover:to-orange-300 shadow-xl shadow-fuchsia-600/30 active:scale-95 transition flex items-center justify-center gap-2.5 group cursor-pointer"

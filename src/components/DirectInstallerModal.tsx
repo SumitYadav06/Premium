@@ -27,6 +27,9 @@ interface DirectInstallerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onDownloadStarted?: (task: DownloadTask) => void;
+  // Live progress — parent (Downloads drawer) me % dikhane ke liye.
+  // Modal band karne par bhi task drawer me update hota rehta hai.
+  onDownloadProgress?: (appId: string, progress: number, downloadedMb: number, speed: string, etaSeconds: number) => void;
   // Fired once when a download actually completes (file ready / installer
   // opening). Used only for the post-download interstitial — no UI change.
   onDownloadCompleted?: (task: DownloadTask) => void;
@@ -39,6 +42,7 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
   isOpen,
   onClose,
   onDownloadStarted,
+  onDownloadProgress,
   onDownloadCompleted
 }) => {
   const [step, setStep] = useState<InstallStep>('permission');
@@ -145,6 +149,11 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
         setDownloadedMb(parseFloat(p.downloadedMb.toFixed(1)));
         setDownloadSpeed(`${p.speedMbps.toFixed(1)} MB/s`);
         setEtaSeconds(p.etaSeconds);
+        try {
+          onDownloadProgress?.(app.id || app.name, p.pct, p.downloadedMb, `${p.speedMbps.toFixed(1)} MB/s`, p.etaSeconds);
+        } catch {
+          /* progress is cosmetic — never break the download */
+        }
       });
       setProgress(100);
       setDownloadedMb(totalMb);
@@ -226,6 +235,11 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
       
       const remainingSeconds = Math.max(0, Math.ceil((duration - elapsed) / 1000));
       setEtaSeconds(remainingSeconds);
+      try {
+        onDownloadProgress?.(app.id || app.name, pct, parseFloat(currentDownloaded), `${speed} MB/s`, remainingSeconds);
+      } catch {
+        /* progress is cosmetic — never break the download */
+      }
 
       if (pct >= 100) {
         clearInterval(interval);

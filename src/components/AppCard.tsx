@@ -20,6 +20,8 @@ interface AppCardProps {
   onToggleBookmark: (app: AppItem) => void;
   theme: 'dark' | 'light';
   index?: number;
+  /** Purana version download ho chuka hai, store me naya hai. */
+  hasUpdate?: boolean;
 }
 
 /** Har category ka apna rang — colorful premium feel */
@@ -54,7 +56,8 @@ export const AppCard: React.FC<AppCardProps> = ({
   onSelect,
   onToggleBookmark,
   theme,
-  index = 0
+  index = 0,
+  hasUpdate = false
 }) => {
   const grad = gradientFor(app.cat);
   const dls = downloads ?? app.downloads ?? 0;
@@ -67,6 +70,9 @@ export const AppCard: React.FC<AppCardProps> = ({
       whileTap={{ scale: 0.96 }}
       transition={{ delay: Math.min(index * 0.045, 0.4), duration: 0.32 }}
       onClick={() => onSelect(app)}
+      // Neeche wale cards tabhi render hon jab screen par aayen —
+      // lambi list me scroll bahut halka ho jata hai.
+      style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 280px' }}
       className={`premium-card group relative rounded-[1.6rem] flex flex-col cursor-pointer border select-none overflow-hidden transition-colors duration-300 ${
         theme === 'dark'
           ? 'bg-white/[0.05] backdrop-blur-xl border-white/10 hover:border-fuchsia-400/50 shadow-lg shadow-black/30'
@@ -96,6 +102,13 @@ export const AppCard: React.FC<AppCardProps> = ({
         {app.isHot && (
           <span className="absolute top-2.5 left-2.5 z-20 bg-gradient-to-r from-red-500 to-orange-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full shadow-lg border border-white/30 uppercase tracking-wider">
             HOT
+          </span>
+        )}
+
+        {/* UPDATE badge — purana version download hai, naya aaya hai */}
+        {hasUpdate && (
+          <span className={`absolute ${app.isHot ? 'top-8' : 'top-2.5'} left-2.5 z-20 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 text-[8px] font-black px-2 py-0.5 rounded-full shadow-lg border border-white/40 uppercase tracking-wider`}>
+            Update
           </span>
         )}
 
