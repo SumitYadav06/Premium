@@ -62,6 +62,8 @@ export interface DownloadTask {
   totalBytes?: number;
   startedAt: number;
   completedAt?: number;
+  /** Android DownloadManager ka id — background download dobara dhoondne / install kholne ke liye */
+  downloadId?: number;
 }
 
 export interface AppRequestItem {
