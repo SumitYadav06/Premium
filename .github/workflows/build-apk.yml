@@ -543,7 +543,9 @@ jobs:
             echo "ERROR: one of KEYSTORE_PASSWORD / KEY_ALIAS / KEY_PASSWORD is not set."
             exit 1
           fi
-          echo "$KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
+          echo "KEYSTORE_BASE64 length: ${#KEYSTORE_BASE64} chars (expect 3568)"
+          printf '%s' "$KEYSTORE_BASE64" | tr -d '[:space:]' | base64 -d > android/app/release.keystore
+          if [ ! -s android/app/release.keystore ]; then echo "ERROR: decoded keystore is empty"; exit 1; fi
           ls -l android/app/release.keystore
           python3 - << 'EOF'
           import os, re, pathlib
