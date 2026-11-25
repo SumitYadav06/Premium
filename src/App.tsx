@@ -10,6 +10,9 @@ import {
 } from './services/firebase';
 import { STORE_CONFIG } from './config';
 import { showInterstitialAd } from './ads';
+import { shareApp } from './utils/shareApp';
+import { detectApkShellState } from './utils/forceUpdate';
+import { ForceUpdateBlocker } from './components/ForceUpdateBlocker';
 import { fetchReleaseApps } from './services/githubApps';
 import { Navbar } from './components/Navbar';
 import { BannerSlider } from './components/BannerSlider';
@@ -52,7 +55,8 @@ import {
   Flame,
   ArrowUp,
   RefreshCw,
-  Store
+  Store,
+  Bookmark
 } from 'lucide-react';
 
 export default function App() {
@@ -99,6 +103,46 @@ export default function App() {
     recordDailyVisit();
   }, []);
 
+  // FORCE UPDATE — purana 5 MB APK pehchano aur store block karo.
+  // Detection: native shell + AdMob native plugin NAHI = purana APK.
+  // 5 second tak har 250ms check karo (bridge aane me der ho sakti hai);
+  // do baar lagatar "old-apk" mile tabhi block karo; bridge na mile ya
+  // naya APK / browser ho to store dikhao (fail open — kabhi brick nahi).
+  useEffect(() => {
+    let stopped = false;
+    let timer: number | undefined;
+    let confirmations = 0;
+    const deadline = Date.now() + 5000;
+    const tick = () => {
+      if (stopped) return;
+      const state = detectApkShellState();
+      if (state === 'new-or-browser') {
+        stopped = true;
+        return;
+      }
+      if (state === 'old-apk') {
+        confirmations += 1;
+        if (confirmations >= 2) {
+          stopped = true;
+          setForceUpdateBlocked(true);
+          return;
+        }
+      } else {
+        confirmations = 0;
+      }
+      if (Date.now() >= deadline) {
+        stopped = true;
+        return;
+      }
+      timer = window.setTimeout(tick, 250);
+    };
+    timer = window.setTimeout(tick, 250);
+    return () => {
+      stopped = true;
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, []);
+
   // Offline indicator — net jaate hi halka banner, taaki user samjhe
   // ki naye apps load nahi ho rahe (pehle se loaded list dikhti rahegi).
   const [isOnline, setIsOnline] = useState<boolean>(() =>
@@ -129,7 +173,13 @@ export default function App() {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = React.useRef<any>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [sortBy, setSortBy] = useState<'trending' | 'downloads' | 'rating' | 'size' | 'name'>('trending');
+  const [sortBy, setSortBy] = useState<'trending' | 'downloads' | 'rating' | 'size' | 'name' | 'newest'>('trending');
+  // Sirf saved (bookmark) apps dikhao — home list ka filter chip.
+  const [showSavedOnly, setShowSavedOnly] = useState(false);
+  // Card share ka chhota toast ("copy ho gaya" jaisi feedback).
+  const [shareToast, setShareToast] = useState<string | null>(null);
+  // Purana 5 MB APK — confirm hone par poora store block hota hai.
+  const [forceUpdateBlocked, setForceUpdateBlocked] = useState(false);
 
   // Voice Search Handler with Multi-language (Hindi + English) & Permission Handling
   const [voiceStatus, setVoiceStatus] = useState<string | null>(null);
@@ -709,6 +759,19 @@ export default function App() {
     );
   };
 
+  // Card se share — native share sheet, nahi to clipboard copy + toast.
+  const handleShareApp = async (app: AppItem) => {
+    const result = await shareApp(app);
+    if (result === 'copied') {
+      setShareToast('Share link copy ho gaya!');
+      window.setTimeout(() => setShareToast(null), 2500);
+    } else if (result === 'failed') {
+      setShareToast('Share nahi ho paya — dobara try karo');
+      window.setTimeout(() => setShareToast(null), 2500);
+    }
+    // 'shared' par native sheet khud feedback deti hai — toast nahi chahiye.
+  };
+
   // Interstitial video ad — sirf har 3rd download pura hone par, browsing
   // ke beech me kabhi nahi. Fire-and-forget: ad na mile to kuch nahi hota.
   const handleDownloadCompleted = (task?: DownloadTask) => {
@@ -785,6 +848,19 @@ export default function App() {
       );
     }
 
+    // Saved-only filter chip — sirf bookmark wale apps dikhao.
+    if (showSavedOnly) {
+      list = list.filter((a) => a && Array.isArray(bookmarkedIds) && bookmarkedIds.includes(a.id));
+    }
+
+    // Newest: Firebase list oldest-first aati hai (push-key order), to
+    // reverse karne se sabse naye add hue apps pehle aate hain. AppItem
+    // me koi date field nahi hai, isliye yahi sabse sahi order hai.
+    if (sortBy === 'newest') {
+      list.reverse();
+      return list;
+    }
+
     list.sort((a, b) => {
       if (sortBy === 'trending') {
         const viewsA = stats[a.id]?.views || 0;
@@ -809,7 +885,7 @@ export default function App() {
     });
 
     return list;
-  }, [safeAppsList, selectedCategory, searchQuery, sortBy, stats]);
+  }, [safeAppsList, selectedCategory, searchQuery, sortBy, stats, showSavedOnly, bookmarkedIds]);
 
   const trendingSearches = useMemo(() => {
     return [...safeAppsList]
@@ -890,6 +966,12 @@ export default function App() {
     });
     return set;
   }, [downloadTasks, safeAppsList]);
+
+  // Purana APK confirm ho gaya — poora store chhupao, sirf update blocker.
+  // (Saare hooks upar call ho chuke hain, isliye yahan early return safe hai.)
+  if (forceUpdateBlocked) {
+    return <ForceUpdateBlocker />;
+  }
 
   return (
     <div className={`relative min-h-screen ${theme === 'dark' ? 'bg-[#0d0a1a] text-white' : 'bg-[#f7f5ff] text-slate-900'} antialiased transition-colors duration-200`}>
@@ -1012,7 +1094,7 @@ export default function App() {
               </form>
 
               {/* High-Visibility Eye-Catching Guide Button & Sort Selector */}
-              <div className="flex items-center gap-2 sm:gap-2.5">
+              <div className="flex items-center flex-wrap gap-2 sm:gap-2.5">
                 {/* Standout How to Install Guide Button */}
                 <button
                   onClick={openInstallGuide}
@@ -1046,12 +1128,29 @@ export default function App() {
                     className="bg-transparent text-xs sm:text-sm font-bold focus:outline-none cursor-pointer"
                   >
                     <option value="trending" className="bg-slate-900 text-white">Trending 🔥</option>
+                    <option value="newest" className="bg-slate-900 text-white">Newest First 🆕</option>
                     <option value="downloads" className="bg-slate-900 text-white">Most Downloaded</option>
                     <option value="rating" className="bg-slate-900 text-white">Highest Rated (★)</option>
                     <option value="size" className="bg-slate-900 text-white">Smallest Size (MB)</option>
                     <option value="name" className="bg-slate-900 text-white">Alphabetical (A-Z)</option>
                   </select>
                 </div>
+
+                {/* Saved-only filter chip — sirf bookmark wale apps */}
+                <button
+                  onClick={() => setShowSavedOnly((v) => !v)}
+                  className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-2.5 sm:py-3 rounded-2xl border text-xs sm:text-sm font-bold transition active:scale-95 cursor-pointer whitespace-nowrap ${
+                    showSavedOnly
+                      ? 'bg-gradient-to-r from-amber-500 to-fuchsia-500 border-amber-400/60 text-white shadow-lg shadow-fuchsia-500/30'
+                      : theme === 'dark'
+                        ? 'bg-slate-900/90 border-slate-800 text-slate-300 hover:border-fuchsia-400/50'
+                        : 'bg-white border-slate-200 text-slate-700 shadow-sm hover:border-fuchsia-300'
+                  }`}
+                  title="Sirf saved (bookmark) apps dikhao"
+                >
+                  <Bookmark className={`w-3.5 h-3.5 flex-shrink-0 ${showSavedOnly ? 'fill-white' : 'text-amber-400'}`} />
+                  <span>Saved ({bookmarkedIds.length})</span>
+                </button>
               </div>
             </div>
 
@@ -1165,7 +1264,20 @@ export default function App() {
                   <div className={`w-14 h-14 rounded-2xl mx-auto flex items-center justify-center ${theme === 'dark' ? 'bg-slate-800 text-slate-500' : 'bg-fuchsia-50 text-fuchsia-400'}`}>
                     <Package className="w-7 h-7" />
                   </div>
-                  {safeAppsList.length === 0 && !searchQuery ? (
+                  {showSavedOnly && bookmarkedIds.length === 0 ? (
+                    <>
+                      <h3 className={`text-base font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Kuch Save Nahi Hai</h3>
+                      <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                        Abhi tak koi app save nahi ki hai. Kisi bhi card par bookmark dabao — wo yahan dikhegi.
+                      </p>
+                      <button
+                        onClick={() => setShowSavedOnly(false)}
+                        className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition shadow-lg shadow-amber-600/30 cursor-pointer inline-flex items-center gap-1.5"
+                      >
+                        <span>Saved Filter Hatao — Sab Dikhao</span>
+                      </button>
+                    </>
+                  ) : safeAppsList.length === 0 && !searchQuery ? (
                     <>
                       <h3 className={`text-base font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Store Load Nahi Hua</h3>
                       <p className="text-xs text-slate-400 max-w-sm mx-auto">
@@ -1215,6 +1327,7 @@ export default function App() {
                       onSelect={(a) => openAppDetail(a)}
                       onQuickDownload={(a) => handleQuickDownload(a)}
                       onToggleBookmark={(a) => handleToggleBookmark(a)}
+                      onShare={(a) => handleShareApp(a)}
                       hasUpdate={updateAppIds.has(app.id)}
                       theme={theme}
                       index={idx}
@@ -1237,6 +1350,15 @@ export default function App() {
           bookmarksCount={bookmarkedIds.length}
           downloadsCount={downloadTasks.length}
         />
+      )}
+
+      {/* Share toast — card se copy hone par chhoti feedback */}
+      {shareToast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[9500] pointer-events-none">
+          <div className="px-4 py-2.5 rounded-full bg-slate-900/95 border border-white/15 text-white text-xs font-bold shadow-xl backdrop-blur whitespace-nowrap">
+            {shareToast}
+          </div>
+        </div>
       )}
 
       {/* Pull-to-refresh indicator */}
