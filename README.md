@@ -47,3 +47,23 @@ publishing).
 > apps, and an AdMob account can be suspended for policy violations.
 > Correct wiring does **not** guarantee ads will serve or earn — approval
 > is Google's decision, and the store's content is the risk, not the code.
+
+---
+
+## Speed & new features (2026-11-25)
+
+- **Faster open:** Firebase (~338 kB) now loads lazily after first paint
+  instead of in the first bundle (first-load JS ~830 kB → ~484 kB raw,
+  ~223 kB → ~152 kB gzip); splash shortened 1.6 s → 1.0 s; stats updates
+  throttled to 800 ms so the grid doesn't re-render on every view/download;
+  off-screen cards render on demand (`content-visibility: auto`).
+- **Bigger launcher icon:** the adaptive icon art is now 384×384 inside the
+  432×432 foreground (was 280×280, looked small/floating); legacy icons use
+  the Lanczos filter for the sharpest downscale.
+- **UPDATE badge:** an app you already downloaded shows an amber UPDATE
+  badge (card + detail page) when the store has a newer version.
+- **Live download progress:** the Downloads drawer now shows real %/speed
+  while a download runs (native in-app download or web), even if you close
+  the installer modal; tasks are created only when a download really starts
+  (previously a fake 100% "ready" task appeared on tap).
+- **Offline banner:** a slim amber strip appears when the network drops.
