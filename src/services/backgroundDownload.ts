@@ -37,6 +37,8 @@ export interface BackgroundDownloadPlugin {
   }>;
   openFile(options: { downloadId: number }): Promise<void>;
   cancel(options: { downloadId: number }): Promise<void>;
+  isNotificationPermissionGranted(): Promise<{ granted: boolean }>;
+  requestNotificationPermission(): Promise<{ granted: boolean }>;
 }
 
 const BackgroundDownload = registerPlugin<BackgroundDownloadPlugin>('BackgroundDownload');
@@ -51,6 +53,34 @@ export const isBackgroundDownloadAvailable = (): boolean => {
 };
 
 export type BgDownloadStatus = 'pending' | 'running' | 'paused' | 'successful' | 'failed' | 'unknown';
+
+/**
+ * Download % wali notification ki permission mili hui hai ya nahi.
+ * Pata na chale to true maan lo — download phir bhi chalega, sirf
+ * notification dikhe ya na dikhe iska farak hai.
+ */
+export async function isNotificationPermissionGranted(): Promise<boolean> {
+  try {
+    const res = await BackgroundDownload.isNotificationPermissionGranted();
+    return !!res.granted;
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * Notification ki permission maango (system dialog). User mana kare to
+ * false — download phir bhi background me chalega, bas % notification
+ * me nahi dikhega; tab Settings → Apps → Premium → Notifications se on karna hoga.
+ */
+export async function requestNotificationPermission(): Promise<boolean> {
+  try {
+    const res = await BackgroundDownload.requestNotificationPermission();
+    return !!res.granted;
+  } catch {
+    return false;
+  }
+}
 
 export interface BgDownloadState {
   status: BgDownloadStatus;
