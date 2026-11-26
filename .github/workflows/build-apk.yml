@@ -255,20 +255,22 @@ jobs:
           # ADAPTIVE ICON — foreground is the art at 281px
           # (272px bbox = 63% of 432, exactly like the old APK)
           # centred on a transparent canvas.
+          # BLACK-AND-WHITE BUG (found 2026-11-26): the old way
+          # (`convert xc:none` canvas + `composite`) wrote the
+          # foreground as a GRAYSCALE PNG on the GitHub runner —
+          # runs #186/#187/#191/#192 all shipped a gray foreground,
+          # which is why the icon showed black and white on the
+          # phone (MT Manager shows the colourful legacy icon, the
+          # launcher shows the gray adaptive foreground). It was
+          # NEVER the phone's themed-icons setting. This single
+          # `convert -extent` + `-type TrueColorAlpha` keeps the
+          # art's own colours (verified locally: sRGB TrueColorAlpha,
+          # colourful pixels present).
           # --------------------------------------------------
-          convert -size 432x432 xc:none \
-            "$RES/drawable-nodpi/ic_launcher_foreground.png"
-
           convert app-icon.png -filter Lanczos -resize 281x281 \
-            "$RES/drawable-nodpi/icon_center.png"
-
-          composite \
-            -gravity center \
-            "$RES/drawable-nodpi/icon_center.png" \
-            "$RES/drawable-nodpi/ic_launcher_foreground.png" \
+            -background none -gravity center -extent 432x432 \
+            -type TrueColorAlpha \
             "$RES/drawable-nodpi/ic_launcher_foreground.png"
-
-          rm -f "$RES/drawable-nodpi/icon_center.png"
 
           # Adaptive icon XMLs (restored — the legacy-only attempt
           # made the icon tiny inside a white frame on Samsung)
@@ -293,6 +295,16 @@ jobs:
           # These are unused — but they ship inside the APK if left behind.
           find "$RES" -path "*mipmap*/ic_launcher_foreground.png" -delete
           find "$RES" -path "*mipmap*/ic_launcher_background.png" -delete
+
+          # ICON COLOUR CHECK — the foreground must be a colour PNG.
+          # If it ever comes out grayscale again, the icon shows black
+          # and white on the phone, so fail the build loudly here.
+          FG_TYPE=$(identify -format "%[type]" "$RES/drawable-nodpi/ic_launcher_foreground.png")
+          echo "Launcher foreground PNG type: $FG_TYPE"
+          case "$FG_TYPE" in
+            *TrueColor*|*Palette*) ;;
+            *) echo "ERROR: launcher foreground is $FG_TYPE, not colour — icon would be black and white"; exit 1 ;;
+          esac
 
           echo "Old-style adaptive icon created successfully."
 
