@@ -221,20 +221,30 @@ jobs:
           mkdir -p "$RES/mipmap-anydpi-v26"
 
           # --------------------------------------------------
-          # LAUNCHER ICON — USER'S LOGO AT 60%
-          # User (2026-11-26): 100% too zoomed, 85% still too big,
-          # chose 60% from a preview. Art at 60% centred, whole logo
-          # (incl. corner mini-icons) visible under circle and
-          # squircle masks. Background is the art's own edge colour
-          # (#0E347F, sampled from app-icon.png) so the padding blends
-          # seamlessly with the art's dark background.
+          # LAUNCHER ICON — USER'S LOGO AT 65% (LEGACY ONLY)
+          # User (2026-11-26): 60% a touch too small — 3-5% bigger.
+          # 65% it is. Art at 65% centred, whole logo (incl. corner
+          # mini-icons) visible under circle and squircle masks.
+          # Background is the art's own edge colour (#0E347F, sampled
+          # from app-icon.png) so the padding blends seamlessly with
+          # the art's dark background.
+          #
+          # NO ADAPTIVE ICON ANY MORE — this is the black-and-white
+          # fix. The phone's themed-icons mode turns the ADAPTIVE
+          # icon (foreground/background layers) into a monochrome
+          # version, so the logo kept showing black and white even
+          # though the APK has no monochrome icon at all. A legacy
+          # colour icon has no layers for the themed-icon engine to
+          # process, so it stays colourful. The legacy icon is a full
+          # opaque square, so the launcher mask just crops blue
+          # corners — the logo itself stays fully visible.
           # --------------------------------------------------
           convert -size 432x432 xc:"#0E347F" \
             "$RES/drawable-nodpi/ic_launcher_background.png"
 
-          # Legacy icons — art at 60% centred on the edge-colour
+          # Legacy icons — art at 65% centred on the edge-colour
           # background (so they match the launcher icon everywhere)
-          for spec in "48 29 mdpi" "72 43 hdpi" "96 58 xhdpi" "144 86 xxhdpi" "192 115 xxxhdpi"; do
+          for spec in "48 31 mdpi" "72 47 hdpi" "96 62 xhdpi" "144 94 xxhdpi" "192 125 xxxhdpi"; do
             set -- $spec
             convert -size "$1x$1" xc:"#0E347F" \
               \( app-icon.png -filter Lanczos -resize "$2x$2" \) \
@@ -243,50 +253,22 @@ jobs:
             cp "$RES/mipmap-$3/ic_launcher.png" "$RES/mipmap-$3/ic_launcher_round.png"
           done
 
-          # --------------------------------------------------
-          # ADAPTIVE ICON — foreground is the art at 60% (259x259)
-          # centred on a transparent canvas; background above shows
-          # through the padding.
-          # --------------------------------------------------
-          convert -size 432x432 xc:none \
-            "$RES/drawable-nodpi/ic_launcher_foreground.png"
-
-          convert app-icon.png -filter Lanczos -resize 259x259 \
-            "$RES/drawable-nodpi/icon_center.png"
-
-          composite \
-            -gravity center \
-            "$RES/drawable-nodpi/icon_center.png" \
-            "$RES/drawable-nodpi/ic_launcher_foreground.png" \
-            "$RES/drawable-nodpi/ic_launcher_foreground.png"
-
-          rm -f "$RES/drawable-nodpi/icon_center.png"
-
-          # Adaptive icon
-          cat > "$RES/mipmap-anydpi-v26/ic_launcher.xml" <<'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-              <background android:drawable="@drawable/ic_launcher_background"/>
-              <foreground android:drawable="@drawable/ic_launcher_foreground"/>
-          </adaptive-icon>
-          EOF
-
-          cat > "$RES/mipmap-anydpi-v26/ic_launcher_round.xml" <<'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-              <background android:drawable="@drawable/ic_launcher_background"/>
-              <foreground android:drawable="@drawable/ic_launcher_foreground"/>
-          </adaptive-icon>
-          EOF
+          # Adaptive icon XMLs — DELETE them (and any the template
+          # wrote). Without them, @mipmap/ic_launcher resolves to the
+          # legacy colour PNG above, which themed-icons cannot turn
+          # black and white. The drawable-nodpi foreground/background
+          # PNGs are now unused; keep them on disk (harmless) so
+          # nothing else breaks, but no XML references them.
+          rm -f "$RES/mipmap-anydpi-v26/ic_launcher.xml"
+          rm -f "$RES/mipmap-anydpi-v26/ic_launcher_round.xml"
 
           # Delete leftover template icon files in mipmap folders
           # (default white Capacitor logo from `cap add android`).
-          # The adaptive XML uses drawable-nodpi only, so these are
-          # unused — but they ship inside the APK if left behind.
+          # These are unused — but they ship inside the APK if left behind.
           find "$RES" -path "*mipmap*/ic_launcher_foreground.png" -delete
           find "$RES" -path "*mipmap*/ic_launcher_background.png" -delete
 
-          echo "Safe-area adaptive icon created successfully."
+          echo "Legacy colour launcher icon created successfully."
 
       # ============================================================
       # MICROPHONE - KEEP WORKING CONFIGURATION
