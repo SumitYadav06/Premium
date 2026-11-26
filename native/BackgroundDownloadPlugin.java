@@ -1,5 +1,6 @@
 package com.premium.app;
 
+import android.Manifest;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
@@ -12,6 +13,8 @@ import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.getcapacitor.annotation.Permission;
+import com.getcapacitor.annotation.PermissionCallback;
 
 /**
  * BackgroundDownload — APK download Android ke system DownloadManager se.
@@ -32,7 +35,13 @@ import com.getcapacitor.annotation.CapacitorPlugin;
  * project me copy karta hai. android/ CI me generate hota hai, isliye
  * plugin ka source yahin repo me rehta hai.
  */
-@CapacitorPlugin(name = "BackgroundDownload")
+@CapacitorPlugin(
+    name = "BackgroundDownload",
+    permissions = @Permission(
+        alias = "notifications",
+        strings = { Manifest.permission.POST_NOTIFICATIONS }
+    )
+)
 public class BackgroundDownloadPlugin extends Plugin {
 
     private static final String APK_MIME = "application/vnd.android.package-archive";
@@ -50,6 +59,44 @@ public class BackgroundDownloadPlugin extends Plugin {
             case DownloadManager.STATUS_FAILED: return "failed";
             default: return "unknown";
         }
+    }
+
+    /** Notification permission mili hui hai ya nahi — Android 13 se neeche hamesha true. */
+    @PluginMethod
+    public void isNotificationPermissionGranted(PluginCall call) {
+        JSObject ret = new JSObject();
+        ret.put("granted", isNotifGranted());
+        call.resolve(ret);
+    }
+
+    /**
+     * Notification permission maango (system dialog). Pehle ek baar mana
+     * karne par bhi dobara poochta hai — lekin Android do baar mana karne
+     * ke baad dialog dikhana band kar deta hai, tab user ko Settings se
+     * on karna padta hai. Download bina permission ke bhi chalta hai,
+     * sirf % wali notification nahi dikhti.
+     */
+    @PluginMethod
+    public void requestNotificationPermission(PluginCall call) {
+        if (isNotifGranted()) {
+            JSObject ret = new JSObject();
+            ret.put("granted", true);
+            call.resolve(ret);
+            return;
+        }
+        requestPermissionForAlias("notifications", call, "notifPermCallback");
+    }
+
+    @PermissionCallback
+    private void notifPermCallback(PluginCall call) {
+        JSObject ret = new JSObject();
+        ret.put("granted", isNotifGranted());
+        call.resolve(ret);
+    }
+
+    private boolean isNotifGranted() {
+        if (android.os.Build.VERSION.SDK_INT < 33) return true;
+        return hasPermission("notifications");
     }
 
     /** Download shuru karo — turant downloadId milta hai, download background me chalta hai. */
