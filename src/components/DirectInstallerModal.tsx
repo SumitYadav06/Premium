@@ -28,6 +28,8 @@ import {
   cancelBackgroundDownload,
   pollBackgroundDownload,
   bgFailureReason,
+  isNotificationPermissionGranted,
+  requestNotificationPermission,
 } from '../services/backgroundDownload';
 import { STORE_CONFIG } from '../config';
 
@@ -66,6 +68,8 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
   // Background (DownloadManager) download ka id — installer isi se khulta hai
   const [bgDownloadId, setBgDownloadId] = useState<number | null>(null);
   const [usedBackgroundDownload, setUsedBackgroundDownload] = useState(false);
+  // Background download na chale to wajah yahan dikhe (chhupake fallback nahi)
+  const [bgError, setBgError] = useState('');
   const bgPollStopRef = React.useRef<(() => void) | null>(null);
   const completedNotifiedRef = React.useRef(false);
 
@@ -89,6 +93,7 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
       setHasTriggeredDownload(false);
       setNativePath(null);
       setErrorMsg('');
+      setBgError('');
       try { bgPollStopRef.current?.(); } catch { /* ignore */ }
       bgPollStopRef.current = null;
       setBgDownloadId(null);
@@ -243,6 +248,18 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
           // Fail hua purana entry hatao, phir naya download shuru karo
           await cancelBackgroundDownload(existingId);
         }
+        // Notification permission (Android 13+) — download shuru karne se
+        // pehle maang lo, taaki % wali notification shade me dikhe. User
+        // mana kare to bhi download chalega, bas notification nahi dikhega.
+        try {
+          const granted = await isNotificationPermissionGranted();
+          if (!granted) {
+            const nowGranted = await requestNotificationPermission();
+            if (!nowGranted) {
+              setBgError('Notification ki permission nahi mili — download background me chalega, par % notification me nahi dikhega. Settings → Apps → Premium → Notifications se on karo.');
+            }
+          }
+        } catch { /* permission pata na chale to bhi download chalao */ }
         const downloadId = await startBackgroundDownload(
           downloadUrl,
           fileName,
@@ -254,7 +271,10 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
         attachBgPoll(downloadId, newTask);
         return;
       } catch (bgErr) {
-        // Background download nahi shuru hua — purane raste se try karo
+        // Background download nahi shuru hua — wajah dikhao, phir purane
+        // raste se try karo (download rukna nahi chahiye).
+        const reason = bgErr instanceof Error ? bgErr.message : String(bgErr);
+        setBgError(`Background download nahi chala: ${reason} — purane tareeke se download ho raha hai.`);
         console.warn('Background download failed, Filesystem fallback:', bgErr);
       }
     }
@@ -613,6 +633,11 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
             {usedBackgroundDownload && (
               <p className="text-center text-[11px] text-emerald-400/90">
                 App band karne par bhi download chalta rahega — notification me % dikhega.
+              </p>
+            )}
+            {bgError && (
+              <p className="text-center text-[11px] text-amber-400/90">
+                {bgError}
               </p>
             )}
           </div>
