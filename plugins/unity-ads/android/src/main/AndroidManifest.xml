@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- No components of its own: the plugin is only the
+         UnityAdsPlugin Capacitor bridge class. INTERNET /
+         ACCESS_NETWORK_STATE come from the Unity Ads AAR manifest
+         and are merged into the app automatically. -->
+</manifest>
