@@ -96,28 +96,63 @@ jobs:
       # cannot be smaller than version 26"). Same fix as the games
       # (which had to raise 22 -> 26 on Capacitor 6). Android 8.0+
       # (API 26) covers ~all active phones.
-      - name: Raise minSdk to 26 (Unity Ads plugin needs 26)
+      # compileSdk 36 is required too: the plugin's appcompat 1.7.0
+      # resolves (via capacitor-android) to androidx.activity 1.11.0
+      # and androidx.core 1.17.0, whose AAR metadata declares
+      # minCompileSdk 36 — run #205 failed checkReleaseAarMetadata
+      # because a module compiled against android-35. The Capacitor
+      # 8.3.2 template already ships compileSdk/targetSdk 36 for the
+      # app, so the variables.gradle lines below are a fail-loudly
+      # assert there; the REAL change is the plugin module, whose own
+      # build.gradle hardcodes compileSdk 35 / targetSdkVersion 35.
+      # Both patches apply to the checkout copy at build time only;
+      # no repo file besides this workflow is modified. The GitHub
+      # ubuntu-latest runner image already preinstalls platform
+      # android-36 (rev 2) and build-tools 36.0.0, so no sdkmanager
+      # install step is needed.
+      - name: Raise minSdk to 26 and compileSdk to 36 (Unity Ads plugin needs 26/36)
         run: |
           python3 - <<'PY'
           import pathlib, re, sys
-          patched = []
-          for fname in ('android/variables.gradle', 'android/app/build.gradle'):
+
+          def patch(fname, subs, required):
               p = pathlib.Path(fname)
               if not p.exists():
-                  continue
+                  print(f'ERROR: {fname} not found')
+                  sys.exit(1)
               t = p.read_text()
-              t2, n1 = re.subn(r'minSdkVersion\s*=\s*\d+', 'minSdkVersion = 26', t)
-              t2, n2 = re.subn(r'minSdkVersion\s+\d+', 'minSdkVersion 26', t2)
-              t2, n3 = re.subn(r'\bminSdk\s*=\s*\d+', 'minSdk = 26', t2)
-              t2, n4 = re.subn(r'\bminSdk\s+\d+', 'minSdk 26', t2)
-              if n1 + n2 + n3 + n4:
-                  p.write_text(t2)
-                  patched.append((fname, n1 + n2 + n3 + n4))
-          if not patched:
-              print('ERROR: no minSdk line found to raise in android project')
-              sys.exit(1)
-          for f, n in patched:
-              print('raised minSdk to 26 in', f, '(%d replacement%s)' % (n, 's' if n > 1 else ''))
+              for pattern, repl, label in subs:
+                  t, n = re.subn(pattern, repl, t)
+                  if n == 0 and label in required:
+                      print(f'ERROR: {label} line not found in {fname}')
+                      sys.exit(1)
+                  if n:
+                      print(f'  {fname}: {label} set ({n} replacement(s))')
+              p.write_text(t)
+
+          # 1. Generated Android project: minSdk 24 -> 26, and assert
+          #    compileSdk/targetSdk at 36.
+          patch('android/variables.gradle', [
+              (r'minSdkVersion\s*=\s*\d+', 'minSdkVersion = 26', 'minSdkVersion'),
+              (r'compileSdkVersion\s*=\s*\d+', 'compileSdkVersion = 36', 'compileSdkVersion'),
+              (r'targetSdkVersion\s*=\s*\d+', 'targetSdkVersion = 36', 'targetSdkVersion'),
+          ], required={'minSdkVersion', 'compileSdkVersion', 'targetSdkVersion'})
+          # app/build.gradle reads the SDK values from variables.gradle;
+          # its minSdk lines (if any) are raised too, but none are required.
+          patch('android/app/build.gradle', [
+              (r'minSdkVersion\s*=\s*\d+', 'minSdkVersion = 26', 'minSdkVersion'),
+              (r'minSdkVersion\s+\d+', 'minSdkVersion 26', 'minSdkVersion'),
+              (r'\bminSdk\s*=\s*\d+', 'minSdk = 26', 'minSdk'),
+              (r'\bminSdk\s+\d+', 'minSdk 26', 'minSdk'),
+          ], required=set())
+          # 2. Unity Ads plugin module (build-time patch only — the repo
+          #    file plugins/unity-ads/android/build.gradle is untouched):
+          #    compileSdk 35 -> 36, targetSdkVersion 35 -> 36.
+          patch('plugins/unity-ads/android/build.gradle', [
+              (r'compileSdk\s+\d+', 'compileSdk 36', 'compileSdk'),
+              (r'targetSdkVersion\s+\d+', 'targetSdkVersion 36', 'targetSdkVersion'),
+          ], required={'compileSdk', 'targetSdkVersion'})
+          print('SDK versions raised: minSdk 26, compileSdk/targetSdk 36')
           PY
 
       - name: Ask install permission at first app open
