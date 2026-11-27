@@ -770,6 +770,24 @@ jobs:
       # BUILD APK
       # ============================================================
 
+      # Gradle dependency cache — the AGP 8.13.0 tree (~50 artifacts)
+      # is downloaded from Google Maven / Maven Central on every run.
+      # Runs #198-#204 (2026-11-27) all failed resolving it while the
+      # identical template resolved fine for #197 37 seconds earlier
+      # and every artifact exists on the repos (verified) — a transient
+      # runner-side network/rate-limit event, not a bad AGP version.
+      # Once any run resolves the tree, later runs reuse the cached
+      # copy instead of fetching it again.
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-cap8-${{ hashFiles('package.json', 'package-lock.json', '.github/workflows/build-apk.yml') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-cap8-
+
       - name: Build APK
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -778,8 +796,26 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew clean
-          ./gradlew assembleRelease
+          # Retry the Gradle build: dependency resolution (AGP 8.13.0
+          # classpath) needs Google Maven / Maven Central, and a short
+          # runner-side network or rate-limit blip must not kill the
+          # whole run (that is what killed #198-#204). One invocation
+          # per attempt (clean + assembleRelease together) so each
+          # attempt resolves the classpath exactly once.
+          for attempt in 1 2 3; do
+            echo "=== Gradle build attempt $attempt/3 ==="
+            if ./gradlew clean assembleRelease; then
+              echo "Gradle build succeeded on attempt $attempt"
+              exit 0
+            fi
+            echo "Gradle build attempt $attempt failed"
+            if [ "$attempt" -lt 3 ]; then
+              echo "Retrying in 90s..."
+              sleep 90
+            fi
+          done
+          echo "ERROR: Gradle build failed after 3 attempts"
+          exit 1
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
