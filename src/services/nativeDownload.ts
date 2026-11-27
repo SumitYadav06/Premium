@@ -30,6 +30,33 @@ export const getDownloadMode = (): DownloadMode => {
   }
 };
 
+/**
+ * WEB DOWNLOAD GATE (2026-11-27) — website = catalogue, downloads SIRF APK ke andar.
+ *
+ * 'apk-prompt' = web visitor — browser download BILKUL NAHI; APK-install
+ * prompt dikhao (store APK ek tap me install karo, phir saare apps free me
+ * download karo). 'native' = store APK ke andar — normal download flow
+ * (BackgroundDownload / Filesystem, progress, installer) bilkul waisa hi
+ * chalega jaisa pehle chalta tha.
+ *
+ * Native ka signal wahi hai jo force-update detector use karta hai:
+ * `Capacitor.isNativePlatform()` (nativeDownload.isNativeApp). Purana APK
+ * bhi 'native' deta hai — usko ForceUpdateBlocker / DirectInstallerModal ka
+ * 'oldapk' step sambhalta hai; ye gate usko nahi rokta.
+ *
+ * Fail-closed by design: bridge missing ya kuch bhi throw kare to 'apk-prompt'
+ * — web jaisa treat karo, kabhi galti se browser download shuru mat karo.
+ */
+export type DownloadGateDecision = 'apk-prompt' | 'native';
+
+export function decideDownloadGate(): DownloadGateDecision {
+  try {
+    return Capacitor.isNativePlatform() ? 'native' : 'apk-prompt';
+  } catch {
+    return 'apk-prompt';
+  }
+}
+
 export interface NativeProgress {
   pct: number;
   downloadedMb: number;
