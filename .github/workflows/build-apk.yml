@@ -35,7 +35,20 @@ jobs:
 
       - name: Install Capacitor
         run: |
-          npm install @capacitor/core@8.3.2 @capacitor/cli@8.3.2 @capacitor/android@8.3.2 @capacitor/filesystem@8.1.5 @capawesome-team/capacitor-file-opener@8.1.1 @capacitor-community/admob@8.4.2
+          npm install @capacitor/core@8.3.2 @capacitor/cli@8.3.2 @capacitor/android@8.3.2 @capacitor/filesystem@8.1.5 @capawesome-team/capacitor-file-opener@8.1.1
+
+      # Local Unity Ads plugin (plugins/unity-ads, @premium/unity-ads).
+      # It is a file: dependency in package.json, so plain `npm install`
+      # links it into node_modules; this step makes the link explicit
+      # and fails loudly if the plugin folder is missing.
+      - name: Install Unity Ads plugin (local)
+        run: |
+          if [ ! -f "plugins/unity-ads/package.json" ]; then
+            echo "ERROR: plugins/unity-ads not found in repo!"
+            exit 1
+          fi
+          npm install ./plugins/unity-ads
+          ls node_modules/@premium/unity-ads/android/src/main/java/com/premium/unityads/UnityAdsPlugin.java
       - name: Create temporary web files
         run: |
           rm -rf dist
@@ -76,6 +89,36 @@ jobs:
         run: |
           rm -rf android
           npx cap add android
+
+      # The Unity Ads plugin declares minSdkVersion 26, but the
+      # Capacitor 8 generated project resolves to 24 — without this
+      # the manifest merger fails the build ("uses-sdk:minSdkVersion 24
+      # cannot be smaller than version 26"). Same fix as the games
+      # (which had to raise 22 -> 26 on Capacitor 6). Android 8.0+
+      # (API 26) covers ~all active phones.
+      - name: Raise minSdk to 26 (Unity Ads plugin needs 26)
+        run: |
+          python3 - <<'PY'
+          import pathlib, re, sys
+          patched = []
+          for fname in ('android/variables.gradle', 'android/app/build.gradle'):
+              p = pathlib.Path(fname)
+              if not p.exists():
+                  continue
+              t = p.read_text()
+              t2, n1 = re.subn(r'minSdkVersion\s*=\s*\d+', 'minSdkVersion = 26', t)
+              t2, n2 = re.subn(r'minSdkVersion\s+\d+', 'minSdkVersion 26', t2)
+              t2, n3 = re.subn(r'\bminSdk\s*=\s*\d+', 'minSdk = 26', t2)
+              t2, n4 = re.subn(r'\bminSdk\s+\d+', 'minSdk 26', t2)
+              if n1 + n2 + n3 + n4:
+                  p.write_text(t2)
+                  patched.append((fname, n1 + n2 + n3 + n4))
+          if not patched:
+              print('ERROR: no minSdk line found to raise in android project')
+              sys.exit(1)
+          for f, n in patched:
+              print('raised minSdk to 26 in', f, '(%d replacement%s)' % (n, 's' if n > 1 else ''))
+          PY
 
       - name: Ask install permission at first app open
         run: |
@@ -536,32 +579,69 @@ jobs:
         run: |
           npx cap sync android
 
-      # AdMob SDK bina is meta-data ke initialise hi nahi hota.
-      # App ID public-safe hai (sirf app ki pehchan; paise ya account
-      # tak isse koi nahi pahunch sakta). Step idempotent hai.
-      - name: Configure AdMob App ID
+      # Unity Ads needs NO manifest meta-data: the Game ID is passed to
+      # UnityAds.initialize() at runtime from src/ads.ts (the live site
+      # the APK loads). This step FAILS LOUDLY if the Game ID is still
+      # the '[FILL IN]' placeholder — no APK may ever be built with a
+      # placeholder or test Game ID. Replace UNITY_GAME_ID in src/ads.ts
+      # with the real Unity Game ID first, then re-run.
+      - name: Fail loudly if Unity Game ID is still [FILL IN]
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          app_id = 'ca-app-pub-2948876721824340~6169328571'
-          manifest = Path('android/app/src/main/AndroidManifest.xml')
-          s = manifest.read_text()
-          if 'com.google.android.gms.ads.APPLICATION_ID' not in s:
-              s = s.replace('</application>',
-                  '    <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" '
-                  f'android:value="{app_id}" />\n    </application>')
-              manifest.write_text(s)
-              print('AdMob App ID meta-data added to AndroidManifest.xml')
-          else:
-              print('AdMob App ID already present - skip')
-          strings = Path('android/app/src/main/res/values/strings.xml')
-          if strings.exists():
-              t = strings.read_text()
-              if 'admob_app_id' not in t:
-                  t = t.replace('</resources>',
-                      f'    <string name="admob_app_id">{app_id}</string>\n</resources>')
-                  strings.write_text(t)
-                  print('admob_app_id added to strings.xml')
+          import re, sys
+          src = Path('src/ads.ts').read_text()
+          fails = []
+          # Check ONLY the UNITY_GAME_ID constant's value — the literal
+          # '[FILL IN]' also appears in comments and in the runtime
+          # guard in src/ads.ts, so a whole-file search would false-fail
+          # even after the real ID is pasted in.
+          m = re.search(r"UNITY_GAME_ID\s*=\s*'([^']*)'", src)
+          if not m:
+              fails.append('UNITY_GAME_ID constant not found in src/ads.ts')
+          elif '[FILL IN]' in m.group(1):
+              fails.append("UNITY_GAME_ID in src/ads.ts is still '[FILL IN]' — paste the real Unity Game ID first")
+          if m and m.group(1) == '3940256099942544':
+              fails.append('test Game ID 3940256099942544 in src/ads.ts — never ship a test ID')
+          if 'ca-app-pub' in src:
+              fails.append('AdMob ID still in src/ads.ts')
+          if fails:
+              print('UNITY GAME ID CHECK FAILED:')
+              for f in fails:
+                  print(' -', f)
+              sys.exit(1)
+          print('Unity Game ID present in src/ads.ts (real ID, no placeholder, no test ID)')
+          PY
+
+      # Unity Ads wiring check — fail loudly if the plugin did not
+      # register with Capacitor, or an old ad-network ID is still in
+      # the shipped code. (The APK loads the live site, so the Game ID
+      # and placements are checked in src/ads.ts, not in dist/.)
+      - name: Verify Unity Ads wiring
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, sys
+          fails = []
+          plug = pathlib.Path('android/app/src/main/assets/capacitor.plugins.json')
+          if not plug.exists():
+              fails.append('capacitor.plugins.json missing (did cap sync run?)')
+          elif 'UnityAds' not in plug.read_text():
+              fails.append('UnityAds plugin not registered in capacitor.plugins.json')
+          src = pathlib.Path('src/ads.ts').read_text()
+          for bad in ('ca-app-pub', '3940256099942544', 'AdMob', 'admob'):
+              if bad in src:
+                  fails.append('forbidden string in src/ads.ts: ' + bad)
+          for good in ('BP_Rewarded_Android', 'BP_Interstitial_Android'):
+              if good not in src:
+                  fails.append('missing Unity placement in src/ads.ts: ' + good)
+          if 'showBanner' in src or 'BP_Banner_Android' in src:
+              fails.append('banner reference in src/ads.ts — Premium is video ads only')
+          if fails:
+              print('UNITY ADS CHECK FAILED:')
+              for f in fails:
+                  print(' -', f)
+              sys.exit(1)
+          print('Unity Ads wiring OK: plugin registered, 2 video placements present, no old-network IDs')
           PY
 
       # ============================================================
