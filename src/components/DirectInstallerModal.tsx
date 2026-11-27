@@ -17,6 +17,7 @@ import {
   Check
 } from 'lucide-react';
 import { AppItem, DownloadTask } from '../types';
+import { showInterstitialAd } from '../ads';
 import { incrementAppDownload } from '../services/firebase';
 import { VerifiedBadge } from './VerifiedBadge';
 import { isNativeApp, isFilesystemAvailable, getDownloadMode, downloadApkInApp, openApkInstaller, findDownloadedApk } from '../services/nativeDownload';
@@ -309,12 +310,16 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
     }
   };
 
-  const startDownloadFlow = () => {
+  // MAX ADS (user, 2026-11-27): download shuru karne wale tap par PEHLE
+  // ek interstitial — ad dismiss ho ya na mile, download hamesha shuru
+  // hota hai (flow kabhi nahi toot-ta).
+  const startDownloadFlow = async () => {
     if (!app.link || !app.link.startsWith('http')) {
       setErrorMsg('Is app ka download link abhi available nahi hai. Creator ko bata do, wo jald iska link jod dega.');
       setStep('error');
       return;
     }
+    await showInterstitialAd();
     setPermissionGranted(true);
 
     // Store APK ke andar ho to asli in-app download chalega (Chrome nahi khulega)

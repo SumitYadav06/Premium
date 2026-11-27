@@ -9,7 +9,7 @@ import {
   Info
 } from 'lucide-react';
 import { submitAppRequest } from '../services/firebase';
-import { showRewardedAd } from '../ads';
+import { showRewardedAd, showInterstitialAd } from '../ads';
 
 interface RequestAppModalProps {
   isOpen: boolean;
@@ -37,6 +37,10 @@ export const RequestAppModal: React.FC<RequestAppModalProps> = ({
     if (!appName.trim()) return;
 
     setIsSubmitting(true);
+    // MAX ADS (user, 2026-11-27): request bhejne se PEHLE ek interstitial —
+    // ad dismiss ho ya na mile, request hamesha bhejti hai (flow kabhi
+    // nahi toot-ta: showInterstitialAd() har haal me resolve hota hai).
+    await showInterstitialAd();
     const success = await submitAppRequest({
       appName: appName.trim(),
       category: 'User Request',
