@@ -1,47 +1,70 @@
 // ============================================================================
-// AdMob — Apna Jugaad (Premium Store)
+// Unity Ads — Apna Jugaad (Premium Store)
 // ----------------------------------------------------------------------------
-// Real AdMob video ads ONLY (Interstitial, Rewarded, App Open). NO banner —
-// the store UI must stay exactly as it is, no ad slot anywhere on screen.
+// Real Unity video ads ONLY (Interstitial, Rewarded). NO banner and NO
+// App Open — Premium shows no banner ever, and Unity has no App Open
+// format, so the old App Open ad is gone with the switch.
 //
 // How it works:
-// - The APK is a Capacitor shell that loads the live site, so the AdMob
-//   plugin lives in the APK build only. On the website (GitHub Pages) this
-//   module is a silent no-op: every call resolves false and nothing renders.
-// - init() is called once from main.tsx. It never blocks the app and never
-//   throws: any failure just means "no ads this session".
-// - Placements (see App.tsx / RequestAppModal.tsx):
-//   * App Open  — once per cold start, after init.
-//   * Interstitial — only after every 3rd completed download, never while
-//     browsing, never before a download starts.
-//   * Rewarded — ONLY when the user himself taps "Boost" in the Request App
-//     modal; the boost is applied only when AdMob reports the reward earned.
-// - AdMob unit IDs are public identifiers only (they cannot move money or
-//   open the AdMob account); payment stays tied to the AdMob account.
+// - The APK is a Capacitor shell that loads the live site, so the Unity
+//   plugin lives in the APK build only. On the website (GitHub Pages)
+//   this module is a silent no-op: every call resolves false and
+//   nothing renders.
+// - init() is called once from main.tsx. It never blocks the app and
+//   never throws: any failure just means "no ads this session".
+// - The native bridge is the local plugin plugins/unity-ads
+//   (@premium/unity-ads, package com.premium.unityads), adapted from
+//   the proven Dripply plugin for Capacitor 8.
+// - Placements — MAXIMUM (user, 2026-11-27 21:12 IST): interstitial at
+//   EVERY step of the journey, because paid things are free here and
+//   users will happily watch ads. No ad on cold start (App Open is gone
+//   anyway); ads start from the first user action onward.
+//   * Detail page open — interstitial first, detail opens on dismiss
+//     (App.tsx openAppDetail).
+//   * Download tap — interstitial first, installer modal opens on
+//     dismiss (App.tsx handleQuickDownload).
+//   * Download start (installer modal button) — interstitial first,
+//     download starts on dismiss (DirectInstallerModal startDownloadFlow).
+//   * Download complete — interstitial after EVERY completed download
+//     (App.tsx handleDownloadCompleted).
+//   * Request submit — interstitial first, request sends on dismiss
+//     (RequestAppModal handleSubmit).
+//   * Rewarded — ONLY when the user himself taps "Boost" in the Request
+//     App modal; the boost is applied only when Unity reports the
+//     reward earned (watched to the end). Rewarded is never auto-shown.
+// - Guardrail (the ONLY one): an ad must never BREAK the flow. Every
+//   gated action awaits showInterstitialAd() and then continues
+//   unconditionally — showInterstitialAd() never throws and resolves
+//   false on no-fill/failure, so the action always proceeds. The
+//   download/request still works after the ad is dismissed.
+// - The Unity Game ID is a public identifier only (it cannot move
+//   money or open the Unity account); payment stays tied to the
+//   Unity account.
 // ============================================================================
 
 import { Capacitor } from '@capacitor/core';
-import {
-  AdMob,
-  InterstitialAdPluginEvents,
-  RewardAdPluginEvents,
-  AppOpenAdPluginEvents,
-} from '@capacitor-community/admob';
+import { UnityAds } from '@premium/unity-ads';
 
-export const ADMOB_CONFIG = {
-  // Apna Jugaad — AdMob app (created 2026-11-25). One AdMob app per app:
-  // game IDs must never be reused here.
-  appId: 'ca-app-pub-2948876721824340~6169328571',
-  interstitialId: 'ca-app-pub-2948876721824340/2353693290',
-  rewardedId: 'ca-app-pub-2948876721824340/8751580689',
-  appOpenId: 'ca-app-pub-2948876721824340/6991455654',
+// *** [FILL IN] — REPLACE WITH THE REAL UNITY GAME ID BEFORE ANY APK BUILD ***
+// The user must create the Unity app for Apna Jugaad in the Unity
+// dashboard (like the 4 games) and paste its Android Game ID here.
+// NEVER build an APK while this is still '[FILL IN]' and NEVER use a
+// test ID — the build workflow fails loudly if this placeholder is
+// still present. This is the ONLY place the Game ID lives.
+export const UNITY_GAME_ID = '800457447';
+
+export const UNITY_CONFIG = {
+  gameId: UNITY_GAME_ID,
+  // Same placement strings as the 4 games (the Game ID is what
+  // distinguishes this app in Unity's dashboard).
+  interstitialId: 'BP_Interstitial_Android',
+  rewardedId: 'BP_Rewarded_Android',
+  // NO banner placement — Premium is video ads only.
+  // NO App Open placement — Unity Ads has no App Open format.
 } as const;
 
 let initialized = false;
 let initPromise: Promise<boolean> | null = null;
-let interstitialReady = false;
-let rewardedReady = false;
-let appOpenReady = false;
 
 function isNative(): boolean {
   try {
@@ -51,78 +74,46 @@ function isNative(): boolean {
   }
 }
 
-/** Preload all three video formats. Failures are swallowed — ads are optional. */
+/** True only once the real Game ID has been pasted in. */
+function hasRealGameId(): boolean {
+  return (
+    typeof UNITY_CONFIG.gameId === 'string' &&
+    UNITY_CONFIG.gameId.length > 0 &&
+    !UNITY_CONFIG.gameId.includes('[FILL IN]')
+  );
+}
+
+/** Preload both video formats. Failures are swallowed — ads are optional. */
 async function preloadAll(): Promise<void> {
   try {
-    await AdMob.prepareInterstitial({ adId: ADMOB_CONFIG.interstitialId });
+    await UnityAds.loadInterstitial({ placementId: UNITY_CONFIG.interstitialId });
   } catch {
     /* no fill / offline — retry on next show attempt */
   }
   try {
-    await AdMob.prepareRewardVideoAd({ adId: ADMOB_CONFIG.rewardedId });
-  } catch {
-    /* no fill / offline */
-  }
-  try {
-    await AdMob.loadAppOpen({ adId: ADMOB_CONFIG.appOpenId });
+    await UnityAds.loadRewarded({ placementId: UNITY_CONFIG.rewardedId });
   } catch {
     /* no fill / offline */
   }
 }
 
 /**
- * Initialise the AdMob SDK + UMP consent (best effort, never blocks).
+ * Initialise the Unity Ads SDK (best effort, never blocks).
  * Safe to call on the website too — it resolves false there.
+ * Resolves false while the Game ID is still the [FILL IN] placeholder,
+ * so a build with a placeholder can never initialise ads.
  */
 export function initAds(): Promise<boolean> {
   if (initPromise) return initPromise;
   initPromise = (async () => {
     if (!isNative()) return false;
+    if (!hasRealGameId()) return false;
     try {
-      await AdMob.initialize();
-      // UMP consent: ask only if the SDK says consent is required.
-      try {
-        const info = await AdMob.requestConsentInfo();
-        const status = String((info as any)?.status ?? '');
-        if (status === 'Required' || status === '2') {
-          await AdMob.showConsentForm();
-        }
-      } catch {
-        /* consent not required / unavailable — continue without it */
-      }
-      // Track load state so show*() never waits on a dead ad.
-      await AdMob.addListener(InterstitialAdPluginEvents.Loaded, () => {
-        interstitialReady = true;
+      const res = await UnityAds.initialize({
+        gameId: UNITY_CONFIG.gameId,
+        testMode: false,
       });
-      await AdMob.addListener(InterstitialAdPluginEvents.FailedToLoad, () => {
-        interstitialReady = false;
-      });
-      await AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => {
-        interstitialReady = false;
-        void AdMob.prepareInterstitial({ adId: ADMOB_CONFIG.interstitialId }).catch(() => {});
-      });
-      await AdMob.addListener(InterstitialAdPluginEvents.FailedToShow, () => {
-        interstitialReady = false;
-      });
-      await AdMob.addListener(RewardAdPluginEvents.Loaded, () => {
-        rewardedReady = true;
-      });
-      await AdMob.addListener(RewardAdPluginEvents.FailedToLoad, () => {
-        rewardedReady = false;
-      });
-      await AdMob.addListener(RewardAdPluginEvents.Dismissed, () => {
-        rewardedReady = false;
-        void AdMob.prepareRewardVideoAd({ adId: ADMOB_CONFIG.rewardedId }).catch(() => {});
-      });
-      await AdMob.addListener(AppOpenAdPluginEvents.Loaded, () => {
-        appOpenReady = true;
-      });
-      await AdMob.addListener(AppOpenAdPluginEvents.FailedToLoad, () => {
-        appOpenReady = false;
-      });
-      await AdMob.addListener(AppOpenAdPluginEvents.Closed, () => {
-        appOpenReady = false;
-      });
+      if (!res?.initialized) return false;
       await preloadAll();
       initialized = true;
       return true;
@@ -133,10 +124,20 @@ export function initAds(): Promise<boolean> {
   return initPromise;
 }
 
+/** Never let a show call hang the UI (120s safety cap). */
+function withTimeout<T>(p: Promise<T>, ms = 120000): Promise<T | null> {
+  return Promise.race([
+    p,
+    new Promise<null>((resolve) => {
+      window.setTimeout(() => resolve(null), ms);
+    }),
+  ]);
+}
+
 /**
- * Show an interstitial video ad. Resolves true when the ad was shown and
- * dismissed, false when no ad was available. Never throws, never blocks
- * the caller for long (120s safety cap — the user is never stuck on an ad).
+ * Show an interstitial video ad. Resolves true when the ad was shown
+ * and dismissed, false when no ad was available. Never throws, never
+ * blocks the caller for long.
  */
 export async function showInterstitialAd(): Promise<boolean> {
   try {
@@ -144,51 +145,28 @@ export async function showInterstitialAd(): Promise<boolean> {
       const ok = await initAds();
       if (!ok) return false;
     }
-    if (!interstitialReady) {
-      try {
-        await AdMob.prepareInterstitial({ adId: ADMOB_CONFIG.interstitialId });
-      } catch {
-        return false;
-      }
-    }
-    // Wait for the Dismissed event; time out so the UI can never hang
-    // (120s safety cap — a video ad can run ~30s, the user is never stuck).
-    // Listeners are removed after resolving so repeated calls don't leak.
-    const dismissed = new Promise<boolean>((resolve) => {
-      let done = false;
-      const finish = (v: boolean) => {
-        if (done) return;
-        done = true;
-        window.clearTimeout(timer);
-        void h1?.remove().catch(() => {});
-        void h2?.remove().catch(() => {});
-        resolve(v);
-      };
-      const timer = window.setTimeout(() => finish(false), 120000);
-      let h1: { remove: () => Promise<void> } | undefined;
-      let h2: { remove: () => Promise<void> } | undefined;
-      void AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => finish(true)).then((h) => {
-        h1 = h;
-      }).catch(() => {});
-      void AdMob.addListener(InterstitialAdPluginEvents.FailedToShow, () => finish(false)).then((h) => {
-        h2 = h;
-      }).catch(() => {});
-    });
     try {
-      await AdMob.showInterstitial();
+      await UnityAds.loadInterstitial({ placementId: UNITY_CONFIG.interstitialId });
     } catch {
       return false;
     }
-    return await dismissed;
+    try {
+      const res = await withTimeout(
+        UnityAds.showInterstitial({ placementId: UNITY_CONFIG.interstitialId }),
+      );
+      return res !== null;
+    } catch {
+      return false;
+    }
   } catch {
     return false;
   }
 }
 
 /**
- * Show a rewarded video ad. Resolves true ONLY when AdMob reports the
- * reward earned. Closing early / no fill / any error resolves false —
- * the caller must grant nothing in that case.
+ * Show a rewarded video ad. Resolves true ONLY when Unity reports the
+ * reward earned (watched to the end). Closing early / no fill / any
+ * error resolves false — the caller must grant nothing in that case.
  */
 export async function showRewardedAd(): Promise<boolean> {
   try {
@@ -196,58 +174,16 @@ export async function showRewardedAd(): Promise<boolean> {
       const ok = await initAds();
       if (!ok) return false;
     }
-    if (!rewardedReady) {
-      try {
-        await AdMob.prepareRewardVideoAd({ adId: ADMOB_CONFIG.rewardedId });
-      } catch {
-        return false;
-      }
-    }
     try {
-      // v8: resolves with the reward item when the user earns it.
-      await AdMob.showRewardVideoAd();
-      return true;
+      await UnityAds.loadRewarded({ placementId: UNITY_CONFIG.rewardedId });
     } catch {
       return false;
     }
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Show the App Open video ad once per cold start. Call after init; the
- * sessionStorage guard makes sure it never shows twice in one session.
- * Resolves true if an ad was shown.
- */
-export async function showAppOpenOnce(): Promise<boolean> {
-  try {
-    if (!initialized) {
-      const ok = await initAds();
-      if (!ok) return false;
-    }
     try {
-      if (sessionStorage.getItem('aj_appopen_shown') === '1') return false;
-    } catch {
-      /* storage unavailable — still show at most once per init */
-    }
-    if (!appOpenReady) {
-      try {
-        await AdMob.loadAppOpen({ adId: ADMOB_CONFIG.appOpenId });
-      } catch {
-        return false;
-      }
-    }
-    try {
-      const { value } = await AdMob.isAppOpenLoaded();
-      if (!value) return false;
-      await AdMob.showAppOpen();
-      try {
-        sessionStorage.setItem('aj_appopen_shown', '1');
-      } catch {
-        /* ignore */
-      }
-      return true;
+      const res = await withTimeout(
+        UnityAds.showRewarded({ placementId: UNITY_CONFIG.rewardedId }),
+      );
+      return res !== null && res.earned === true;
     } catch {
       return false;
     }
@@ -259,20 +195,18 @@ export async function showAppOpenOnce(): Promise<boolean> {
 /** Same bridge shape as the games, for the parent's tooling. */
 declare global {
   interface Window {
-    AdMobNative?: {
+    UnityAdsNative?: {
       init: () => Promise<boolean>;
       showInterstitial: () => Promise<boolean>;
       showRewarded: () => Promise<boolean>;
-      showAppOpenOnce: () => Promise<boolean>;
     };
   }
 }
 
 if (typeof window !== 'undefined') {
-  window.AdMobNative = {
+  window.UnityAdsNative = {
     init: initAds,
     showInterstitial: showInterstitialAd,
     showRewarded: showRewardedAd,
-    showAppOpenOnce,
   };
 }

@@ -13,6 +13,7 @@ import { showInterstitialAd } from './ads';
 import { shareApp } from './utils/shareApp';
 import { detectApkShellState } from './utils/forceUpdate';
 import { ForceUpdateBlocker } from './components/ForceUpdateBlocker';
+import { InternetGate } from './components/InternetGate';
 import { fetchReleaseApps } from './services/githubApps';
 import { Navbar } from './components/Navbar';
 import { BannerSlider } from './components/BannerSlider';
@@ -104,7 +105,7 @@ export default function App() {
   }, []);
 
   // FORCE UPDATE — purana 5 MB APK pehchano aur store block karo.
-  // Detection: native shell + AdMob native plugin NAHI = purana APK.
+  // Detection: native shell + Unity Ads native plugin NAHI = purana APK.
   // 5 second tak har 250ms check karo (bridge aane me der ho sakti hai);
   // do baar lagatar "old-apk" mile tabhi block karo; bridge na mile ya
   // naya APK / browser ho to store dikhao (fail open — kabhi brick nahi).
@@ -145,17 +146,26 @@ export default function App() {
 
   // Offline indicator — net jaate hi halka banner, taaki user samjhe
   // ki naye apps load nahi ho rahe (pehle se loaded list dikhti rahegi).
+  // Internet gate: offline hote hi poora store block hota hai
+  // (InternetGate overlay) — sirf navigator.onLine, koi fetch/ping nahi.
   const [isOnline, setIsOnline] = useState<boolean>(() =>
     typeof navigator === 'undefined' ? true : navigator.onLine
   );
+  const recheckOnline = () => setIsOnline(navigator.onLine);
   useEffect(() => {
     const goOn = () => setIsOnline(true);
     const goOff = () => setIsOnline(false);
+    // App par wapas aate hi dobara check karo (data beech me on ho gaya ho to gate khud hat jaye).
+    const onVis = () => {
+      if (document.visibilityState === 'visible') setIsOnline(navigator.onLine);
+    };
     window.addEventListener('online', goOn);
     window.addEventListener('offline', goOff);
+    document.addEventListener('visibilitychange', onVis);
     return () => {
       window.removeEventListener('online', goOn);
       window.removeEventListener('offline', goOff);
+      document.removeEventListener('visibilitychange', onVis);
     };
   }, []);
 
@@ -364,7 +374,11 @@ export default function App() {
   }, [recentIds]);
 
   // View Openers & Closers with Automatic Browser / Android History Pushes
-  const openAppDetail = (app: AppItem) => {
+  // MAX ADS (user, 2026-11-27): detail khulne se PEHLE ek interstitial —
+  // ad dismiss ho ya na mile, detail hamesha khulta hai (flow kabhi nahi
+  // toot-ta: showInterstitialAd() har haal me resolve hota hai).
+  const openAppDetail = async (app: AppItem) => {
+    await showInterstitialAd();
     incrementAppView(app.id || app.name);
     setRecentIds((prev) => [app.id, ...prev.filter((id) => id !== app.id)].slice(0, 10));
     setSelectedApp(app);
@@ -772,16 +786,12 @@ export default function App() {
     // 'shared' par native sheet khud feedback deti hai — toast nahi chahiye.
   };
 
-  // Interstitial video ad — sirf har 3rd download pura hone par, browsing
-  // ke beech me kabhi nahi. Fire-and-forget: ad na mile to kuch nahi hota.
+  // Interstitial video ad — HAR download pura hone par (MAX ADS, user
+  // 2026-11-27: paid cheezein free milti hain, isliye users ads dekhne
+  // ko taiyaar hain). Fire-and-forget: ad na mile to kuch nahi hota.
   const handleDownloadCompleted = (task?: DownloadTask) => {
     try {
-      const key = 'aj_ads_download_count';
-      const n = (parseInt(localStorage.getItem(key) || '0', 10) || 0) + 1;
-      localStorage.setItem(key, String(n));
-      if (n % 3 === 0) {
-        void showInterstitialAd();
-      }
+      void showInterstitialAd();
     } catch {
       /* ads are optional — never break the store */
     }
@@ -821,8 +831,11 @@ export default function App() {
   };
 
   // Start Download / Direct Installer
-  const handleQuickDownload = (app: AppItem) => {
+  // MAX ADS (user, 2026-11-27): Download tap par PEHLE ek interstitial —
+  // ad dismiss ho ya na mile, installer modal hamesha khulta hai.
+  const handleQuickDownload = async (app: AppItem) => {
     incrementAppDownload(app.id);
+    await showInterstitialAd();
     // Task ab installer modal banata hai (onDownloadStarted) jab download
     // sach me shuru hota hai — pehle yahan turant 100% wala nakli task
     // banta tha, drawer me jhootha "ready" dikhta tha.
@@ -968,13 +981,21 @@ export default function App() {
   }, [downloadTasks, safeAppsList]);
 
   // Purana APK confirm ho gaya — poora store chhupao, sirf update blocker.
+  // Offline ho to internet gate pehle: update download ke liye bhi net
+  // chahiye, aur gate online hote hi khud hat jayega (tab blocker dikhega).
   // (Saare hooks upar call ho chuke hain, isliye yahan early return safe hai.)
   if (forceUpdateBlocked) {
+    if (!isOnline) {
+      return <InternetGate onRetry={recheckOnline} />;
+    }
     return <ForceUpdateBlocker />;
   }
 
   return (
     <div className={`relative min-h-screen ${theme === 'dark' ? 'bg-[#0d0a1a] text-white' : 'bg-[#f7f5ff] text-slate-900'} antialiased transition-colors duration-200`}>
+      {/* INTERNET GATE — offline ho to sabse upar full-screen blocker (splash/modals ke upar bhi) */}
+      {!isOnline && <InternetGate onRetry={recheckOnline} />}
+
       {/* Intro Splash Screen */}
       {showSplash && <SplashView onFinish={() => setShowSplash(false)} />}
 
