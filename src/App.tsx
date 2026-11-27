@@ -12,6 +12,7 @@ import { STORE_CONFIG } from './config';
 import { showInterstitialAd } from './ads';
 import { shareApp } from './utils/shareApp';
 import { detectApkShellState } from './utils/forceUpdate';
+import { decideDownloadGate } from './services/nativeDownload';
 import { ForceUpdateBlocker } from './components/ForceUpdateBlocker';
 import { InternetGate } from './components/InternetGate';
 import { fetchReleaseApps } from './services/githubApps';
@@ -31,6 +32,7 @@ const InstallGuideModal = React.lazy(() => import('./components/InstallGuideModa
 const OwnerModal = React.lazy(() => import('./components/OwnerModal').then((m) => ({ default: m.OwnerModal })));
 const AdminModal = React.lazy(() => import('./components/AdminModal').then((m) => ({ default: m.AdminModal })));
 const RequestAppModal = React.lazy(() => import('./components/RequestAppModal').then((m) => ({ default: m.RequestAppModal })));
+const WebApkPromptModal = React.lazy(() => import('./components/WebApkPromptModal').then((m) => ({ default: m.WebApkPromptModal })));
 
 const ChunkLoader: React.FC = () => (
   <div className="min-h-[50vh] flex items-center justify-center">
@@ -334,6 +336,9 @@ export default function App() {
   const [isOwnerModalOpen, setIsOwnerModalOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isRequestOpen, setIsRequestOpen] = useState(false);
+  // WEB GATE (2026-11-27): web visitor ne Download dabaya — APK-install prompt.
+  // Sirf tap par khulta hai, page load par kabhi nahi; APK shell me kabhi nahi.
+  const [isWebApkPromptOpen, setIsWebApkPromptOpen] = useState(false);
 
   // Synchronized State References to avoid stale closures in event listeners
   const selectedAppRef = React.useRef<AppItem | null>(null);
@@ -514,6 +519,12 @@ export default function App() {
   };
 
   const openDirectInstaller = (app: AppItem) => {
+    // WEB GATE: website sirf catalogue hai — web visitor ko installer modal
+    // aur browser download nahi, APK-install prompt dikhao.
+    if (decideDownloadGate() !== 'native') {
+      setIsWebApkPromptOpen(true);
+      return;
+    }
     setDirectInstallApp(app);
     try {
       window.history.pushState({ view: 'installer' }, '');
@@ -834,6 +845,13 @@ export default function App() {
   // MAX ADS (user, 2026-11-27): Download tap par PEHLE ek interstitial —
   // ad dismiss ho ya na mile, installer modal hamesha khulta hai.
   const handleQuickDownload = async (app: AppItem) => {
+    // WEB GATE: web visitor ko na interstitial dikhao, na download count
+    // badhao, na installer kholo — sirf APK-install prompt dikhao.
+    // APK shell ke andar neeche wala normal flow bilkul waisa hi chalega.
+    if (decideDownloadGate() !== 'native') {
+      setIsWebApkPromptOpen(true);
+      return;
+    }
     incrementAppDownload(app.id);
     await showInterstitialAd();
     // Task ab installer modal banata hai (onDownloadStarted) jab download
@@ -1426,6 +1444,12 @@ export default function App() {
       <StoreUpdateModal />
 
       <React.Suspense fallback={null}>
+      {/* WEB GATE prompt — sirf web par Download tap par khulta hai */}
+      <WebApkPromptModal
+        isOpen={isWebApkPromptOpen}
+        onClose={() => setIsWebApkPromptOpen(false)}
+        theme={theme}
+      />
       <DirectInstallerModal
         app={directInstallApp}
         isOpen={!!directInstallApp}
@@ -1459,6 +1483,10 @@ export default function App() {
           const matchingApp = apps.find((a) => a.id === task.appId);
           if (matchingApp) {
             openDirectInstaller(matchingApp);
+          } else if (decideDownloadGate() !== 'native') {
+            // WEB GATE: purana task (localStorage) bhi web par browser
+            // download na khole — APK-install prompt dikhao.
+            setIsWebApkPromptOpen(true);
           } else {
             window.open(task.downloadUrl, '_blank');
           }
