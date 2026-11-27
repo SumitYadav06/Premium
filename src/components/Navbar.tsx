@@ -7,6 +7,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { STORE_CONFIG } from '../config';
+import { isNativeApp } from '../services/nativeDownload';
 
 interface NavbarProps {
   theme: 'dark' | 'light';
@@ -88,6 +89,23 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right: Quick Action Buttons */}
         <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* WEB ONLY persistent cue — website = catalogue, downloads sirf APK
+              me. APK shell ke andar kabhi nahi dikhta (wahan downloads waise
+              hi app ke andar hote hain). Seedha store APK ka link. */}
+          {!isNativeApp() && (
+            <a
+              href={STORE_CONFIG.STORE_APP_APK_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 sm:px-3.5 h-9 sm:h-10 rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 text-white text-[11px] sm:text-xs font-black tracking-wide shadow-lg shadow-fuchsia-600/30 hover:opacity-95 active:scale-95 transition whitespace-nowrap"
+              title="APK download karo — ek tap me install karo"
+            >
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">APK download karo</span>
+              <span className="sm:hidden">APK</span>
+            </a>
+          )}
+
           {/* Bookmarks / Saved Button */}
           <button
             onClick={onOpenBookmarks}
