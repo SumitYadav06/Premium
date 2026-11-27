@@ -22,27 +22,31 @@ and how advertising works.
 We do **not** collect your name, phone number, email address, contacts,
 location, photos, or payment details. We do not sell any data.
 
-## 2. Advertising (AdMob)
+## 2. Advertising (Unity Ads)
 
-The Android app shows video ads from Google AdMob:
+The Android app shows video ads from Unity Ads:
 
-- **App Open ad** — once when the app is opened.
-- **Interstitial video ad** — only after every 3rd completed download,
-  never while browsing.
+- **Interstitial video ad** — at several points while you use the
+  store: when you open an app's detail page, when you tap Download,
+  when a download starts, after a download completes, and before an
+  app request is sent. No ad appears on app open.
 - **Rewarded video ad** — only when you yourself tap "Boost" in the
   Request App screen; the boost applies only if you watch the ad fully.
 
-AdMob (Google) may collect advertising identifiers and usage data to serve
-and measure ads, as described in Google's Privacy Policy
-(https://policies.google.com/privacy). You can reset your advertising ID
-or opt out of personalised ads in your Android settings
+There is no banner ad and no ad on app open — Unity Ads has no
+App Open format.
+
+Unity Ads (Unity Technologies) may collect advertising identifiers and
+usage data to serve and measure ads, as described in Unity's Privacy
+Policy (https://unity.com/legal/privacy-policy). You can reset your
+advertising ID or opt out of personalised ads in your Android settings
 (Settings → Privacy → Ads).
 
-The website version of the store (GitHub Pages) shows no AdMob ads.
+The website version of the store (GitHub Pages) shows no Unity ads.
 
 ## 3. Third-party services
 
-- Google AdMob (advertising) — https://policies.google.com/privacy
+- Unity Ads (advertising) — https://unity.com/legal/privacy-policy
 - Google Firebase (database, analytics) — https://firebase.google.com/support/privacy
 - Google Gemini API (AI features) — https://ai.google.dev/gemini-api/terms
 

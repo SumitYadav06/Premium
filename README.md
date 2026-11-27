@@ -23,30 +23,40 @@ View your app in AI Studio: https://ai.studio/apps/2b245b45-8550-4d47-8dcf-d1b1b
 
 ---
 
-## Advertising (AdMob) — APK only
+## Advertising (Unity Ads) — APK only
 
 The Android APK shows **video ads only** (no banner, no ad slot on any
-screen) via Google AdMob (`@capacitor-community/admob` v8, real SDK —
-see `src/ads.ts`):
+screen, no App Open — Unity has no App Open format) via Unity Ads
+(local plugin `plugins/unity-ads`, `@premium/unity-ads`, Unity Ads
+Android SDK 4.18.0 — see `src/ads.ts`):
 
-- **App Open** — once per cold start (`src/main.tsx`).
-- **Interstitial** — only after every 3rd completed download
-  (`src/App.tsx` → `DirectInstallerModal` `onDownloadCompleted`).
+- **Interstitial — MAXIMUM** (user, 2026-11-27 21:12 IST: paid things
+  are free here, so users happily watch ads): at **every** step of the
+  journey — opening an app's detail page, Download tap (installer modal
+  opens after the ad), Download start inside the installer modal, after
+  **every** completed download, and before sending an app request. No ad
+  on cold start; ads start from the first user action onward.
 - **Rewarded** — only when the user taps "Boost" in the Request App modal;
-  the boost applies only when AdMob reports the reward earned.
+  the boost applies only when Unity reports the reward earned.
 
-AdMob IDs live in `src/ads.ts` (`ADMOB_CONFIG`) and the App ID is written
-into `AndroidManifest.xml` by the "Configure AdMob App ID" step in
-`.github/workflows/build-apk.yml`. The website (GitHub Pages) shows no ads.
+Every gated action shows the ad FIRST and continues on dismiss; if the
+ad fails to load, the action continues immediately — an ad never breaks
+a download or a request (the only guardrail).
+
+The Unity Game ID lives in `src/ads.ts` (`UNITY_GAME_ID`) — it is
+currently the `[FILL IN]` placeholder and MUST be replaced with the
+real Unity Game ID (created in the user's Unity dashboard) before any
+APK build; the workflow fails loudly while the placeholder is present.
+The website (GitHub Pages) shows no ads.
 
 Privacy policy: `privacy-policy.md` (fill in the contact email before
 publishing).
 
-> ⚠️ Honest note: this store distributes modified ("mod") APKs. AdMob
-> review can limit or reject ads for apps that distribute modded/cracked
-> apps, and an AdMob account can be suspended for policy violations.
-> Correct wiring does **not** guarantee ads will serve or earn — approval
-> is Google's decision, and the store's content is the risk, not the code.
+> ⚠️ Honest note: this store distributes modified ("mod") APKs. The
+> previous ad network's review limited ads for this app, which is why
+> it was replaced by Unity Ads. Correct wiring does **not** guarantee
+> ads will serve or earn — approval/fill is Unity's decision, and the
+> store's content is the risk, not the code.
 
 ---
 
@@ -84,12 +94,12 @@ publishing).
   with a small toast. Detail page share is unchanged.
 - **Force update for the old 5 MB APK:** the old APK is the same
   live-sync WebView shell, so on boot the site checks the Capacitor
-  bridge (up to 5 s): native shell + AdMob native plugin missing =
+  bridge (up to 5 s): native shell + Unity Ads native plugin missing =
   old APK → a full-screen, no-bypass "Update Karo" blocker with a
   download button for the new APK. New APK, browsers and uncertain
   bridge states are never blocked (fail open). Detection uses
-  `Capacitor.isPluginAvailable('AdMob')` (native PluginHeaders) —
-  `window.Capacitor.Plugins.AdMob` is NOT a valid check because
+  `Capacitor.isPluginAvailable('UnityAds')` (native PluginHeaders) —
+  `window.Capacitor.Plugins.UnityAds` is NOT a valid check because
   `registerPlugin` creates that proxy everywhere. See
   `src/utils/forceUpdate.ts` and `src/components/ForceUpdateBlocker.tsx`.
 
