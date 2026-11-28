@@ -252,13 +252,14 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
         // Notification permission (Android 13+) — download shuru karne se
         // pehle maang lo, taaki % wali notification shade me dikhe. User
         // mana kare to bhi download chalega, bas notification nahi dikhega.
+        // (User, 2026-11-28: "permission nahi mili" wala text poora hata do —
+        // permission milne par bhi wo text dikh raha tha. Isliye yahan koi
+        // error text set nahi hota — permission mile ya na mile, download
+        // bina toke chalta hai.)
         try {
           const granted = await isNotificationPermissionGranted();
           if (!granted) {
-            const nowGranted = await requestNotificationPermission();
-            if (!nowGranted) {
-              setBgError('Notification ki permission nahi mili — download background me chalega, par % notification me nahi dikhega. Settings → Apps → Premium → Notifications se on karo.');
-            }
+            await requestNotificationPermission();
           }
         } catch { /* permission pata na chale to bhi download chalao */ }
         const downloadId = await startBackgroundDownload(
