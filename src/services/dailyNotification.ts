@@ -1,13 +1,14 @@
-// Daily notification — rotating messages + app icon (Apna Jugaad / Premium).
-// Premium had NO daily notification: the only notification was the system
-// DownloadManager download-% one, whose icon Android controls. This adds ONE
-// notification a day at 10:00 AM, rotating through 3 messages, with the app's
-// own icons: smallIcon "ic_stat_icon" (white silhouette in res/drawable-*)
-// and largeIcon "ic_notif_large" (full-colour app icon in res/drawable-*).
-// Same 7-day-window design as the games: cancels old ids, schedules the next
-// 7 days, refreshes at most once a day. Uses checkPermissions() only, so it
-// never shows a second permission prompt — the launch prompt (App.tsx, #210
-// fix) already asks once.
+// Weekly notification — hafte me EK baar (Sunday 10:00 AM), rotating messages + app icon.
+// User, 2026-11-28: notification hafte me ek baar aaye (roz nahi).
+// Premium had NO notification before #218; #218 added a DAILY one —
+// this changes it to WEEKLY. Same icons: smallIcon "ic_stat_icon" (white
+// silhouette) and largeIcon "ic_notif_large" (full-colour app icon).
+// Cancels any stale ids 1-7 first (incl. #218's daily ones), then schedules
+// the next Sunday 10 AM. Refreshes at most once a day. Uses checkPermissions()
+// only, so it never shows a second permission prompt — the launch prompt
+// (App.tsx, #210 fix) already asks once.
+// (Function ka naam scheduleDailyNotification hi rakha hai taaki App.tsx
+// me koi change na karna pade — andar se ye weekly hai.)
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 
@@ -16,11 +17,12 @@ const MSGS = [
   "नए ऐप आ गए हैं — अभी देखो 📲",
   "आज का बेस्ट ऐप देखो, फ्री में डाउनलोड करो 📲",
 ];
-const FLAG = 'premium-daily-notif-v2-ts';
+const FLAG = 'premium-weekly-notif-v1-ts';
 const DAY = 24 * 60 * 60 * 1000;
 
-function dayOfYear(d: Date): number {
-  return Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 0).getTime()) / 86400000);
+function weekOfYear(d: Date): number {
+  const start = new Date(d.getFullYear(), 0, 1);
+  return Math.floor((d.getTime() - start.getTime()) / (7 * 86400000));
 }
 
 export async function scheduleDailyNotification(): Promise<void> {
@@ -30,29 +32,26 @@ export async function scheduleDailyNotification(): Promise<void> {
     if (Date.now() - last < DAY) return;
     const perm = await LocalNotifications.checkPermissions();
     if (perm.display !== 'granted') return; // launch prompt already asked; retry next launch
+    // Purani scheduled notifications cancel karo (incl. #218 ki daily ids 1-7).
     const ids = Array.from({ length: 7 }, (_, k) => ({ id: k + 1 }));
+    await LocalNotifications.cancel({ notifications: ids }).catch(() => {});
+    // Agla Sunday 10:00 AM (aaj Sunday hai aur 10 baje nahi to aaj hi).
     const now = new Date();
-    const list: Array<{
-      id: number; title: string; body: string;
-      smallIcon: string; largeIcon: string; iconColor: string;
-      schedule: { at: Date; allowWhileIdle: boolean };
-    }> = [];
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i, 10, 0, 0);
-      if (d.getTime() <= now.getTime()) continue;
-      list.push({
-        id: list.length + 1,
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 10, 0, 0);
+    let add = (7 - d.getDay()) % 7;
+    if (add === 0 && d.getTime() <= now.getTime()) add = 7;
+    d.setDate(d.getDate() + add);
+    await LocalNotifications.schedule({
+      notifications: [{
+        id: 1,
         title: 'Apna Jugaad',
-        body: MSGS[dayOfYear(d) % MSGS.length],
+        body: MSGS[weekOfYear(d) % MSGS.length],
         smallIcon: 'ic_stat_icon',
         largeIcon: 'ic_notif_large',
         iconColor: '#FFB300',
         schedule: { at: d, allowWhileIdle: true },
-      });
-    }
-    await LocalNotifications.cancel({ notifications: ids }).catch(() => {});
-    if (!list.length) return;
-    await LocalNotifications.schedule({ notifications: list });
+      }],
+    });
     localStorage.setItem(FLAG, String(Date.now()));
   } catch {
     /* never break app start */
