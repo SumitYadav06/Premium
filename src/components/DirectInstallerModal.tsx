@@ -17,7 +17,6 @@ import {
   Check
 } from 'lucide-react';
 import { AppItem, DownloadTask } from '../types';
-import { showInterstitialAd } from '../ads';
 import { incrementAppDownload } from '../services/firebase';
 import { VerifiedBadge } from './VerifiedBadge';
 import { isNativeApp, isFilesystemAvailable, getDownloadMode, downloadApkInApp, openApkInstaller, findDownloadedApk } from '../services/nativeDownload';
@@ -311,8 +310,10 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
     }
   };
 
-  // MAX ADS (user, 2026-11-27): download shuru karne wale tap par PEHLE
-  // ek interstitial — ad dismiss ho ya na mile, download hamesha shuru
+  // NO ad on the Grant & Download tap (user, 2026-11-28): install ki
+  // permission wale step par jo interstitial aata tha, woh band kar diya.
+  // Baaki ads waise hi hain — detail khulne par, Download dabane par,
+  // download pura hone par, Request submit par. Download hamesha shuru
   // hota hai (flow kabhi nahi toot-ta).
   const startDownloadFlow = async () => {
     if (!app.link || !app.link.startsWith('http')) {
@@ -320,7 +321,6 @@ export const DirectInstallerModal: React.FC<DirectInstallerModalProps> = ({
       setStep('error');
       return;
     }
-    await showInterstitialAd();
     setPermissionGranted(true);
 
     // Store APK ke andar ho to asli in-app download chalega (Chrome nahi khulega)
