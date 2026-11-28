@@ -35,7 +35,7 @@ jobs:
 
       - name: Install Capacitor
         run: |
-          npm install @capacitor/core@8.3.2 @capacitor/cli@8.3.2 @capacitor/android@8.3.2 @capacitor/filesystem@8.1.5 @capawesome-team/capacitor-file-opener@8.1.1
+          npm install @capacitor/core@8.3.2 @capacitor/cli@8.3.2 @capacitor/android@8.3.2 @capacitor/filesystem@8.1.5 @capacitor/local-notifications@8 @capawesome-team/capacitor-file-opener@8.1.1
 
       # Local Unity Ads plugin (plugins/unity-ads, @premium/unity-ads).
       # It is a file: dependency in package.json, so plain `npm install`
@@ -613,6 +613,23 @@ jobs:
       - name: Sync Capacitor
         run: |
           npx cap sync android
+
+      # Notification icons: white-silhouette small icon + full-colour large icon.
+      # Without these, Android falls back to the launcher icon as the small icon
+      # and shows the white-circle "!" placeholder. Files live in the repo at
+      # notif-icons/ (flat names: ic_stat_icon__<density>.png).
+      - name: Add notification icons
+        run: |
+          set -e
+          for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            mkdir -p "android/app/src/main/res/drawable-$d"
+            cp "notif-icons/ic_stat_icon__$d.png" "android/app/src/main/res/drawable-$d/ic_stat_icon.png"
+            cp "notif-icons/ic_notif_large__$d.png" "android/app/src/main/res/drawable-$d/ic_notif_large.png"
+          done
+          mkdir -p android/app/src/main/res/drawable
+          cp notif-icons/ic_stat_icon__nodpi.png android/app/src/main/res/drawable/ic_stat_icon.png
+          cp notif-icons/ic_notif_large__nodpi.png android/app/src/main/res/drawable/ic_notif_large.png
+          ls android/app/src/main/res/drawable-*/ic_stat_icon.png android/app/src/main/res/drawable-*/ic_notif_large.png
 
       # Unity Ads needs NO manifest meta-data: the Game ID is passed to
       # UnityAds.initialize() at runtime from src/ads.ts (the live site
