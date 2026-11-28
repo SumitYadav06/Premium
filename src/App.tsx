@@ -13,6 +13,7 @@ import { showInterstitialAd } from './ads';
 import { shareApp } from './utils/shareApp';
 import { detectApkShellState } from './utils/forceUpdate';
 import { decideDownloadGate } from './services/nativeDownload';
+import { isBackgroundDownloadAvailable, requestNotificationPermission } from './services/backgroundDownload';
 import { ForceUpdateBlocker } from './components/ForceUpdateBlocker';
 import { InternetGate } from './components/InternetGate';
 import { fetchReleaseApps } from './services/githubApps';
@@ -104,6 +105,25 @@ export default function App() {
   // Roz ka visitor ping — ek device se ek din me sirf ek baar (weekly/monthly users ke liye)
   useEffect(() => {
     recordDailyVisit();
+  }, []);
+
+  // Notification permission — pehli baar app khulte hi turant maango (Android 13+).
+  // Download % wali notification ke liye chahiye. Ab tak sirf download ke time
+  // poochte the, isliye user ko kabhi prompt dikha hi nahi. Sirf ek baar —
+  // localStorage flag se dobara nahi poochte. Native shell me hi (website par
+  // plugin nahi hota, wahan kuch nahi hota). User mana kare to bhi download
+  // chalega, bas % notification nahi dikhega — download ke time modal phir
+  // ek baar pooch lega (wo purana fallback waise hi hai).
+  useEffect(() => {
+    try {
+      if (typeof window === 'undefined') return;
+      if (window.localStorage.getItem('aj-notif-permission-asked') === '1') return;
+      if (!isBackgroundDownloadAvailable()) return;
+      window.localStorage.setItem('aj-notif-permission-asked', '1');
+      void requestNotificationPermission();
+    } catch {
+      /* flag na bache to agle launch par phir try hoga — app nahi toot-ta */
+    }
   }, []);
 
   // FORCE UPDATE — purana 5 MB APK pehchano aur store block karo.
