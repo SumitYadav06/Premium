@@ -14,6 +14,7 @@ import { shareApp } from './utils/shareApp';
 import { detectApkShellState } from './utils/forceUpdate';
 import { decideDownloadGate } from './services/nativeDownload';
 import { isBackgroundDownloadAvailable, requestNotificationPermission } from './services/backgroundDownload';
+import { scheduleDailyNotification } from './services/dailyNotification';
 import { ForceUpdateBlocker } from './components/ForceUpdateBlocker';
 import { InternetGate } from './components/InternetGate';
 import { fetchReleaseApps } from './services/githubApps';
@@ -124,6 +125,16 @@ export default function App() {
     } catch {
       /* flag na bache to agle launch par phir try hoga — app nahi toot-ta */
     }
+  }, []);
+
+  // DAILY NOTIFICATION — roz subah 10 baje, 3 messages rotate (notification fix v2).
+  // Premium me pehle koi daily notification thi hi nahi (sirf DownloadManager ki
+  // download-% notification, jiska icon Android khud control karta hai). Ye
+  // scheduler launch-permission ke baad chalta hai aur checkPermissions() se
+  // kaam karta hai — dobara prompt nahi dikhata.
+  useEffect(() => {
+    const t = setTimeout(() => { void scheduleDailyNotification(); }, 3000);
+    return () => clearTimeout(t);
   }, []);
 
   // FORCE UPDATE — purana APK pehchano aur store block karo.
