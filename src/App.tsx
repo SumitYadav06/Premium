@@ -126,8 +126,9 @@ export default function App() {
     }
   }, []);
 
-  // FORCE UPDATE — purana 5 MB APK pehchano aur store block karo.
-  // Detection: native shell + Unity Ads native plugin NAHI = purana APK.
+  // FORCE UPDATE — purana APK pehchano aur store block karo.
+  // Detection: native shell + (Unity Ads plugin NAHI ya versionCode <
+  // MIN_SUPPORTED_BUILD) = purana APK. Sirf sabse naya build chalta hai.
   // 5 second tak har 250ms check karo (bridge aane me der ho sakti hai);
   // do baar lagatar "old-apk" mile tabhi block karo; bridge na mile ya
   // naya APK / browser ho to store dikhao (fail open — kabhi brick nahi).
@@ -136,9 +137,9 @@ export default function App() {
     let timer: number | undefined;
     let confirmations = 0;
     const deadline = Date.now() + 5000;
-    const tick = () => {
+    const tick = async () => {
       if (stopped) return;
-      const state = detectApkShellState();
+      const state = await detectApkShellState();
       if (state === 'new-or-browser') {
         stopped = true;
         return;
